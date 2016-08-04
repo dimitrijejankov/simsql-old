@@ -1,0 +1,170 @@
+
+
+/*****************************************************************************
+ *                                                                           *
+ *  Copyright 2014 Rice University                                           *
+ *                                                                           *
+ *  Licensed under the Apache License, Version 2.0 (the "License");          *
+ *  you may not use this file except in compliance with the License.         *
+ *  You may obtain a copy of the License at                                  *
+ *                                                                           *
+ *      http://www.apache.org/licenses/LICENSE-2.0                           *
+ *                                                                           *
+ *  Unless required by applicable law or agreed to in writing, software      *
+ *  distributed under the License is distributed on an "AS IS" BASIS,        *
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *  See the License for the specific language governing permissions and      *
+ *  limitations under the License.                                           *
+ *                                                                           *
+ *****************************************************************************/
+
+
+
+package simsql.runtime;
+
+class <<<<pipeName>>>>AggregationInput extends InputRecord {
+
+    private static ReflectedFunction _agg_sqrt = new ReflectedFunction("java.lang.Math", "sqrt", double.class);
+
+    <<<<functionDeclarations>>>>
+
+    public <<<<pipeName>>>>AggregationInput() {
+    }
+
+    public int getNumAttributes() {
+	return <<<<inputNumAtts>>>>;
+    }
+
+    public short getTypeCode() {
+	return <<<<inputTypeCode>>>>;
+    }
+
+    private static final RecordPool pool_agg = new RecordPool(512, new <<<<pipeName>>>>AggregationRecord());
+    public HashableRecord runSelectionAndProjection() {
+
+	// do the selection.
+	Bitstring predResult = isPresent.and(<<<<inputSelection>>>>);
+	if (predResult.allAreFalseOrUnknown()) {
+	    return null;
+	}
+
+//	<<<<pipeName>>>>AggregationRecord aggRec = new <<<<pipeName>>>>AggregationRecord();
+
+	<<<<pipeName>>>>AggregationRecord aggRec = (<<<<pipeName>>>>AggregationRecord)pool_agg.get();
+
+	aggRec.setSortAttribute(getSortAttribute());
+//	aggRec.atts = new Attribute[aggRec.getNumAttributes()];
+	aggRec.isPresent = predResult;
+
+	<<<<groupingAttsAssignments>>>>
+        <<<<aggregateInitializers>>>>	 
+
+	// and return it.
+	return aggRec;
+    }
+}
+
+class <<<<pipeName>>>>AggregationRecord extends AggregatorRecord {
+
+    private static int[] _split_atts = new int[]{<<<<groupingAttsPositions>>>>};
+    private static ReflectedFunction _agg_sqrt = new ReflectedFunction("java.lang.Math", "sqrt", double.class);
+
+    <<<<functionDeclarations>>>>
+
+    public <<<<pipeName>>>>AggregationRecord() {
+    }
+
+     public int getNumAttributes() {
+	return <<<<numAggregatorAtts>>>>;
+    }
+
+     public short getTypeCode() {
+	return 7747;
+    }
+
+    public long getHashKey() {
+        return ((long) 0) <<<<primaryHash>>>>;
+    }
+
+    public long getSecondaryHashKey() {
+	return ((long) 0) <<<<aggregatorHash>>>>;
+    }
+
+    public boolean isFromSameGroup(AggregatorRecord rec) {
+	return true <<<<groupingAttsComparisons>>>>;
+    }
+
+    public void consume(AggregatorRecord me) {
+
+	// consume the isPresent.
+	isPresent = isPresent.or(me.isPresent);
+
+	<<<<aggregateConsumers>>>>
+    }
+
+    private static final RecordPool pool_fin = new RecordPool(5, new <<<<pipeName>>>>AggregationOutput());
+    public Record getFinal() {
+
+//	<<<<pipeName>>>>AggregationOutput finalRec = new <<<<pipeName>>>>AggregationOutput();
+//	finalRec.atts = new Attribute[finalRec.getNumAttributes()];
+	
+	<<<<pipeName>>>>AggregationOutput finalRec = (<<<<pipeName>>>>AggregationOutput)pool_fin.get();
+	finalRec.setSortAttribute(getSortAttribute());
+	<<<<outputAssignments>>>>
+
+	// run the selection
+	Bitstring predResult = isPresent.and(<<<<outputSelection>>>>);
+
+	if (predResult.allAreFalseOrUnknown()) {
+	   return null;
+	}
+
+	finalRec.isPresent = predResult;
+	return finalRec;
+    }
+
+    @Override
+    public HashableRecord[] splitSome() {
+        return split(_split_atts);
+    }
+}
+
+class <<<<pipeName>>>>AggregationOutput extends AbstractRecord {
+
+    public <<<<pipeName>>>>AggregationOutput() {
+    }
+
+    public int getNumAttributes() {
+	return <<<<outputNumAtts>>>>;
+    }
+
+    public short getTypeCode() {
+	return <<<<outputTypeCode>>>>;
+    }
+}
+
+<<<<skipOrderingsStart>>>>
+
+class Ordering {
+  static Class<?> [] getOrdering () {
+     Class<?> [] temp = {<<<<pipeName>>>>AggregationRecord.class};
+     return temp;
+  }
+}
+
+// this is used by the deserializers to obtain the list of types that they need to deserialize
+class RecTypeList { 
+  static Class<?> [] getPossibleRecordTypes () {
+      Class<?> [] temp = {<<<<possRecordTypesString>>>>   <<<<pipeName>>>>AggregationInput.class, <<<<pipeName>>>>AggregationRecord.class};
+      return temp;
+  }
+}
+
+<<<<skipOrderingsEnd>>>>
+
+
+// maybe a stub here...
+
+<<<<preAggregateStub>>>>
+
+// END

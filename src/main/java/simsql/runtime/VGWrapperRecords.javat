@@ -1,0 +1,240 @@
+
+
+/*****************************************************************************
+ *                                                                           *
+ *  Copyright 2014 Rice University                                           *
+ *                                                                           *
+ *  Licensed under the Apache License, Version 2.0 (the "License");          *
+ *  you may not use this file except in compliance with the License.         *
+ *  You may obtain a copy of the License at                                  *
+ *                                                                           *
+ *      http://www.apache.org/licenses/LICENSE-2.0                           *
+ *                                                                           *
+ *  Unless required by applicable law or agreed to in writing, software      *
+ *  distributed under the License is distributed on an "AS IS" BASIS,        *
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *  See the License for the specific language governing permissions and      *
+ *  limitations under the License.                                           *
+ *                                                                           *
+ *****************************************************************************/
+
+
+
+package simsql.runtime;
+
+import java.util.*;
+import java.io.*;
+
+// outer data+vg input record
+class VGRecordOuter extends VGRecord {
+
+    <<<<functionDeclarations>>>>
+
+    public int getNumAttributes() {
+	return <<<<numAttsVG>>>>;
+    }
+
+    public short getTypeCode() {
+	return 9979;
+    }
+
+    public long getHashKey() {
+	return getSortAttribute();
+    }
+
+    public long getSecondaryHashKey() {
+    	return <<<<vgSeedAtt>>>>.getHashCode();
+    }
+
+    public boolean containsSeed() {
+	return true;
+    }
+
+    public boolean isOuterRecord() {
+	return true;
+    }
+
+    public boolean allAreEqual() {
+    	Attribute[] vgt = {<<<<vgInputAtts>>>>};
+	
+	for (Attribute a: vgt) {
+	    if (!a.allAreEqual())
+	       return false;
+	}
+
+	return true;
+    }
+
+    public boolean isFromSameSeedGroup(VGRecord me) {
+    	if (<<<<vgSeedAtt>>>> == null || me.<<<<vgSeedAtt>>>> == null) {
+	   return false;
+        }
+
+	return <<<<vgSeedAtt>>>>.equals(me.<<<<vgSeedAtt>>>>).allAreTrue();
+    }
+
+    public void initializeVG(VGFunction f, int k) {
+	((SeedAttribute)<<<<vgSeedAtt>>>>).initializeVG(f, k);
+    }
+
+    public Attribute[] getVGInputAtts() {
+    	Attribute[] vgt = {<<<<vgInputAtts>>>>};
+	return vgt;
+    }
+
+    public VGRecordOuter() {
+        super();
+    } 
+}
+
+// inner data+vg input record
+class VGRecordInner extends VGRecord {
+
+    <<<<functionDeclarations>>>>
+
+
+    public int getNumAttributes() {
+	return <<<<numAttsVG>>>>;
+    }
+
+    public short getTypeCode() {
+	return 7797;
+    }
+
+    public long getHashKey() {
+	return getSortAttribute();
+    }
+
+    public long getSecondaryHashKey() {
+	return <<<<vgSeedAtt>>>>.getHashCode();
+    }
+
+    public boolean containsSeed() {
+	return <<<<vgSeedAtt>>>>.isNull().allAreFalseOrUnknown();
+    }
+
+    public boolean isOuterRecord() {
+	return false;
+    }
+
+
+    public boolean allAreEqual() {
+    	Attribute[] vgt = {<<<<vgInputAtts>>>>};
+
+	for (Attribute a: vgt) {
+	    if (!a.allAreEqual())
+	       return false;
+	}
+
+	return true;
+    }
+
+    public boolean isFromSameSeedGroup(VGRecord me) {
+    	if (<<<<vgSeedAtt>>>> == null || me.<<<<vgSeedAtt>>>> == null) {
+	   return false;
+        }
+
+	return <<<<vgSeedAtt>>>>.equals(me.<<<<vgSeedAtt>>>>).allAreTrue();
+    }
+
+    public void initializeVG(VGFunction f, int k) {
+	((SeedAttribute)<<<<vgSeedAtt>>>>).initializeVG(f, k);
+    }
+
+    public Attribute[] getVGInputAtts() {
+    	Attribute[] vgt = {<<<<vgInputAtts>>>>};
+	return vgt;
+    }
+
+    public VGRecordInner() {
+    	super();
+    }
+}
+
+
+
+
+// outer input record
+class VGOuterInput extends InputRecord {
+
+    <<<<functionDeclarations>>>>
+
+    private static final RecordPool vpool_o = new RecordPool(128, new VGRecordOuter());
+
+    public int getNumAttributes() {
+	return <<<<numAttsOuter>>>>;
+    }
+
+    public short getTypeCode() {
+	return <<<<outerTypeCode>>>>;
+    }
+
+    public HashableRecord runSelectionAndProjection() {
+	Bitstring predResult = isPresent.and(<<<<outerInputSelection>>>>);
+	if (predResult.allAreFalseOrUnknown()) {
+	    return null;
+	}
+
+//	VGRecordOuter outRec = new VGRecordOuter();
+
+	VGRecordOuter outRec = (VGRecordOuter)vpool_o.get();
+	outRec.isPresent = predResult;
+	outRec.setSortAttribute(((long)0) <<<<outerPrimaryHash>>>>);
+
+	<<<<outerInputAssignments>>>>;
+	
+	return outRec;
+    }
+    
+    public VGOuterInput() {
+    }
+}
+
+
+// output (final) record
+class VGOutputRecord extends AbstractRecord {
+    
+    <<<<functionDeclarations>>>>
+
+    public int getNumAttributes() {
+	return <<<<numAttsOutput>>>>;
+    }
+    
+    public short getTypeCode() {
+	return <<<<outputTypeCode>>>>;
+    }
+    
+    public boolean runSelection() {
+	return !(isPresent.allAreFalseOrUnknown());
+    }
+    
+    public VGOutputRecord(Bitstring outerIsPresent, VGRecord seedRec, Attribute[] input_atts) {
+    	   setMeUp(outerIsPresent, seedRec, input_atts);
+    }
+
+    public void setMeUp(Bitstring outerIsPresent, VGRecord seedRec, Attribute[] input_atts) {
+	isPresent = outerIsPresent;
+
+    	isPresent = isPresent.and(<<<<outputSelection>>>>);
+	<<<<outputAssignments>>>>;
+    }
+
+    public VGOutputRecord() {
+    }
+}
+
+// this class is used to get the order in which groups of input records are presented to the reducer
+class Ordering {
+  static Class<?> [] getOrdering () {
+     Class<?> [] temp = {VGRecordInner.class, VGRecordOuter.class};
+     return temp;
+  }
+}
+
+// this is used by the deserializers to obtain the list of types that they need to deserialize
+class RecTypeList { 
+  static Class<?> [] getPossibleRecordTypes () {
+    Class<?> [] temp = {<<<<possRecordTypesString>>>> VGRecordOuter.class, VGRecordInner.class, VGOuterInput.class, VGOutputRecord.class <<<<innerInputClassNames>>>>};
+    return temp;
+  }
+}

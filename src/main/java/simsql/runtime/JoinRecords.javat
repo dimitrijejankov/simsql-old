@@ -1,0 +1,279 @@
+
+
+/*****************************************************************************
+ *                                                                           *
+ *  Copyright 2014 Rice University                                           *
+ *                                                                           *
+ *  Licensed under the Apache License, Version 2.0 (the "License");          *
+ *  you may not use this file except in compliance with the License.         *
+ *  You may obtain a copy of the License at                                  *
+ *                                                                           *
+ *      http://www.apache.org/licenses/LICENSE-2.0                           *
+ *                                                                           *
+ *  Unless required by applicable law or agreed to in writing, software      *
+ *  distributed under the License is distributed on an "AS IS" BASIS,        *
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *  See the License for the specific language governing permissions and      *
+ *  limitations under the License.                                           *
+ *                                                                           *
+ *****************************************************************************/
+
+
+
+package simsql.runtime;
+
+import java.util.*;
+import java.nio.ByteBuffer;
+
+class LeftIn extends InputRecord {
+
+  <<<<functionDeclarations>>>>
+
+  public int getNumAttributes () {
+    return <<<<leftNumAtts>>>>;
+  }
+
+  public short getTypeCode () {
+    return <<<<leftTypeCode>>>>;
+  }
+
+  private static final RecordPool jpool_L = new RecordPool(16384, new LeftOut());
+  public HashableRecord runSelectionAndProjection () {
+
+    Bitstring predResult = isPresent.and (<<<<leftSelection>>>>);
+    
+    // if we got nothing back, then return a nul
+    if (predResult.allAreFalseOrUnknown ()) {
+      return null;
+    }    
+    
+    HashableRecord returnVal = (HashableRecord)jpool_L.get();
+    returnVal.setSortAttribute(getSortAttribute());
+
+    <<<<leftAssignments>>>>
+    returnVal.isPresent = predResult;
+    return returnVal;
+  }
+  
+  public LeftIn () {}
+  
+}
+
+class RightIn extends InputRecord {
+
+  <<<<functionDeclarations>>>>
+
+  public int getNumAttributes () {
+    return <<<<rightNumAtts>>>>;
+  }
+
+  public short getTypeCode () {
+    return <<<<rightTypeCode>>>>;
+  }
+
+  private static final RecordPool jpool_R = new RecordPool(16384, new RightOut());
+  public HashableRecord runSelectionAndProjection () {
+
+    Bitstring predResult = isPresent.and (<<<<rightSelection>>>>);
+    
+    // if we got nothing back, then return a nul
+    if (predResult.allAreFalseOrUnknown ()) {
+      return null;
+    }
+    
+    HashableRecord returnVal = (HashableRecord)jpool_R.get();
+    returnVal.setSortAttribute(getSortAttribute());
+
+    <<<<rightAssignments>>>>
+    returnVal.isPresent = predResult;
+    return returnVal;
+  }
+  
+  public RightIn () {}
+}
+
+class LeftOut extends HashableRecord {
+
+  private static int[] _split_atts = new int[]{<<<<leftHashPositions>>>>};
+
+  <<<<functionDeclarations>>>>
+  
+  public int getNumAttributes () {
+    return <<<<leftNumOutAtts>>>>; 
+  }
+  
+  // records have a primary hash (used to sort during MapReduce) and (possibly) a secondary hash that
+  // is used to do the merge.
+  public long getHashKey () {
+    return ((long) 0) <<<<leftHash>>>>; 
+  }
+  
+  // the secondary hash is used to do the merge efficiently, in the case that not all of the join atts
+  // are being used in the primary hash... it should return -1 if it is not to be used
+  public long getSecondaryHashKey () {
+    return ((long) 0) <<<<leftSecondaryHash>>>>; 
+  }
+
+  public short getTypeCode () {
+    return 4947;  
+  }
+
+  @Override
+  public HashableRecord[] splitSome() {
+    return split(_split_atts);
+  }
+  
+  public LeftOut () {}
+  
+}
+
+class RightOut extends HashableRecord {
+
+  private static int[] _split_atts = new int[]{<<<<rightHashPositions>>>>};
+
+  <<<<functionDeclarations>>>>
+  
+  static RightOut myNull;
+
+  public static AbstractRecord getNull () {
+    if (myNull == null)
+      myNull = new RightOut ();
+      myNull.isPresent = BitstringWithSingleValue.TRUE;
+      for (int i = 0; i < <<<<rightNumOutAtts>>>>; i++) {
+        myNull.atts[i] = new NullAttribute ();
+      }
+    return myNull;
+  }
+
+  public int getNumAttributes () {
+    return <<<<rightNumOutAtts>>>>; 
+  }
+  
+  public long getHashKey () {
+    return ((long) 0) <<<<rightHash>>>>; 
+  }
+  
+  public long getSecondaryHashKey () {
+    return ((long) 0) <<<<rightSecondaryHash>>>>;
+  }
+
+  public short getTypeCode () {
+    return 2767;  
+  }
+  
+  @Override
+  public HashableRecord[] splitSome() {
+    return split(_split_atts);
+  }  
+
+  public RightOut () {}
+}
+
+class Result extends JoinResultRecord {
+  
+  public int getNumAttributes () {
+    return <<<<outputNumOutAtts>>>>; 
+  }
+  
+  public Result () {}
+
+
+  private static final RecordPool jpool_res = new RecordPool(32, new Result());
+    
+  // join two records; return null if they don't match; return the resulting
+  // Record object otherwise
+  static public Record join (AbstractRecord left, AbstractRecord right) {
+
+  <<<<functionDeclarations>>>>    
+
+
+    // make sure that we have the records in the correct order (OutL on the left,
+    // OurR on the right)... if this is not the case, then swap them
+    if (left.getTypeCode () != 4947) {
+      AbstractRecord temp = left;
+      left = right;
+      right = temp;
+    }
+    
+    // check the join predicate
+    Bitstring predResult = <<<<outputSelection>>>>.and (left.isPresent).and (right.isPresent); 
+    
+    // if we got nothing back, then return a nul
+    if (predResult.allAreFalseOrUnknown ()) {
+      return null;
+    }
+    
+    Result output = (Result)jpool_res.get();
+
+    output.isPresent = predResult;
+    <<<<outputAssignments>>>>
+    return output;
+  }
+  
+  public short getTypeCode () {
+    return <<<<outputTypeCode>>>>;  
+  }
+
+  // tests the join predicate 
+  public static Bitstring test(AbstractRecord left, AbstractRecord right) {
+
+  <<<<functionDeclarations>>>>    
+
+
+    // make sure that we have the records in the correct order (OutL on the left,
+    // OurR on the right)... if this is not the case, then swap them
+    if (left.getTypeCode () != 4947) {
+      AbstractRecord temp = left;
+      left = right;
+      right = temp;
+    }
+    
+    // check the join predicate
+    Bitstring predResult = <<<<outputSelection>>>>.and (left.isPresent).and (right.isPresent); 
+    
+    return predResult;
+  }
+
+  // assembles the record for the semijoin.
+  public static Record compose(AbstractRecord left, AbstractRecord right, Bitstring predResult) {
+
+  <<<<functionDeclarations>>>>    
+
+
+    // make sure that we have the records in the correct order (OutL on the left,
+    // OurR on the right)... if this is not the case, then swap them
+    if (left.getTypeCode () != 4947) {
+      AbstractRecord temp = left;
+      left = right;
+      right = temp;
+    }
+        
+    // construct the result record
+    //Result output = new Result ();
+    //output.atts = new Attribute [output.getNumAttributes ()];
+
+    Result output = (Result)jpool_res.get();
+
+    output.isPresent = predResult;
+    <<<<outputAssignments>>>>
+    return output;
+  }
+}
+
+// this class is used to get the order in which groups of input records are presented to the reducer
+class Ordering {
+  static Class<?> [] getOrdering () {
+     Class<?> [] leftFirst = {LeftOut.class, RightOut.class};
+     Class<?> [] rightFirst = {RightOut.class, LeftOut.class};
+     return <<<<reducerOrdering>>>>;
+  }
+}
+
+// this is used by the deserializers to obtain the list of types that they need to deserialize
+class RecTypeList { 
+  static Class<?> [] getPossibleRecordTypes () {
+    Class<?> [] temp = {<<<<possRecordTypesString>>>> LeftIn.class, RightIn.class, LeftOut.class, RightOut.class, Result.class};
+    return temp;
+  }
+}
+  

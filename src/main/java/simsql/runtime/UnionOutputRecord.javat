@@ -1,0 +1,72 @@
+
+
+/*****************************************************************************
+ *                                                                           *
+ *  Copyright 2014 Rice University                                           *
+ *                                                                           *
+ *  Licensed under the Apache License, Version 2.0 (the "License");          *
+ *  you may not use this file except in compliance with the License.         *
+ *  You may obtain a copy of the License at                                  *
+ *                                                                           *
+ *      http://www.apache.org/licenses/LICENSE-2.0                           *
+ *                                                                           *
+ *  Unless required by applicable law or agreed to in writing, software      *
+ *  distributed under the License is distributed on an "AS IS" BASIS,        *
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *  See the License for the specific language governing permissions and      *
+ *  limitations under the License.                                           *
+ *                                                                           *
+ *****************************************************************************/
+
+
+
+package simsql.runtime;
+
+class UnionOutputRecord extends HashableRecord {
+
+    public UnionOutputRecord () {}
+
+    <<<<functionDeclarations>>>>
+
+    private static int[] _split_atts = new int[]{<<<<hashPositions>>>>};
+
+    public int getNumAttributes() {
+	return <<<<numOutputAtts>>>>;
+    }
+
+    public short getTypeCode() {
+	return <<<<outputTypeCode>>>>;
+    }
+
+    // this is used to sort during MapReduce, when we want to have a sort order
+    public long getHashKey () {
+      return ((long) 0) <<<<primaryHash>>>>;
+    }
+
+    public long getSecondaryHashKey () {
+      return ((long) -1); 
+    }
+
+    @Override
+    public HashableRecord[] splitSome() {
+      return split(_split_atts);
+    }
+
+}
+
+// this is used by the deserializers to obtain the list of types that they need to deserialize
+class RecTypeList {
+  static Class<?> [] getPossibleRecordTypes () {
+    Class<?> [] temp = {<<<<possRecordTypesString>>>> UnionOutputRecord.class <<<<innerInputClassNames>>>>};
+    return temp;
+  }
+}
+
+// this class is used to get the order in which groups of input records are presented to the reducer
+class Ordering {
+  static Class<?> [] getOrdering () {
+     Class<?> [] temp = {SelectionOut.class};
+     return temp;
+  }
+}
+

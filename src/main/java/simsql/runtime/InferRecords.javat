@@ -1,0 +1,244 @@
+
+
+/*****************************************************************************
+ *                                                                           *
+ *  Copyright 2014 Rice University                                           *
+ *                                                                           *
+ *  Licensed under the Apache License, Version 2.0 (the "License");          *
+ *  you may not use this file except in compliance with the License.         *
+ *  You may obtain a copy of the License at                                  *
+ *                                                                           *
+ *      http://www.apache.org/licenses/LICENSE-2.0                           *
+ *                                                                           *
+ *  Unless required by applicable law or agreed to in writing, software      *
+ *  distributed under the License is distributed on an "AS IS" BASIS,        *
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *  See the License for the specific language governing permissions and      *
+ *  limitations under the License.                                           *
+ *                                                                           *
+ *****************************************************************************/
+
+
+package simsql.runtime;
+
+import java.util.*;
+import java.nio.ByteBuffer;
+
+class SplitIn extends InputRecord {
+
+  public int getNumAttributes() {
+	return <<<<inputNumAtts>>>>;
+  }
+
+  public short getTypeCode() {
+    return <<<<inputTypeCode>>>>;
+  }
+
+  public HashableRecord runSelectionAndProjection () {
+
+    Bitstring predResult = isPresent.and (<<<<inputSelection>>>>);
+    
+    // if we got nothing back, then return a nul
+    if (predResult.allAreFalseOrUnknown ()) {
+      return null;
+    }    
+    
+    HashableRecord returnVal = new SplitOut ();
+    returnVal.atts = new Attribute [returnVal.getNumAttributes ()];
+    <<<<inputAssignments>>>>
+    returnVal.isPresent = predResult;
+    return returnVal;
+  }
+  
+  public SplitIn () {}
+}
+
+
+class SplitOut extends ConstantRecord {
+  
+  public int getNumAttributes () {
+    return <<<<numInferAtts>>>>; 
+  }
+  
+  public short getTypeCode() {
+	return 849;
+  }
+
+  public long getHashKey() {
+	return ((long) 0) <<<<inferHash>>>>;
+  }
+
+  public ConstantRecord[] runSplit () {
+    
+    ArrayList <ConstantRecord> returnValList = new ArrayList <ConstantRecord> ();
+    
+    ConstantRecord returnVal = new SplitOut ();
+    returnVal.atts = new Attribute [returnVal.getNumAttributes ()];  
+    <<<<inputAssignments>>>> 
+    returnVal.isPresent = isPresent; 
+    
+    boolean allSingletons = true;
+    for (int i = 0; i < returnVal.getNumAttributes (); i++) {
+      if (returnVal.atts[i].getSize() > 1) {
+        allSingletons = false;
+        break;
+      }
+    }
+
+    if (allSingletons)
+      return new ConstantRecord[] {this};
+
+    int MCIter = 1;
+    for (int i = 0; i < returnVal.getNumAttributes (); i++) {
+      if (returnVal.atts[i].getSize () > 1) {
+        MCIter = returnVal.atts[i].getSize ();
+        break;
+      }
+    }
+
+    //do the splitting based on each MC iteration
+    for (int i = 0; i < MCIter; i++) {
+      ConstantRecord returnValNew = new SplitOut ();
+      returnValNew.atts = new Attribute [returnVal.getNumAttributes ()];  
+      returnValNew.isPresent = returnVal.isPresent;
+      for (int j = 0; j < returnVal.getNumAttributes (); j++) {
+        HashMap<Attribute, Bitstring> splits = returnVal.atts[j].split();
+        for (Attribute att : splits.keySet()) {   
+          if (splits.get(att).getValue(i)) {
+            returnValNew.atts[j] = att;
+            returnValNew.isPresent = returnValNew.isPresent.and(splits.get(att));
+            break;
+          }
+        }
+      }
+      if (!returnValList.contains(returnValNew) && returnValNew.isPresent.getValue(i))
+        returnValList.add(returnValNew);
+    }
+
+    return returnValList.toArray(); 
+  }
+
+  public ConstantRecord[] runSplit (int[] attsindex) {
+    
+    ArrayList <ConstantRecord> returnValList = new ArrayList <ConstantRecord> ();
+    
+    ConstantRecord returnVal = new SplitOut ();
+    returnVal.atts = new Attribute [returnVal.getNumAttributes ()];  
+    <<<<inputAssignments>>>> 
+    returnVal.isPresent = isPresent; 
+
+    boolean allSingletons = true;
+    for (int i = 0; i < attsindex.length; i++) {
+      if (returnVal.atts[attsindex[i]].getSize() > 1) {
+        allSingletons = false;
+        break;
+      }
+    }
+
+    if (attsIndex.length == 0 || allSingletons)
+      return new ConstantRecord[] {this};
+    
+    int MCIter = 1;
+    for (int i = 0; i < returnVal.getNumAttributes (); i++) {
+      if (returnVal.atts[i].getSize () > 1) {
+        MCIter = returnVal.atts[i].getSize ();
+        break;
+      }
+    }
+
+    //do the splitting based on each MC iteration
+    for (int i = 0; i < MCIter; i++) {
+      ConstantRecord returnValNew = new SplitOut ();
+      returnValNew.atts = new Attribute [attsindex.length];  
+      returnValNew.isPresent = returnVal.isPresent;
+      for (int j = 0; j < attsindex.length; j++) {
+        HashMap<Attribute, Bitstring> splits = returnVal.atts[attsindex[j]].split();
+        for (Attribute att : splits.keySet()) {   
+          if (splits.get(att).getValue(i)) {
+            returnValNew.atts[j] = att;
+            returnValNew.isPresent = returnValNew.isPresent.and(splits.get(att));
+            break;
+          }
+        }
+      }
+
+      boolean gflag = false;
+      for (ConstantRecord rec : returnValList) {
+        boolean flag = true;
+        for (int j = 0; j < attsindex.length; j++) {
+          flag = flag && returnValNew.atts[j].equals(rec.atts[j]).allAreTrue();
+        }
+        if (flag) {
+          gflag = true;
+          break;
+        }
+      }
+
+      if (!gflag && returnValNew.isPresent.getValue(i))
+        returnValList.add(returnValNew);
+    }
+
+    return returnValList.toArray(); 
+  }
+  
+  public boolean isFromSameGroup(ConstantRecord rec) {
+	return true <<<<inputAttsComparisons>>>>;
+  }
+  
+  public SplitOut () {}
+  
+}
+
+class InferResult extends InferResultRecord {
+  
+  public int getNumAttributes () {
+    return <<<<outputNumAtts>>>>; 
+  }
+
+  public short getTypeCode() {
+	return <<<<outputTypeCode>>>>;
+  }
+  
+  public InferResult () {}
+    
+  // the last step of inference - calculate the fraction of of the Monte Carlo iterations 
+  // for which a tuple appears at least once in the query result
+  static public Record inference (ConstantRecord input) {
+    
+    // check the inference predicate
+    Bitstring predResult = input.isPresent.and(<<<<outputSelection>>>>); 
+    
+    // if we got nothing back, then return a nul
+    if (predResult.allAreFalseOrUnknown ()) {
+      return null;
+    }
+    
+    // construct the result record
+    InferResult output = new InferResult ();
+    output.atts = new Attribute [output.getNumAttributes () + 1];
+    <<<<outputAssignments>>>>
+    
+    double fraction = predResult.fractionOfTrue();
+    output.atts[output.getNumAttributes ()] = new DoubleAttribute(fraction); 
+    output.isPresent = predResult; 
+    return output;
+  }
+  
+}
+
+// this class is used to get the order in which groups of input records are presented to the reducer
+class Ordering {
+  static Class<?> [] getOrdering () {
+     Class<?> [] temp = {SplitOut.class};
+     return temp;
+  }
+}
+
+// this is used by the deserializers to obtain the list of types that they need to deserialize
+class RecTypeList { 
+  static Class<?> [] getPossibleRecordTypes () {
+    Class<?> [] temp = {<<<<possRecordTypesString>>>> SplitIn.class, SplitOut.class, InferResult.class};
+    return temp;
+  }
+}
+  

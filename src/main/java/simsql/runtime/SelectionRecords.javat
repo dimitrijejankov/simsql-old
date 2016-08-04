@@ -1,0 +1,109 @@
+
+
+/*****************************************************************************
+ *                                                                           *
+ *  Copyright 2014 Rice University                                           *
+ *                                                                           *
+ *  Licensed under the Apache License, Version 2.0 (the "License");          *
+ *  you may not use this file except in compliance with the License.         *
+ *  You may obtain a copy of the License at                                  *
+ *                                                                           *
+ *      http://www.apache.org/licenses/LICENSE-2.0                           *
+ *                                                                           *
+ *  Unless required by applicable law or agreed to in writing, software      *
+ *  distributed under the License is distributed on an "AS IS" BASIS,        *
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *  See the License for the specific language governing permissions and      *
+ *  limitations under the License.                                           *
+ *                                                                           *
+ *****************************************************************************/
+
+
+
+package simsql.runtime;
+
+class <<<<pipeName>>>>SelectionIn extends InputRecord {
+
+  <<<<functionDeclarations>>>>
+
+  public int getNumAttributes () {
+    return <<<<inputNumAtts>>>>;
+  }
+
+  public short getTypeCode () {
+    return <<<<inputTypeCode>>>>;
+  }
+
+  private static final RecordPool pool_p = new RecordPool(32, new <<<<pipeName>>>>SelectionOut());
+  public HashableRecord runSelectionAndProjection () {
+
+    Bitstring predResult = isPresent.and (<<<<inputSelection>>>>);
+    
+    // if we got nothing back, then return a nul
+    if (predResult.allAreFalseOrUnknown ()) {
+      return null;
+    }    
+    
+    HashableRecord returnVal = (HashableRecord)pool_p.get();
+
+//  HashableRecord returnVal = new <<<<pipeName>>>>SelectionOut ();
+//  returnVal.atts = new Attribute [returnVal.getNumAttributes ()];
+    returnVal.setSortAttribute(getSortAttribute());
+    <<<<inputAssignments>>>>
+    returnVal.isPresent = predResult;
+    return returnVal;
+  }
+  
+  public <<<<pipeName>>>>SelectionIn () {}
+  
+}
+
+class <<<<pipeName>>>>SelectionOut extends HashableRecord {
+
+  <<<<functionDeclarations>>>>
+  
+  public int getNumAttributes () {
+    return <<<<outputNumAtts>>>>; 
+  }
+
+  public long getSecondaryHashKey () {
+    return ((long) 0) <<<<selectionHash>>>>; 
+  }
+
+  public long getHashKey() {
+    return ((long) 0) <<<<primaryHash>>>>; 
+  }
+  
+  public short getTypeCode () {
+    return <<<<outputTypeCode>>>>;  
+  }
+
+  public <<<<pipeName>>>>SelectionOut () {}
+  
+}
+
+<<<<skipOrderingsStart>>>>
+
+// this class is used to get the order in which groups of input records are presented to the reducer
+class Ordering {
+  static Class<?> [] getOrdering () {
+     Class<?> [] temp = {SelectionOut.class};
+     return temp;
+  }
+}
+
+// this is used by the deserializers to obtain the list of types that they need to deserialize
+class RecTypeList { 
+  static Class<?> [] getPossibleRecordTypes () {
+    Class<?> [] temp = {<<<<possRecordTypesString>>>> SelectionIn.class, SelectionOut.class};
+    return temp;
+  }
+}
+  
+<<<<skipOrderingsEnd>>>>
+
+// maybe a stub here...
+
+<<<<preSelectionStub>>>>
+
+// END

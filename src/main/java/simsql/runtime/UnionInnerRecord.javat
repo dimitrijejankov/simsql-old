@@ -1,0 +1,54 @@
+
+
+/*****************************************************************************
+ *                                                                           *
+ *  Copyright 2014 Rice University                                           *
+ *                                                                           *
+ *  Licensed under the Apache License, Version 2.0 (the "License");          *
+ *  you may not use this file except in compliance with the License.         *
+ *  You may obtain a copy of the License at                                  *
+ *                                                                           *
+ *      http://www.apache.org/licenses/LICENSE-2.0                           *
+ *                                                                           *
+ *  Unless required by applicable law or agreed to in writing, software      *
+ *  distributed under the License is distributed on an "AS IS" BASIS,        *
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *  See the License for the specific language governing permissions and      *
+ *  limitations under the License.                                           *
+ *                                                                           *
+ *****************************************************************************/
+
+package simsql.runtime;
+
+class UnionInnerRecord_<<<<innerInputName>>>> extends InputRecord {
+
+    <<<<functionDeclarations>>>>
+
+    private static final RecordPool vpool_i = new RecordPool (8192, new UnionOutputRecord());
+
+    public UnionInnerRecord_<<<<innerInputName>>>> () {
+    }    
+
+    public int getNumAttributes() {
+	return <<<<numInnerInputAtts>>>>;
+    }
+
+    public short getTypeCode() {
+	return <<<<innerInputTypeCode>>>>;
+    }
+
+    public HashableRecord runSelectionAndProjection() {
+	Bitstring predResult = isPresent.and(<<<<innerInputSelection>>>>);
+
+	if (predResult.allAreFalseOrUnknown()) {
+	    return null;
+	}
+
+	UnionOutputRecord outRec = (UnionOutputRecord) vpool_i.get();
+	outRec.isPresent = predResult;
+
+	<<<<innerInputAssignments>>>>
+
+	return outRec;
+    }
+}

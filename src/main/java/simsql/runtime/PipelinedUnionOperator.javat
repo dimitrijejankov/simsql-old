@@ -1,0 +1,128 @@
+
+/*****************************************************************************
+ *                                                                           *
+ *  Copyright 2014 Rice University                                           *
+ *                                                                           *
+ *  Licensed under the Apache License, Version 2.0 (the "License");          *
+ *  you may not use this file except in compliance with the License.         *
+ *  You may obtain a copy of the License at                                  *
+ *                                                                           *
+ *      http://www.apache.org/licenses/LICENSE-2.0                           *
+ *                                                                           *
+ *  Unless required by applicable law or agreed to in writing, software      *
+ *  distributed under the License is distributed on an "AS IS" BASIS,        *
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *  See the License for the specific language governing permissions and      *
+ *  limitations under the License.                                           *
+ *                                                                           *
+ *****************************************************************************/
+
+package simsql.runtime;
+
+import java.io.IOException;
+import java.util.*;
+import java.nio.ByteBuffer;
+
+class <<<<pipeName>>>>Input extends AbstractRecord {
+
+    public int getNumAttributes () {
+      return <<<<inputNumAtts>>>>;
+    }
+
+    public short getTypeCode () {
+      return <<<<inputTypeCode>>>>;
+    }
+
+    public <<<<pipeName>>>>Input () {}
+}
+
+class <<<<pipeName>>>> extends PipelinedOperator {
+
+  private UnionCleaner myCleaner = null;
+  private int whichPartition = -1;
+  private int numPartitions = -1;
+    
+  class UnionOutputRecord extends HashableRecord {
+
+    <<<<functionDeclarations>>>>
+
+    public int getNumAttributes() {
+        return <<<<numOutputAtts>>>>;
+    }
+
+    public short getTypeCode() {
+        return <<<<outputTypeCode>>>>;
+    }
+
+    public long getHashKey () {
+         return -1;
+    }
+    
+  }
+
+  <<<<innerInputClasses>>>>
+
+  // check if we accept this particular input
+  private short [] typeCodes = {<<<<inputTypeCodes>>>>};
+  public boolean accepts (Record value) {
+    for (short s : typeCodes) {
+      if (s == value.getTypeCode ())
+        return true;
+    }
+    return false;
+  }
+
+  private InputRecord [] allRecs;
+  public <<<<pipeName>>>> () {
+
+    // this sets up an array of input records
+    allRecs = new InputRecord [typeCodes.length];
+    <<<<setupListOfRecs>>>>
+  }
+
+  public void takeParam (String paramName, String paramVal) {
+    // accept the required parameters
+    if (paramName.equals ("whichPartition"))
+      whichPartition = Integer.parseInt (paramVal);
+    else if (paramName.equals ("numPartitions"))
+      numPartitions = Integer.parseInt (paramVal);
+    else 
+      throw new RuntimeException ("Got a weird parameter!");
+
+    // this is all of the input records we need to proces
+    String [] fileNames = {<<<<filesToReadDirectly>>>>};
+    short [] typeCodes = {<<<<directTypeCodes>>>>};
+
+    if (paramName.equals ("whichPartition") || paramName.equals ("numPartitions"))
+      if (whichPartition != -1 && numPartitions != -1)
+        myCleaner = new UnionCleaner (fileNames, typeCodes, allRecs, numPartitions, whichPartition);
+  }
+  
+  public Record cleanup () {
+    return myCleaner.cleanup ();  
+  }
+  
+  // process the record by running the selection and projection
+  public void process (Record value) {
+
+    int i;
+    for (i = 0; i < typeCodes.length; i++) {
+      if (typeCodes[i] == value.getTypeCode ()) {
+        allRecs[i].copyMyselfFrom (value); 
+        break;
+      }
+    }
+
+    if (i == typeCodes.length)
+      throw new RuntimeException ("Could not find the appropriate record type!");
+
+    HashableRecord myRec = allRecs[i].runSelectionAndProjection ();
+
+    if (myRec != null) {
+      if (!myRec.getIsPresent ().allAreFalseOrUnknown ())
+        emit (myRec);    
+    }
+  }
+  
+}
+  
