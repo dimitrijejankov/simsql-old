@@ -1,0 +1,3 @@
+vgfunction ConditionalNormal
+input [rv_mean: integer, mean: double, rv_i: integer, rv_j: integer, covar: double, rv_obs: integer, obs: double]
+output [rv: integer, value: double]

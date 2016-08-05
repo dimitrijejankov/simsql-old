@@ -28,11 +28,8 @@ import java.util.*;
 import org.antlr.runtime.*;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.*;
-import org.apache.hadoop.io.*;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
 
 /**
  * Hadoop-SimSQL runtime interface class.

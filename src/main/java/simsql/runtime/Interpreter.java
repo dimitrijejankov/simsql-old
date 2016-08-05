@@ -24,7 +24,6 @@ package simsql.runtime;
 
 import org.antlr.runtime.*;
 import java.io.*;
-import org.antlr.runtime.*;
 import java.util.*;
 
 public class Interpreter {

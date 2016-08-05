@@ -23,9 +23,6 @@ package simsql.compiler;
 
 import java.util.ArrayList;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
 

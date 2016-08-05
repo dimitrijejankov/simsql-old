@@ -1,0 +1,3 @@
+vgfunction myFunction
+input [att1: integer, att2: double, att3: string]
+output [attx: integer]

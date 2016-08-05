@@ -5,20 +5,9 @@ package simsql.compiler;
 
 import org.antlr.runtime.*;
 
-import java.util.Stack;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
-import simsql.compiler.*;
 
-
-import org.antlr.runtime.*;
-import java.util.Stack;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -787,7 +776,7 @@ public class QueryParser extends Parser {
                     match(input,RBRACKET,FOLLOW_RBRACKET_in_dropTableStatement574); if (state.failed) return statement;
                     if ( state.backtracking==0 ) {
 
-                                        statement = new DropElement((viewName!=null?viewName.getText():null) + "_" + (lb!=null?lb.getText():null) + ".." + (ub!=null?ub.getText():null), DropElement.ARRAY_CONSTANT_INDEX_TABLE);
+                                        statement = new DropElement((viewName!=null?viewName.getText():null) + "_" + (lb!=null?lb.getText():null) + "src/main" + (ub!=null?ub.getText():null), DropElement.ARRAY_CONSTANT_INDEX_TABLE);
                                   
                     }
 
@@ -3479,9 +3468,9 @@ public class QueryParser extends Parser {
                     match(input,RPAREN,FOLLOW_RPAREN_in_baselineArraySchema3862); if (state.failed) return retval;
                     if ( state.backtracking==0 ) {
 
-                                retval.arrayString = (lb!=null?lb.getText():null)+".."+(ub!=null?ub.getText():null);
+                                retval.arrayString = (lb!=null?lb.getText():null)+ "src/main" +(ub!=null?ub.getText():null);
                                 retval.schema = new DefinedArrayTableSchema(schemaName62, 
-                                                                      (lb!=null?lb.getText():null)+".."+(ub!=null?ub.getText():null), 
+                                                                      (lb!=null?lb.getText():null)+ "src/main" +(ub!=null?ub.getText():null),
                                                                       attributeList63);
                               
                     }
@@ -3493,9 +3482,9 @@ public class QueryParser extends Parser {
                     {
                     if ( state.backtracking==0 ) {
 
-                                retval.arrayString = (lb!=null?lb.getText():null)+".."+(ub!=null?ub.getText():null);
+                                retval.arrayString = (lb!=null?lb.getText():null)+ "src/main" +(ub!=null?ub.getText():null);
                                 retval.schema = new DefinedArrayTableSchema(schemaName62, 
-                                                                      (lb!=null?lb.getText():null)+".."+(ub!=null?ub.getText():null));
+                                                                      (lb!=null?lb.getText():null)+ "src/main" +(ub!=null?ub.getText():null));
                               
                     }
 
@@ -4968,7 +4957,7 @@ public class QueryParser extends Parser {
                     if ( state.backtracking==0 ) {
 
                                       table = new BaselineTableNameArray((baselineTableNameArray!=null?baselineTableNameArray.getText():null), 
-                                                                          (lb!=null?lb.getText():null) + ".." + (ub!=null?ub.getText():null));
+                                                                          (lb!=null?lb.getText():null) + "src/main" + (ub!=null?ub.getText():null));
                                   
                     }
 

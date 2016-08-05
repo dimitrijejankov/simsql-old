@@ -24,7 +24,6 @@ package simsql.runtime;
 
 import java.nio.*;
 import java.util.*;
-import java.util.jar.*;
 import java.io.*;
 
 /** 

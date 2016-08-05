@@ -23,7 +23,7 @@
 package simsql.code_generator;
 
 import java.util.*;
-import java.io.*;
+
 import org.antlr.runtime.*;
 
 /** Translates a query into an object of type E. */

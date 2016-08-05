@@ -1,0 +1,3 @@
+vgfunction Gamma
+input [mean: double, var: double]
+output [value: integer]

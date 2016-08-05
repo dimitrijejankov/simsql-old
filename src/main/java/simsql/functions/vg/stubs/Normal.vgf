@@ -1,0 +1,3 @@
+vgfunction Normal
+input [mean: double, stdev: double]
+output [value: double]

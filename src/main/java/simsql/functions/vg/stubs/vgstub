@@ -1,0 +1,108 @@
+#!/usr/bin/perl
+
+# Copyright 2014 Rice University
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# author: lp 2012
+use IPC::Cmd qw(can_run run run_forked);
+
+local $/=undef;
+
+if ($#ARGV != 0) {
+    print "Usage: vgf_gen vgfile.vgf\n\n";
+    exit;
+}
+
+# open up and read
+open FILE, "$ARGV[0]" or die "Couldn't open file $ARGV[0]";
+$str = <FILE>;
+close FILE;
+
+
+# get the vg function name
+my $vgf = "";
+if ($str =~ m/vgfunction\s+[A-Za-z_]+[A-Za-z_0-9_]*/) {
+
+    # cut off
+    $_ = $&;
+    s/vgfunction\s+//g;
+    $vgf = $_;
+}
+
+# gets the schemas
+sub get_schema {
+    my ($str, $mode) = @_;
+    my @atts;
+    if ($str =~ m/$mode\s+\[[A-Za-z0-9_: ,]*\]/) {
+
+	# cut off
+	$_ = $&;
+	s/($mode\s+)|\]|\[|\s//g;
+
+	# split atts
+	@comm = split(/,/);
+	if ($#comm < 0) {
+	    die "Incorrect schema\n";
+	}
+
+	foreach (@comm) {
+
+	    # split thang
+	    @vals = split(/:/);
+	    if ($#vals != 1) {
+		die "Syntax error in schema\n";
+	    }
+
+	    push(@atts, "(" . @vals[0] . ", " . lc(@vals[1]) . ")");
+	}
+     }
+     return(@atts);
+}
+
+# get both schemas
+@input_atts = get_schema($str, "input");
+@output_atts = get_schema($str, "output");
+
+if ($vgf =~ m// or $#input_atts < 0 or $#output_atts < 0) {
+    die "Incomplete VGF information!\n";
+}
+
+# generate the M4
+my $kx = "include(`VGFLib.m4')dnl\n";
+$kx = $kx . "define(`_VG_NAME', `$vgf')dnl\n";
+$kx = $kx . "define(`_VG_INPUT_ATTS', `(";
+foreach (@input_atts) {
+    $kx = $kx . $_ . ",";
+}
+chop($kx);
+$kx = $kx . ")')dnl\n";
+$kx = $kx . "define(`_VG_OUTPUT_ATTS', `(";
+foreach (@output_atts) {
+    $kx = $kx . $_ . ",";
+}
+chop($kx);
+$kx = $kx . ")')dnl\n";
+$kx = $kx . "include(`VGFStub.m4')\n";
+
+# call M4 and read the output
+can_run("m4") or die "M4 not found!";
+
+my $outx;
+$outx = run_forked("m4 ",{
+		   child_stdin => $kx});
+
+my $out_file = $vgf . ".vg.cc";
+open OUTF, ">$out_file" or die "Cannot create file $out_file\n";
+print OUTF ${$outx}{stdout};
+close OUTF;

@@ -1,0 +1,3 @@
+vgfunction RandomWalk
+input [startValue: double, numSteps: integer, startYear: integer, startMonth: integer, mean: double, stdev: double]
+output [year: integer, month: integer, value: double]

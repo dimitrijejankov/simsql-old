@@ -1,0 +1,3 @@
+vgfunction BayesianDemand
+input [p0shape: double, p0scale: double, d0shape: double, d0scale: double, curDemand: integer, curPrice: double, newPrice: double]
+output [newDemand: integer]
