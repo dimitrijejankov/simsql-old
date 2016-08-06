@@ -12,17 +12,27 @@
 
     <dependencies>
 
+        <!-- JLine begin -->
+
         <dependency>
             <groupId>jline</groupId>
             <artifactId>jline</artifactId>
             <version>1.0</version>
         </dependency>
 
+        <!-- JLine end -->
+
+        <!-- SqlLite-jdbc begin-->
+
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.8.11.2</version>
         </dependency>
+
+        <!-- SqlLite-jdbc end-->
+
+        <!-- Hadoop-client begin-->
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -31,16 +41,23 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Hadoop-client end-->
+
+        <!-- Antlr begin-->
+
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr</artifactId>
             <version>3.2</version>
         </dependency>
 
+        <!-- Antlr end-->
+
     </dependencies>
 
-
     <build>
+
+        <!-- Resources begin-->
 
         <resources>
             <resource>
@@ -63,7 +80,184 @@
             </resource>
         </resources>
 
+        <!-- Resources end-->
+
         <plugins>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+
+                    <!-- Compile jni begin-->
+
+                    <execution>
+                        <id>jni-compile</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>/usr/bin/make</executable>
+                            <workingDirectory>${basedir}/src/main/java/simsql/runtime/</workingDirectory>
+                            <arguments>
+                                <argument>-f</argument>
+                                <argument>VGFunction.jni.Makefile</argument>
+                                <argument>CC=/usr/bin/g++</argument>
+                                <argument>INCLUDE=${java.home}/include</argument>
+                                <argument>OUTDIR=${basedir}/src/generated/resources/simsql/runtime</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Compile jni end-->
+
+
+                    <!-- Compile VGFunctions begin-->
+
+                    <execution>
+                        <id>vg-compile</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>/usr/bin/make</executable>
+                            <workingDirectory>${basedir}/src/main/java/simsql/functions/vg/</workingDirectory>
+                            <arguments>
+                                <argument>-f</argument>
+                                <argument>vg.Makefile</argument>
+                                <argument>CC=/usr/bin/g++</argument>
+                                <argument>INCLUDE=${basedir}/src/main/java/simsql/runtime</argument>
+                                <argument>OUTDIR=${basedir}/src/generated/resources/simsql/functions</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Compile VGFunctions end-->
+
+                    <!-- Compile UDFunctions begin-->
+
+                    <execution>
+                        <id>ud-compile</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>/usr/bin/make</executable>
+                            <workingDirectory>${basedir}/src/main/java/simsql/functions/</workingDirectory>
+                            <arguments>
+                                <argument>-f</argument>
+                                <argument>ud.Makefile</argument>
+                                <argument>CC=/usr/bin/g++</argument>
+                                <argument>INCLUDE=${basedir}/src/main/java/simsql/runtime</argument>
+                                <argument>OUTDIR=${basedir}/src/generated/resources/simsql/runtime</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Compile UDFunctions end-->
+
+                    <!-- Compile Prolog Parser begin !-->
+
+                    <execution>
+                        <id>antlr-prolog-parser</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>java</executable>
+                            <arguments>
+                                <argument>-classpath</argument>
+                                <classpath/>
+                                <argument>org.antlr.Tool</argument>
+                                <argument>-verbose</argument>
+                                <argument>-make</argument>
+                                <argument>-o</argument>
+                                <argument>${basedir}/src/generated/java/simsql/code_generator</argument>
+                                <argument>${basedir}/src/main/java/simsql/code_generator/PrologQuery.g</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Compile Prolog Parser end !-->
+
+                    <!-- Compile SQL Parser begin -->
+
+                    <execution>
+                        <id>antlr-sql-parser</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>java</executable>
+                            <arguments>
+                                <argument>-classpath</argument>
+                                <classpath/>
+                                <argument>org.antlr.Tool</argument>
+                                <argument>-verbose</argument>
+                                <argument>-make</argument>
+                                <argument>-o</argument>
+                                <argument>${basedir}/src/generated/java/simsql/compiler</argument>
+                                <argument>${basedir}/src/main/java/simsql/compiler/Query.g</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Compile SQL Parser end -->
+
+                    <!-- Compile DataFlow Parser begin -->
+
+                    <execution>
+                        <id>antlr-data-flow-parser</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>java</executable>
+                            <arguments>
+                                <argument>-classpath</argument>
+                                <classpath/>
+                                <argument>org.antlr.Tool</argument>
+                                <argument>-verbose</argument>
+                                <argument>-make</argument>
+                                <argument>-o</argument>
+                                <argument>${basedir}/src/generated/java/simsql/runtime</argument>
+                                <argument>${basedir}/src/main/java/simsql/runtime/DataFlow.g</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Compile DataFlow Parser end -->
+
+                    <!-- Compile Optimizer begin -->
+
+                    <execution>
+                        <id>optimizer-compile</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>/usr/bin/make</executable>
+                            <workingDirectory>${basedir}/src/main/java/simsql/optimizer/</workingDirectory>
+                            <arguments>
+                                <argument>-f</argument>
+                                <argument>prolog.Makefile</argument>
+                                <argument>OUTDIR=${basedir}/src/generated/resources/simsql/optimizer</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Compile Optimizer end -->
+
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>

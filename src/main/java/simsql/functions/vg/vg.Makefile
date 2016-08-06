@@ -19,22 +19,26 @@
 #  *****************************************************************************/
 
 
-# Makefile for building individual VG functions
+# Makefile for building all VG functions
 
 ECHO = echo
+RM = rm -f
+
+SRCS = $(wildcard *.vg.cc)
+FUNC = $(patsubst %.vg.cc,%,$(SRCS))
+
 CCFLAGS = -c -fPIC -O3
 CLFLAGS = -lgsl -lgslcblas -ldl -shared -rdynamic
-RM = rm -f
-BASENAME = basename
-LFUNC=$(shell $(BASENAME) $(FUNC) .vg.cc)
+
 
 .SILENT: all
 
 all: $(FUNC)
-	$(ECHO) "\033[1m\033[31mBuilding VG function '$(LFUNC)'.\033[0m"
-	$(CC) -I $(INCLUDE) $(CCFLAGS) $(FUNC) -o $(LFUNC).vg.o
-	$(CC) -o $(OUTDIR)/$(LFUNC).vg.so $(LFUNC).vg.o $(CLFLAGS)
-	$(RM) $(LFUNC).vg.o
+%: %.vg.cc
+	@$(ECHO) "\033[1m\033[31mBuilding VG function '$@'.\033[0m"
+	@$(CC) -I $(INCLUDE) $(CCFLAGS) $@.vg.cc -o $@.vg.o
+	@$(CC) -o $(OUTDIR)/$@.vg.so $@.vg.o $(CLFLAGS)
+	@$(RM) $@.vg.o
 
 clean:
-	$(RM) $(LFUNC).vg.o
+	@$(RM) $(OUTDIR)/*.vg.o

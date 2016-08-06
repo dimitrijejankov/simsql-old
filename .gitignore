@@ -1,3 +1,5 @@
 target/
 .idea/
 simsql.iml
+src/generated/java/simsql/*/*
+src/generated/resources/simsql/*/*
