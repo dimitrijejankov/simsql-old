@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-$HADOOP_PREFIX/bin/hadoop jar /simsql/target/simsql-jar-with-dependencies.jar
+$HADOOP_PREFIX/bin/hadoop jar /simsql/target/simsql-jar-with-dependencies.jar -Dmapreduce.reduce.java.opts=-Xmx3428m -Dmapreduce.map.java.opts=-Xmx3428m -Dmapreduce.reduce.memory.mb=6000 -Dmapreduce.map.memory.mb=6000

@@ -3,3 +3,4 @@ target/
 simsql.iml
 src/generated/java/simsql/*/*
 src/generated/resources/simsql/*/*
+examples/work/
