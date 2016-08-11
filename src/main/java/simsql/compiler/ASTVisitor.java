@@ -73,6 +73,7 @@ public abstract class ASTVisitor {
 	 public abstract boolean visitSelectStatement(SelectStatement selectStatement) throws Exception;
 	 public abstract boolean visitDefinedTableSchemaExpression(DefinedTableSchema table)throws Exception;
 	 public abstract boolean visitDefinedArrayTableSchemaExpression(DefinedArrayTableSchema definedArrayTableSchema)throws Exception;
+	 public abstract boolean visitModuloTableSchemaExpression(DefinedModuloTableSchema definedModuloTableSchema)throws Exception;
 	 public abstract boolean visitWithStatementExpression(WithStatement withStatement)throws Exception;
 	 public abstract boolean visitTableReferenceExpression(TableReference tableReference)throws Exception;
 	 public abstract boolean visitOrderByColumn(OrderByColumn orderByColumn)throws Exception;

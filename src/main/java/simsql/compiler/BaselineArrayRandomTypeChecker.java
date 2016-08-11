@@ -106,7 +106,7 @@ public class BaselineArrayRandomTypeChecker extends RandomTableTypeChecker {
 		}
 		
 		/*
-		 * 3. try to save the view. Basically we iterate from lowerBound to upBound, and replace each "i" with 
+		 * 3. try to save the view. Basically we iterate from multiplier to offset, and replace each "i" with
 		 * the initialized index.
 		 */
 		ArrayList<SQLExpression> selectList = selectStatement.selectList;

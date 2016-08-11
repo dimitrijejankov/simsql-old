@@ -621,6 +621,11 @@ createRandomTableStatement returns[RandomTableStatement statement]:
 	          {
 	            $statement = $generalRandomStatement.statement;
 	          }
+	          |
+	          baselineModuloRandomStatement
+	          {
+	            $statement = $baselineModuloRandomStatement.statement;
+	          }
 	      )
           /*------------------------------end-------------------------------
           */
@@ -670,6 +675,19 @@ generalRandomStatement returns[RandomTableStatement statement]:
                                $randomParameters.withStatementList,
                                $randomParameters.statement);
           };
+
+baselineModuloRandomStatement returns[BaseLineModuloRandomTableStatement statement]:
+           baselineModuloSchema AS
+           randomParameters
+           {
+              $statement = new BaseLineModuloRandomTableStatement(
+                               $baselineModuloSchema.multiplier,
+                               $baselineModuloSchema.offset,
+                               $baselineModuloSchema.schema,
+                               $randomParameters.tableReference,
+                               $randomParameters.withStatementList,
+                               $randomParameters.statement);
+           };
           
 baselineSchema returns[DefinedTableSchema schema, String index]: 
       schemaName LBRACKET NUMERIC RBRACKET
@@ -722,6 +740,31 @@ generalSchema returns[DefinedTableSchema schema]:
         |
         {
           $schema = new DefinedTableSchema($schemaName.name+"_i", true);
+        }
+      )
+      ;
+
+baselineModuloSchema returns[DefinedModuloTableSchema schema, String multiplier, String offset]:
+      schemaName LBRACKET mul=NUMERIC ASTERISK MODULOTABLEINDEX PLUS off=NUMERIC RBRACKET
+      (
+        LPAREN
+        attributeList
+        RPAREN
+        {
+          $multiplier = $mul.text;
+          $offset = $off.text;
+          $schema = new DefinedModuloTableSchema($schemaName.name,
+                                                 $mul.text,
+                                                 $off.text,
+                                                 $attributeList.attributeList);
+        }
+        |
+        {
+          $multiplier = $mul.text;
+          $offset = $off.text;
+          $schema = new DefinedModuloTableSchema($schemaName.name,
+                                                 $mul.text,
+                                                 $off.text);
         }
       )
       ;
@@ -1761,6 +1804,7 @@ VGFUNCTION: V G F U N C T I O N;
 FUNCTION: F U N C T I O N;
 
 GENERALTABLEINDEX: I;
+MODULOTABLEINDEX: N;
 UNION: U N I O N;
 
 
