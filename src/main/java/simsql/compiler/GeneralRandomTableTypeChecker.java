@@ -58,9 +58,8 @@ public class GeneralRandomTableTypeChecker extends RandomTableTypeChecker
 	public boolean visitGeneralRandomTableStatement(
 			GeneralRandomTableStatement generalRandomTableStatement) throws Exception
 	{
-		boolean subCheck = super.visitRandomTableStatement(generalRandomTableStatement);
-		
-		return subCheck;
+
+		return super.visitRandomTableStatement(generalRandomTableStatement);
 	}
 
 	public void saveView(DefinedTableSchema tableAttributes, 

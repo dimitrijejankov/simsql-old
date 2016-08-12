@@ -24,8 +24,8 @@ package simsql.compiler; // package mcdb.catalog;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.io.File;
-
-import simsql.shell.TableStatistics;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Encapsulates a single attribute, as a (name,type) pair. Also contains the
@@ -76,7 +76,7 @@ public class Catalog implements simsql.shell.Catalog {
 	}
 
 	/** Returns true if a given object exists */
-	public int getOjbectType(String object) {
+	public int getObjectType(String object) {
 		return ds.getObjectType(object);
 	}
 
@@ -94,8 +94,8 @@ public class Catalog implements simsql.shell.Catalog {
 		// we'll return null if not found.
 		Relation out = null;
 
-		if (getOjbectType(relName) == DataAccess.OBJ_RELATION
-				|| getOjbectType(relName) == DataAccess.OBJ_VALUES_TABLE) {
+		if (getObjectType(relName) == DataAccess.OBJ_RELATION
+				|| getObjectType(relName) == DataAccess.OBJ_VALUES_TABLE) {
 			try {
 				out = new Relation(relName, ds.getRelationFileName(relName),
 						ds.getAttsFromRelation(relName),
@@ -110,13 +110,26 @@ public class Catalog implements simsql.shell.Catalog {
 		return (out);
 	}
 
+	/** Returns all modulo relationships with all the information about a given Relation */
+	public List<Relation> getModuloRelations(String baseRel) {
+
+        LinkedList<Relation> out = new LinkedList<Relation>();
+        baseRel = baseRel.toLowerCase();
+
+        for(String relName : ds.getAllModuloRelationNames(baseRel)) {
+            out.add(getRelation(relName));
+        }
+
+        return out;
+	}
+
 	public boolean hasReferencingTable(String relName) {
 		// =======================================
 		relName = relName.toLowerCase();
 		// =======================================
 
-		if (getOjbectType(relName) == DataAccess.OBJ_RELATION
-				|| getOjbectType(relName) == DataAccess.OBJ_VALUES_TABLE) {
+		if (getObjectType(relName) == DataAccess.OBJ_RELATION
+				|| getObjectType(relName) == DataAccess.OBJ_VALUES_TABLE) {
 			if (ds.getReferenceTables(relName).size() >= 1) {
 				return true;
 			} else {
@@ -138,7 +151,7 @@ public class Catalog implements simsql.shell.Catalog {
 		rel.setName(rel.getName().toLowerCase());
 		// =======================================
 
-		if (getOjbectType(rel.getName()) != DataAccess.OBJ_RELATION) {
+		if (getObjectType(rel.getName()) != DataAccess.OBJ_RELATION) {
 			if(checkAttributeNameList(rel.getAttributes()))
 			{
 				ds.addRelation(rel);
@@ -152,7 +165,7 @@ public class Catalog implements simsql.shell.Catalog {
 
 	/** Remove a relation from the catalog */
 	public void dropRelation(String relationName) {
-		if (getOjbectType(relationName) == DataAccess.OBJ_RELATION) {
+		if (getObjectType(relationName) == DataAccess.OBJ_RELATION) {
 			ds.dropRelation(relationName);
 		} else {
 			System.err.println("Relation " + relationName + " doesn't exist!");
@@ -176,7 +189,7 @@ public class Catalog implements simsql.shell.Catalog {
 
 	/** Remove a ValueTable from the catalog */
 	public void dropValueTable(String relationName) {
-		if (getOjbectType(relationName) == DataAccess.OBJ_VALUES_TABLE) {
+		if (getObjectType(relationName) == DataAccess.OBJ_VALUES_TABLE) {
 			ds.dropRelation(relationName);
 		} else {
 			System.err.println("Relation " + relationName + " doesn't exist!");
@@ -203,7 +216,7 @@ public class Catalog implements simsql.shell.Catalog {
 		// get all objects
 		try {
 			for (String s : ds.getObjectNames()) {
-				if (getOjbectType(s) == whichType)
+				if (getObjectType(s) == whichType)
 					ret.add(s);
 			}
 		} catch (Exception e) {
@@ -225,7 +238,7 @@ public class Catalog implements simsql.shell.Catalog {
 		// we'll return null if not found
 		Function out = null;
 
-		if (getOjbectType(fName) == DataAccess.OBJ_GENERAL_FUNCTION) {
+		if (getObjectType(fName) == DataAccess.OBJ_GENERAL_FUNCTION) {
 			try {
 				out = new Function(fName, ds.getInputAttsFromFunction(fName),
 						ds.getOutputAttFromFunction(fName));
@@ -245,7 +258,7 @@ public class Catalog implements simsql.shell.Catalog {
 	 */
 	public void addFunction(Function myFunc) throws Exception {
 
-		if (getOjbectType(myFunc.getName()) != DataAccess.OBJ_GENERAL_FUNCTION) {
+		if (getObjectType(myFunc.getName()) != DataAccess.OBJ_GENERAL_FUNCTION) {
 			ds.addFunction(myFunc);
 		} else {
 			System.err.println("An object called " + myFunc.getName()
@@ -257,7 +270,7 @@ public class Catalog implements simsql.shell.Catalog {
 	/** Remove a VGF from the catalog */
 	public void dropFunction(String funcName) throws Exception {
 		try {
-			if (getOjbectType(funcName) == DataAccess.OBJ_GENERAL_FUNCTION) {
+			if (getObjectType(funcName) == DataAccess.OBJ_GENERAL_FUNCTION) {
 				ds.dropFunction(funcName);
 			} else {
 				System.err.println("Function " + funcName + " doesn't exist!");
@@ -283,7 +296,7 @@ public class Catalog implements simsql.shell.Catalog {
 		// we'll return null if not found
 		VGFunction out = null;
 
-		if (getOjbectType(vgfName) == DataAccess.OBJ_VGFUNCTION) {
+		if (getObjectType(vgfName) == DataAccess.OBJ_VGFUNCTION) {
 			try {
 				out = new VGFunction(vgfName, ds.getTundlesPerTuple(vgfName),
 						ds.getInputAttsFromVGFunction(vgfName),
@@ -304,7 +317,7 @@ public class Catalog implements simsql.shell.Catalog {
 	 */
 	public void addVGFunction(VGFunction vgf) throws Exception {
 
-		if (getOjbectType(vgf.getName()) != DataAccess.OBJ_VGFUNCTION) {
+		if (getObjectType(vgf.getName()) != DataAccess.OBJ_VGFUNCTION) {
 			ds.addVGFunction(vgf);
 		} else {
 			System.err.println("An object called " + vgf.getName()
@@ -316,7 +329,7 @@ public class Catalog implements simsql.shell.Catalog {
 	/** Remove a VGF from the catalog */
 	public void dropVGFunction(String vgfName) throws Exception {
 		try {
-			if (getOjbectType(vgfName) == DataAccess.OBJ_VGFUNCTION) {
+			if (getObjectType(vgfName) == DataAccess.OBJ_VGFUNCTION) {
 				ds.dropVGFunction(vgfName);
 			} else {
 				System.err
@@ -344,12 +357,12 @@ public class Catalog implements simsql.shell.Catalog {
 
 		try {
 
-			if (getOjbectType(viewName) == DataAccess.OBJ_VIEW) {
+			if (getObjectType(viewName) == DataAccess.OBJ_VIEW) {
 				view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), DataAccess.OBJ_VIEW);
-			} else if (getOjbectType(viewName) == DataAccess.OBJ_RANDRELATION) {
+			} else if (getObjectType(viewName) == DataAccess.OBJ_RANDRELATION) {
 				view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), DataAccess.OBJ_RANDRELATION);
 			}
-			else if (getOjbectType(viewName) == DataAccess.OBJ_UNION_VIEW) {
+			else if (getObjectType(viewName) == DataAccess.OBJ_UNION_VIEW) {
 				view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), DataAccess.OBJ_UNION_VIEW);
 			}
 			else {
@@ -365,7 +378,7 @@ public class Catalog implements simsql.shell.Catalog {
 					if (indexTableNameList.size() != 0) {
 						Collections.sort(indexTableNameList);
 						viewName = indexTableNameList.get(indexTableNameList.size() - 1);
-						view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), getOjbectType(viewName));
+						view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), getObjectType(viewName));
 					}
 				} else {
 					int end = viewName.lastIndexOf("_");
@@ -374,7 +387,7 @@ public class Catalog implements simsql.shell.Catalog {
 						ArrayList<String> indexTableNameList = ds.getIndexTable(tempName);
 						if (indexTableNameList.size() != 0 && indexTableNameList.contains(tempName + "_i")) {
 							viewName = tempName + "_i";
-							view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), getOjbectType(viewName));
+							view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), getObjectType(viewName));
 						}
 					}
 				}
@@ -399,15 +412,15 @@ public class Catalog implements simsql.shell.Catalog {
 
 		try {
 
-			if (getOjbectType(viewName) == DataAccess.OBJ_VIEW) {
+			if (getObjectType(viewName) == DataAccess.OBJ_VIEW) {
 				view = new View(viewName, ds.getSQL(viewName),
 						ds.getAttsFromView(viewName), DataAccess.OBJ_VIEW);
-			} else if (getOjbectType(viewName) == DataAccess.OBJ_RANDRELATION) {
+			} else if (getObjectType(viewName) == DataAccess.OBJ_RANDRELATION) {
 				view = new View(viewName, ds.getSQL(viewName),
 						ds.getAttsFromView(viewName),
 						DataAccess.OBJ_RANDRELATION);
 			}
-			else if (getOjbectType(viewName) == DataAccess.OBJ_UNION_VIEW) {
+			else if (getObjectType(viewName) == DataAccess.OBJ_UNION_VIEW) {
 				view = new View(viewName, ds.getSQL(viewName),
 						ds.getAttsFromView(viewName),
 						DataAccess.OBJ_UNION_VIEW);
@@ -427,7 +440,7 @@ public class Catalog implements simsql.shell.Catalog {
 	 * @throws Exception
 	 */
 	public void addView(View view) throws Exception {
-		int type = getOjbectType(view.getName());
+		int type = getObjectType(view.getName());
 
 		if (type != DataAccess.OBJ_VIEW && type != DataAccess.OBJ_RANDRELATION && type != DataAccess.OBJ_UNION_VIEW) {
 			if(checkAttributeNameList(view.getAttributes()))
@@ -443,9 +456,9 @@ public class Catalog implements simsql.shell.Catalog {
 
 	/** Remove a view from the catalog */
 	public void dropView(String viewName) {
-		if (getOjbectType(viewName) == DataAccess.OBJ_VIEW
-				|| getOjbectType(viewName) == DataAccess.OBJ_RANDRELATION
-				|| getOjbectType(viewName) == DataAccess.OBJ_UNION_VIEW) {
+		if (getObjectType(viewName) == DataAccess.OBJ_VIEW
+				|| getObjectType(viewName) == DataAccess.OBJ_RANDRELATION
+				|| getObjectType(viewName) == DataAccess.OBJ_UNION_VIEW) {
 			ds.dropView(viewName);
 		} else {
 			System.err.println("view " + viewName + " doesn't exist!");
@@ -602,7 +615,12 @@ public class Catalog implements simsql.shell.Catalog {
 					newString += "_" + parts[i];
 				}
 				s = newString + "[" + parts[parts.length - 1] + "]";
-			} 
+			}
+            else if(s.matches(".*?_mod_.*_.*")) {
+                int end = s.lastIndexOf("_mod");
+                String[] parts = s.substring(end).split("_");
+                s = s.substring(0, end) + "[" + parts[2] + "*n+" + parts[3] + "]";
+            }
 			System.out.format("%-50s%n", s + "*");
 		}
 

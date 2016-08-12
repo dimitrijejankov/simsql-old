@@ -622,9 +622,9 @@ createRandomTableStatement returns[RandomTableStatement statement]:
 	            $statement = $generalRandomStatement.statement;
 	          }
 	          |
-	          baselineModuloRandomStatement
+	          moduloRandomStatement
 	          {
-	            $statement = $baselineModuloRandomStatement.statement;
+	            $statement = $moduloRandomStatement.statement;
 	          }
 	      )
           /*------------------------------end-------------------------------
@@ -676,14 +676,14 @@ generalRandomStatement returns[RandomTableStatement statement]:
                                $randomParameters.statement);
           };
 
-baselineModuloRandomStatement returns[BaseLineModuloRandomTableStatement statement]:
-           baselineModuloSchema AS
+moduloRandomStatement returns[ModuloRandomTableStatement statement]:
+           moduloSchema AS
            randomParameters
            {
-              $statement = new BaseLineModuloRandomTableStatement(
-                               $baselineModuloSchema.multiplier,
-                               $baselineModuloSchema.offset,
-                               $baselineModuloSchema.schema,
+              $statement = new ModuloRandomTableStatement(
+                               $moduloSchema.multiplier,
+                               $moduloSchema.offset,
+                               $moduloSchema.schema,
                                $randomParameters.tableReference,
                                $randomParameters.withStatementList,
                                $randomParameters.statement);
@@ -744,7 +744,7 @@ generalSchema returns[DefinedTableSchema schema]:
       )
       ;
 
-baselineModuloSchema returns[DefinedModuloTableSchema schema, String multiplier, String offset]:
+moduloSchema returns[DefinedModuloTableSchema schema, String multiplier, String offset]:
       schemaName LBRACKET mul=NUMERIC ASTERISK MODULOTABLEINDEX PLUS off=NUMERIC RBRACKET
       (
         LPAREN

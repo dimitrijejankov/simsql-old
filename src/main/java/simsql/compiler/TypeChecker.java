@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import simsql.runtime.TypeMachine;
 import simsql.runtime.DataType;
@@ -651,11 +653,8 @@ public class TypeChecker extends ASTVisitor {
                 TableReference.GENERAL_INDEX_TABLE,
                 upBoundExp);
 
-        if (!tempChecker.visitTableReferenceExpression(tableReference2)) {
-            return false;
-        }
+        return tempChecker.visitTableReferenceExpression(tableReference2);
 
-        return true;
     }
 
 
@@ -728,8 +727,8 @@ public class TypeChecker extends ASTVisitor {
 
                     }
 
-                    for (int i = 0; i < columnNameList.size(); i++) {
-                        ColumnExpression column = new ColumnExpression(table, columnNameList.get(i));
+                    for (String aColumnNameList : columnNameList) {
+                        ColumnExpression column = new ColumnExpression(table, aColumnNameList);
                         edge.addColumnExpression(element, column);
                         edgeTypeChecker.put(column.toString(), typeChecker);
                         typeChecker.addReferenceString(column.toString());
@@ -790,11 +789,7 @@ public class TypeChecker extends ASTVisitor {
         MathExpression expression = orderByColumn.expression;
         ArrayList<DataType> subTypeList = expression.acceptVisitor(this);
 
-        if (subTypeList == null) {
-            return false;
-        } else {
-            return true;
-        }
+        return subTypeList != null;
     }
 
     /* (non-Javadoc)
@@ -810,63 +805,18 @@ public class TypeChecker extends ASTVisitor {
         Relation relation = catalog.getRelation(tableName);
         View view = catalog.getSchemaView(tableName);
 
-        boolean isAligned = table.isAlignd;
-		
-		/*String realTableName;
-		if(!isAligned)
-		{
-			realTableName = tableName;
-		}
-		else
-		{
-			int start = tableName.lastIndexOf("_");
-			realTableName = tableName.substring(0, start);
-		}
-		
-		if(realTableName.endsWith("_i"))
-		{
-			System.err.println("Schema [" + realTableName + "] ends with \"_i\", which is not allowed!");
-			return false;
-		}
-		else
-		{
-			int start = realTableName.lastIndexOf("_");
-			if(start >= 0)
-			{
-				String suffix = realTableName.substring(start+1, realTableName.length());
-				if(suffix != null)
-				{
-					boolean valid = false;
-					for(int i = 0; i < suffix.length(); i++)
-					{
-						if(suffix.charAt(i) < '0' || suffix.charAt(i) > '9')
-						{
-							valid = true;
-							break;
-						}
-					}
-					
-					if(!valid)
-					{
-						System.err.println("Schema [" + realTableName + "] ends with \"_<number>\", which is not allowed!");
-						return false;
-					}
-				}
-			}
-		}*/
-
         if (relation != null || view != null) {
             System.err.println("Entity [" + tableName + "] does exist!");
             return false;
         }
 
         if (tableAttributeList != null) {
-            for (int i = 0; i < tableAttributeList.size(); i++) {
-                if (stringSet.contains(tableAttributeList.get(i))) {
+            for (String aTableAttributeList : tableAttributeList) {
+                if (stringSet.contains(aTableAttributeList)) {
                     System.err.println("The attributes in Relation [" + tableName + "] overlapped!");
                     return false;
                 } else {
-                    stringSet.add(tableAttributeList.get(i));
+                    stringSet.add(aTableAttributeList);
                 }
             }
         }
@@ -905,8 +855,23 @@ public class TypeChecker extends ASTVisitor {
         return true;
     }
 
-    public boolean visitModuloTableSchemaExpression(DefinedModuloTableSchema definedModuloTableSchema) throws Exception {
-        return false;
+    public boolean visitModuloTableSchemaExpression(DefinedModuloTableSchema table) throws Exception {
+
+        String realTableName = table.viewName;
+        String multiplier = table.multiplier;
+        String tableName = realTableName.substring(0, realTableName.lastIndexOf("_mod_"));
+
+        for(Relation r : catalog.getModuloRelations(tableName)) {
+
+            String modPart = r.getName().substring(tableName.length());
+
+            String[] splits = modPart.split("_");
+
+            if(!multiplier.equals(splits[2]))
+                return false;
+        }
+
+        return visitDefinedTableSchemaExpression(table);
     }
 
 
@@ -1840,8 +1805,8 @@ public class TypeChecker extends ASTVisitor {
             return null;
 
         ArrayList<DataType> subType = new ArrayList<DataType>(expressionList.size());
-        for (int i = 0; i < expressionList.size(); i++) {
-            ArrayList<DataType> subTypeList = expressionList.get(i).acceptVisitor(this);
+        for (MathExpression anExpressionList : expressionList) {
+            ArrayList<DataType> subTypeList = anExpressionList.acceptVisitor(this);
 
             if (subTypeList == null) {
                 System.err.println("The set expression is wrong in type checker!");
@@ -2709,7 +2674,7 @@ public class TypeChecker extends ASTVisitor {
                         System.err.println("Table [" + objectName + "] has referencing tables!");
                     }
                 } else {
-                    int objectType = catalog.getOjbectType(objectName);
+                    int objectType = catalog.getObjectType(objectName);
                     if (objectType == DataAccess.OBJ_VIEW) {
                         subCheck = false;
                         System.err.println("Wrong type of table [" + objectName + "]: it is a view!");
@@ -2728,7 +2693,7 @@ public class TypeChecker extends ASTVisitor {
                     subCheck = false;
                     System.err.println("Wrong type of view [" + objectName + "]: no view exists!");
                 } else {
-                    int objectType = catalog.getOjbectType(objectName);
+                    int objectType = catalog.getObjectType(objectName);
                     if (objectType == DataAccess.OBJ_RANDRELATION) {
                         subCheck = false;
                         System.err.println("Wrong type of view [" + objectName + "]: it is a random table!");
@@ -2742,7 +2707,7 @@ public class TypeChecker extends ASTVisitor {
                     subCheck = false;
                     System.err.println("Wrong type of union view [" + objectName + "]: no union view exists!");
                 } else {
-                    int objectType = catalog.getOjbectType(objectName);
+                    int objectType = catalog.getObjectType(objectName);
                     if (objectType != DataAccess.OBJ_UNION_VIEW) {
                         subCheck = false;
                         System.err.println("Wrong type of view [" + objectName + "]: it is not a union view!");
@@ -2818,7 +2783,7 @@ public class TypeChecker extends ASTVisitor {
                                 subCheck = false;
                                 System.err.println("Table [" + outputObjectName + "] is a Simulation random table, but we find that it is a relation!");
                             } else {
-                                int objectType = catalog.getOjbectType(tempOjbectName);
+                                int objectType = catalog.getObjectType(tempOjbectName);
                                 if (objectType == DataAccess.OBJ_VIEW) {
                                     subCheck = false;
                                     System.err.println("Wrong type of table [" + outputObjectName + "]: it is a view!");

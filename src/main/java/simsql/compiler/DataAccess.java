@@ -321,6 +321,36 @@ public class DataAccess {
 		}
 	}
 
+	/** Retrives all modulo relations **/
+
+    public List<String> getAllModuloRelationNames(String relName){
+
+        LinkedList<String> ret = new LinkedList<String>();
+
+        try {
+
+            // prepare the SQL statement
+            PreparedStatement ps = conn
+                    .prepareStatement("SELECT relName FROM Relation WHERE relName like ?");
+
+            ps.setString(1, relName + "_mod_%_%");
+
+            // run it
+            ResultSet rs = ps.executeQuery();
+
+            while(rs.next()){
+                ret.add(rs.getString(1));
+            }
+        }
+        catch (Exception e) {
+            System.err.println("Unable to execute SQL query!");
+            e.printStackTrace();
+            System.err.println("Can't find a modulo relationships for relation name " + relName);
+        }
+
+        return ret;
+    }
+
 	/** Retrieves the file name of a given relation */
 	public String getRelationFileName(String relName) {
 		String out = "";

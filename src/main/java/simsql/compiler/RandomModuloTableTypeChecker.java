@@ -19,46 +19,43 @@
  *****************************************************************************/
 
 
-package simsql.compiler;
+/**
+ * 
+ */
+package simsql.compiler; // package mcdb.compiler.parser.astVisitor;
+
+import simsql.runtime.DataType;
 
 import java.util.ArrayList;
 
+/**
+ * @author Dimitrije
+ *
+ */
+public class RandomModuloTableTypeChecker extends RandomTableTypeChecker {
 
-public class DefinedModuloTableSchema extends DefinedTableSchema {
-	String multiplier;
-	String offset;
-
-	public DefinedModuloTableSchema(String viewName,
-									String multiplier,
-									String offset,
-									ArrayList<String> tableAttributeList)
-	{
-		super(viewName, tableAttributeList, true);
-		this.viewName = viewName.toLowerCase() + "_mod_" + multiplier + "_" + offset;
-		this.tableAttributeList = tableAttributeList;
-		this.multiplier = multiplier;
-		this.offset = offset;
-	}
-
-	public DefinedModuloTableSchema(String viewName,
-                                    String multiplier,
-                                    String offset)
-	{
-		this(viewName, multiplier, offset, null);
-	}
-	
-	public String toString()
-	{
-		return viewName;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see component.sqlExpression.SQLExpression#acceptVisitor(astVisitor.ASTVisitor)
+	/**
+	 * @param allowDuplicatedAttributeAlias
+	 * @throws Exception
 	 */
-	@Override
-	public boolean acceptVisitor(ASTVisitor astVisitor) throws Exception{
-		return astVisitor.visitModuloTableSchemaExpression(this);
+	public RandomModuloTableTypeChecker(boolean allowDuplicatedAttributeAlias) throws Exception {
+		super(allowDuplicatedAttributeAlias);
 	}
-	
+
+	public boolean visitModuloRandomTableStatement(ModuloRandomTableStatement statement) throws Exception {
+        return super.visitRandomTableStatement(statement);
+	}
+
+    @Override
+    public void saveView(DefinedTableSchema tableAttributes, ArrayList<DataType> gottenAttributeTypeList, String sql) throws Exception {
+        super.saveView(tableAttributes, gottenAttributeTypeList, sql);
+
+        String viewName = tableAttributes.viewName;
+
+        int end = viewName.lastIndexOf("_mod");
+        String realViewName = viewName.substring(0, end);
+
+        catalog.addIndexTable(realViewName, viewName);
+        catalog.addMCDependecy(viewName, this.getIndexedRandomTableList());
+    }
 }

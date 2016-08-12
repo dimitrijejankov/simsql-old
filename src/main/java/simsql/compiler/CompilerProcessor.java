@@ -319,6 +319,16 @@ public class CompilerProcessor {
 				return null;
 			}
 		}
+		else if(expression instanceof ModuloRandomTableStatement)
+		{
+			((ModuloRandomTableStatement) expression).setSqlString(sql);
+			typeChecker = new RandomModuloTableTypeChecker(false);
+			subcheck = ((RandomModuloTableTypeChecker)typeChecker).visitModuloRandomTableStatement((ModuloRandomTableStatement)expression);
+			if(!subcheck)
+			{
+				return null;
+			}
+		}
 		/*
 		 * --------------------------end------------------------------
 		 */

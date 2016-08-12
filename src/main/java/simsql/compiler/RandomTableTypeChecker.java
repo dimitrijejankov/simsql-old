@@ -57,21 +57,19 @@ public class RandomTableTypeChecker extends TypeChecker {
 	}
 
 	public boolean visitRandomTableStatement(
-			RandomTableStatement randomTableStatement)throws Exception
-	{
-		
+			RandomTableStatement randomTableStatement)throws Exception {
+
 		//record this statements
-		if(super.statement == null)
-		{
+		if (super.statement == null) {
 			super.statement = randomTableStatement;
 		}
-		
+
 		int errorNum = 0;
 		boolean subcheck;
-		
+
 		DefinedTableSchema definedSchema = randomTableStatement.definedTableSchema;
 		SQLExpression outerTable = randomTableStatement.outerTable;
-		
+
 		ArrayList<WithStatement> withList = randomTableStatement.withList;
 		SelectStatement selectStatement = randomTableStatement.selectStatement;
 		
@@ -80,83 +78,60 @@ public class RandomTableTypeChecker extends TypeChecker {
 		 * 1.1 check if the view name is overlapped.
 		 */
 		checkState = SCHEMASTAGE;
-		
+
 		boolean attributeSubcheck;
-		
-		if(toSave)
-		{
-			attributeSubcheck = definedSchema.acceptVisitor(this);
-		}
-		else
-		{
-			attributeSubcheck = true;
-		}
-		if(!attributeSubcheck)
+
+		attributeSubcheck = !toSave || definedSchema.acceptVisitor(this);
+		if (!attributeSubcheck)
 			return false;
 		
 		/*
 		 * 2.1 check if the table references overlapped. It includes the outer table which can be a 
 		 *     subquery or a real table, and the some inner new created table by the VGFunction.
 		 */
-		
+
 		checkState = OUTTABLESTAGE;
-		if(outerTable instanceof TableReference)
-		{
+		if (outerTable instanceof TableReference) {
 			outTableName = ((TableReference) outerTable).alias;
 			/*
 			 * Here if sentence can not be executed. I write here just for keeping the format
 			 * of the method for typecheck the visitSelectStatement
 			 */
-			if(tableReferenceMap.containsKey(((TableReference) outerTable).alias))
-			{
+			if (tableReferenceMap.containsKey(((TableReference) outerTable).alias)) {
 				System.err.println("Relation [" + ((TableReference) outerTable).alias +
 						"] is ambigurous!");
-				errorNum ++;
-			}
-			else
-			{
+				errorNum++;
+			} else {
 				tableReferenceMap.put(((TableReference) outerTable).alias, ((TableReference) outerTable));
 				fromList.add(((TableReference) outerTable).alias);
 			}
-		}
-		else if(outerTable instanceof FromSubquery)
-		{
+		} else if (outerTable instanceof FromSubquery) {
 			outTableName = ((FromSubquery) outerTable).alias;
 			/*
 			 * Here if sentence can not be executed. I write here just for keeping the format
 			 * of the method for typecheck the visitSelectStatement
 			 */
-			if(fromSubqueryMap.containsKey(((FromSubquery) outerTable).alias))
-			{
+			if (fromSubqueryMap.containsKey(((FromSubquery) outerTable).alias)) {
 				System.err.println("Subquery [" + ((FromSubquery) outerTable).alias +
 						"] is ambigurous!");
-				errorNum ++;
-			}
-			else
-			{
+				errorNum++;
+			} else {
 				fromSubqueryMap.put(((FromSubquery) outerTable).alias, ((FromSubquery) outerTable));
 				fromList.add(((FromSubquery) outerTable).alias);
 			}
-		}	
-		else
-		{
+		} else {
 			errorNum++;
 		}
 
 		//deal with the table from VGFunciton
 		checkState = WITHSTAGE;
-		for(int i = 0; i < withList.size(); i ++)
-		{
-			WithStatement statement = withList.get(i);
-			String tempTableName  = statement.tempTableName;
+		for (WithStatement statement : withList) {
+			String tempTableName = statement.tempTableName;
 			GeneralFunctionExpression vgFunction = statement.expression;
-			if(vgFunctionMap.containsKey(tempTableName))
-			{
+			if (vgFunctionMap.containsKey(tempTableName)) {
 				System.err.println("Ramdom table [" + tempTableName + "] is ambigurous!");
-				errorNum ++;
-			}
-			else
-			{
+				errorNum++;
+			} else {
 				vgFunctionMap.put(tempTableName, vgFunction);
 			}
 		}
@@ -169,38 +144,35 @@ public class RandomTableTypeChecker extends TypeChecker {
 		 * 2.2.1 sub check the outertable
 		 */
 		boolean outerTableSubcheck = outerTable.acceptVisitor(this);
-		if(!outerTableSubcheck)
-		{
-			errorNum ++;
+		if (!outerTableSubcheck) {
+			errorNum++;
 			return false;
 		}
-		
-		
-		if(outerTable instanceof FromSubquery)
-		{
+
+
+		if (outerTable instanceof FromSubquery) {
 			MathExpression expression = ((FromSubquery) outerTable).expression;
-			TypeChecker typechecker = ((SubqueryExpression)expression).getTypeChecker();
+			TypeChecker typechecker = ((SubqueryExpression) expression).getTypeChecker();
 			typerCheckerMap.put(((FromSubquery) outerTable).alias, typechecker);
 		}
 		
 		/*
 		 * 2.2.2 sub check the table defined by the VGFunction
 		 */
-		
+
 		boolean withStatementSubcheck[] = new boolean[withList.size()];
-		
-		
-		for(int i = 0; i < withList.size(); i++)
-		{
+
+
+		for (int i = 0; i < withList.size(); i++) {
 			withStatementSubcheck[i] = withList.get(i).acceptVisitor(this);
-			if(!withStatementSubcheck[i])
+			if (!withStatementSubcheck[i])
 				return false;
 		}
 		
 		/*
 		 * 3 check the select statement in the random table definition
 		 */
-		
+
 		ArrayList<SQLExpression> selectList = selectStatement.selectList;
 		ArrayList<SQLExpression> tableReferenceList = selectStatement.tableReferenceList;
 		BooleanPredicate whereClause = selectStatement.whereClause;
@@ -214,133 +186,102 @@ public class RandomTableTypeChecker extends TypeChecker {
 		 * 3.1.1 Check if the table's alias appear twice in the FROM clause.
  		 */
 		checkState = FROMSTAGE;
-		if(tableReferenceList == null || tableReferenceList.size() == 0)
-		{
+		if (tableReferenceList == null || tableReferenceList.size() == 0) {
 			System.err.println("From clause can not be empty!");
-			errorNum ++;
+			errorNum++;
 		}
-		
-		for(int i = 0; i < tableReferenceList.size(); i++)
-		{
-			SQLExpression fromElement = tableReferenceList.get(i);
-			
-			if(fromElement instanceof TableReference)
-			{
-				if(tableReferenceMap.containsKey(((TableReference) fromElement).alias))
-				{
+
+		for (SQLExpression fromElement : tableReferenceList) {
+			if (fromElement instanceof TableReference) {
+				if (tableReferenceMap.containsKey(((TableReference) fromElement).alias)) {
 					System.err.println("Relation [" + ((TableReference) fromElement).alias +
 							"] is ambigurous!");
-					errorNum ++;
-				}
-				else
-				{
+					errorNum++;
+				} else {
 					tableReferenceMap.put(((TableReference) fromElement).alias, ((TableReference) fromElement));
 					fromList.add(((TableReference) fromElement).alias);
 				}
-			}
-			else if(fromElement instanceof FromSubquery)
-			{
-				if(fromSubqueryMap.containsKey(((FromSubquery) fromElement).alias))
-				{
+			} else if (fromElement instanceof FromSubquery) {
+				if (fromSubqueryMap.containsKey(((FromSubquery) fromElement).alias)) {
 					System.err.println("Subquery [" + ((FromSubquery) fromElement).alias +
 							"] is ambigurous!");
-					errorNum ++;
-				}
-				else
-				{
+					errorNum++;
+				} else {
 					fromSubqueryMap.put(((FromSubquery) fromElement).alias, ((FromSubquery) fromElement));
 					fromList.add(((FromSubquery) fromElement).alias);
 				}
-			}
-			else
-			{
-				errorNum ++;
+			} else {
+				errorNum++;
 			}
 		}
 		
 		/*
 		 * 3.1.2 sub check: each element should have a visit check: if it is in the real relation
 		 */
-		for(int i = 0; i < tableReferenceList.size(); i++)
-		{
-			SQLExpression fromElement = tableReferenceList.get(i);
+		for (SQLExpression fromElement : tableReferenceList) {
 			//from table
-			
-			if(fromElement instanceof TableReference)
-			{
+
+			if (fromElement instanceof TableReference) {
 				String table = ((TableReference) fromElement).table;
 				//String alias = ((TableReference) fromElement).alias;
-				
+
 				//if the table is referenced to a VGFunction
-				if(vgFunctionMap.containsKey(table))
-				{
+				if (vgFunctionMap.containsKey(table)) {
 					continue;
-				}
-				else
-				{
-					subcheck = ((TableReference)fromElement).acceptVisitor(this);
-					if(subcheck == false)
-					{
-						errorNum ++;
+				} else {
+					subcheck = ((TableReference) fromElement).acceptVisitor(this);
+					if (subcheck == false) {
+						errorNum++;
 						return false;
 					}
 				}
 			}
 			// from subquery
-			else if(fromElement instanceof FromSubquery)
-			{
-				subcheck = ((FromSubquery)fromElement).acceptVisitor(this);
+			else if (fromElement instanceof FromSubquery) {
+				subcheck = ((FromSubquery) fromElement).acceptVisitor(this);
 				MathExpression expression = ((FromSubquery) fromElement).expression;
-				TypeChecker typechecker = ((SubqueryExpression)expression).getTypeChecker();
+				TypeChecker typechecker = ((SubqueryExpression) expression).getTypeChecker();
 				typerCheckerMap.put(((FromSubquery) fromElement).alias, typechecker);
-				if(subcheck == false)
-				{
-					errorNum ++;
+				if (!subcheck) {
+					errorNum++;
 					return false;
 				}
-			}	
+			}
 		}
 		
 		/*
 		 * 3.2.1 Check select clause, if the layer >= 1, then such selected attributes should have no overlapped name.
 		 */
 		checkState = SELECTSTAGE;
-		if(selectList == null || selectList.size() == 0)
-		{
+		if (selectList == null || selectList.size() == 0) {
 			System.err.println("Select clause can not be empty!");
-			errorNum ++;
+			errorNum++;
 		}
-		
-		for(int i = 0; i < selectList.size(); i++)
-		{
-			SQLExpression selectElement = selectList.get(i);
+
+		for (SQLExpression selectElement : selectList) {
 			subcheck = selectElement.acceptVisitor(this);
-			if(subcheck == false)
-			{
-				errorNum ++;
+			if (subcheck == false) {
+				errorNum++;
 			}
 		}
 		/*
 		 * 3.2.2 if the layer >= 1, then such output attributes should have no overlapped name.
 		 */
 		this.setAllowDuplicatedAttributeAlias(false);
-		if(!this.isAllowDuplicatedAttributeAlias())
-		{
+		if (!this.isAllowDuplicatedAttributeAlias()) {
 			checkDuplicateOutputForRandomTable(selectList);
 		}
-		
+
 		fillInOutputAttributeForRandomTable(selectList, fromList);
 		
 		/*
 		 * 3.3 Check where clause
 		 */
 		checkState = WHERESTAGE;
-		if(whereClause != null)
-		{
+		if (whereClause != null) {
 			subcheck = whereClause.acceptVisitor(this);
-			if(subcheck == false)
-			{
-				errorNum ++;
+			if (subcheck == false) {
+				errorNum++;
 			}
 		}
 		
@@ -348,37 +289,31 @@ public class RandomTableTypeChecker extends TypeChecker {
 		 * There should not be direct aggregationExpression in where clause.
 		 */
 		subcheck = new WhereRule(whereClause).checkWhereClause();
-		if(subcheck == false)
-		{
+		if (subcheck == false) {
 			System.err.println("Invalide use of group function in where clause!");
-			errorNum ++;
+			errorNum++;
 		}
-		
+
 		outputAliasMap = outputAliasTempMap;
 		/*
 		 * 4. Check groupby clause, we only support the column name of the group by.
 		 */
 		checkState = GROUPBYSTAGE;
-		if(groupByClauseList != null)
-		{
+		if (groupByClauseList != null) {
 			ArrayList<DataType> subTypeList;
-			for(int i = 0; i < groupByClauseList.size(); i++)
-			{
-				ColumnExpression column = groupByClauseList.get(i);
+			for (ColumnExpression column : groupByClauseList) {
 				subTypeList = column.acceptVisitor(this);
-				
-				if(subTypeList == null)
-				{
-					errorNum ++;
+
+				if (subTypeList == null) {
+					errorNum++;
 				}
 			}
-			
+
 			GroupbyRule rule = new GroupbyRule(selectStatement, this);
-			if(!rule.checkGroupbyRule())
-			{
+			if (!rule.checkGroupbyRule()) {
 				System.err.println("The column in select clause and groupby clause should follow the " +
 						"Groupby rule!");
-				errorNum ++;
+				errorNum++;
 			}
 		}
 		
@@ -386,15 +321,11 @@ public class RandomTableTypeChecker extends TypeChecker {
 		 * 5. orderby clause
 		 */
 		checkState = ORDERBYSTAGE;
-		if(orderByClauseList != null)
-		{
-			for(int i = 0; i < orderByClauseList.size(); i++)
-			{
-				OrderByColumn column = orderByClauseList.get(i);
+		if (orderByClauseList != null) {
+			for (OrderByColumn column : orderByClauseList) {
 				subcheck = column.acceptVisitor(this);
-				if(subcheck == false)
-				{
-					errorNum ++;
+				if (subcheck == false) {
+					errorNum++;
 				}
 			}
 		}
@@ -403,12 +334,10 @@ public class RandomTableTypeChecker extends TypeChecker {
 		 * 6. Having clause
 		 */
 		checkState = HAVINGSTAGE;
-		if(havingClause != null)
-		{
+		if (havingClause != null) {
 			subcheck = havingClause.acceptVisitor(this);
-			if(subcheck == false)
-			{
-				errorNum ++;
+			if (!subcheck) {
+				errorNum++;
 			}
 		}
 		
@@ -416,25 +345,23 @@ public class RandomTableTypeChecker extends TypeChecker {
 		 * 7. Aggregation rule: all the aggregation should all have distinct, or all not.
 		 */
 		AggregationRule aggregationRule = new AggregationRule(selectStatement, this);
-		if(!aggregationRule.checkRule())
-		{
+		if (!aggregationRule.checkRule()) {
 			System.err.println("The aggregations should have all distinct or all not-distinct!");
-			errorNum ++;
+			errorNum++;
 		}
 		
 		
 		/*
 		 * 8. check if the output attributes match the random table definition, and save view if possible.
 		 */
-		
-		ArrayList<DataType> gottenAttributeTypeList =  getRandomTableAttributes(selectList);
-		
+
+		ArrayList<DataType> gottenAttributeTypeList = getRandomTableAttributes(selectList);
+
 		ArrayList<String> definedAttribteList = definedSchema.tableAttributeList;
-		
+
 		String query = randomTableStatement.getSqlString();
-		
-		if(errorNum >= 1)
-		{
+
+		if (errorNum >= 1) {
 			System.err.println("TypeChecker wrong!");
 			throw new RuntimeException("TypeChecker wrong!");
 		}
@@ -443,9 +370,8 @@ public class RandomTableTypeChecker extends TypeChecker {
 		/*
 		 * 8. try to see if the number of attributes matches.
 		 */
-		if(definedAttribteList!= null && gottenAttributeTypeList.size() != definedAttribteList.size())
-		{
-			errorNum ++;
+		if (definedAttribteList != null && gottenAttributeTypeList.size() != definedAttribteList.size()) {
+			errorNum++;
 			System.err.println("The number of attributes defined in the random table [" +
 					definedSchema.viewName + "] does not match its defintion in its subquery!");
 			return false;
@@ -456,47 +382,37 @@ public class RandomTableTypeChecker extends TypeChecker {
 		 * Note that BaselineArrayRandomTypeChecker has already been considered by the GeneralRandomTableTypeChecker,
 		 * which would be called by the BaselineArrayRandomTypeChecker.
 		 */
-		if(this instanceof BaseLineRandomTableTypeChecker ||
-				this instanceof GeneralRandomTableTypeChecker)
-		{
+		if (this instanceof BaseLineRandomTableTypeChecker ||
+				this instanceof GeneralRandomTableTypeChecker) {
 			String viewName = definedSchema.viewName;
 			int end = viewName.lastIndexOf("_");
-			
+
 			String realViewName = viewName.substring(0, end);
 			ArrayList<String> timeTickTableList = catalog.getIndexTableList(realViewName);
-			if(timeTickTableList != null && timeTickTableList.size() > 0)
-			{
+			if (timeTickTableList != null && timeTickTableList.size() > 0) {
 				String anotherTimeTickTable = timeTickTableList.get(0);
 				View anotherTimeTickView = catalog.getView(anotherTimeTickTable);
 				ArrayList<Attribute> tempAttributeList = anotherTimeTickView.getAttributes();
-				if(tempAttributeList.size() != gottenAttributeTypeList.size())
-				{
+				if (tempAttributeList.size() != gottenAttributeTypeList.size()) {
 					System.err.println("The random table under the different time tick has the different number of attributes!");
 					return false;
 				}
-				
-				for(int i = 0; i < tempAttributeList.size(); i++)
-				{
-					if(!gottenAttributeTypeList.get(i).getTypeName().equals(tempAttributeList.get(i).getType().getTypeName()))
-					{
-				//		System.out.println("first attribute: " + gottenAttributeTypeList.get(i).getTypeName());
-				//		System.out.println("second attribute: " + tempAttributeList.get(i).getType().getTypeName());
-				//		System.err.println("The random table under the different time tick has the different type!");
-				//		return false;
+
+				for (int i = 0; i < tempAttributeList.size(); i++) {
+					if (!gottenAttributeTypeList.get(i).getTypeName().equals(tempAttributeList.get(i).getType().getTypeName())) {
+						//		System.out.println("first attribute: " + gottenAttributeTypeList.get(i).getTypeName());
+						//		System.out.println("second attribute: " + tempAttributeList.get(i).getType().getTypeName());
+						//		System.err.println("The random table under the different time tick has the different type!");
+						//		return false;
 					}
-					
-					if(definedAttribteList != null)
-					{
-						if(!definedAttribteList.get(i).equals(tempAttributeList.get(i).getName()))
-						{
+
+					if (definedAttribteList != null) {
+						if (!definedAttribteList.get(i).equals(tempAttributeList.get(i).getName())) {
 							System.err.println("The random table under the different time tick has the different name!");
 							return false;
 						}
-					}
-					else
-					{
-						if(!attributeList.get(i).equals(tempAttributeList.get(i).getName()))
-						{
+					} else {
+						if (!attributeList.get(i).equals(tempAttributeList.get(i).getName())) {
 							System.err.println("The random table under the different time tick has the different name!");
 							return false;
 						}
@@ -508,189 +424,147 @@ public class RandomTableTypeChecker extends TypeChecker {
 		/*
 		 * 10. to save.
 		 */
-		if(toSave)
-		{
+		if (toSave) {
 			saveView(definedSchema, gottenAttributeTypeList, query);
 		}
-		
-		
+
+
 		return errorNum == 0;
 	}
 	
 	public int checkDuplicateOutputForRandomTable(ArrayList<SQLExpression> selectList)throws Exception
 	{
 		int errorNum = 0;
-		
-		for(int i = 0; i < selectList.size(); i++)
-		{
-			SQLExpression selectElement = selectList.get(i);
+
+		for (SQLExpression selectElement : selectList) {
 			//select * from ..
-			if(selectElement instanceof AsteriskTable)
-			{
+			if (selectElement instanceof AsteriskTable) {
 				//consider the tableReferences, see
 				String tableAlias[] = new String[tableReferenceMap.size()];
 				tableAlias = tableReferenceMap.keySet().toArray(tableAlias);
-				
+
 				TableReference tempTableReference;
 				String tableName;
 				Relation relation;
 				ArrayList<Attribute> tempList;
-				for(int j = 0; j < tableAlias.length; j++)
-				{
-					tempTableReference = tableReferenceMap.get(tableAlias[j]);
+				for (String tableAlia : tableAlias) {
+					tempTableReference = tableReferenceMap.get(tableAlia);
 					tableName = tempTableReference.table;
-					
+
 					//for the VGFunction
-					if(vgFunctionMap.containsKey(tableName))
-					{
+					if (vgFunctionMap.containsKey(tableName)) {
 						GeneralFunctionExpression expression = vgFunctionMap.get(tableName);
 						VGFunction vgFunction = catalog.getVGFunction(expression.functionName);
 						tempList = vgFunction.getOutputAtts();
-						for(int k = 0; k < tempList.size(); k++)
-						{
-							if(attributeTableAliasMap.containsKey(tempList.get(k).getName()))
-							{
+						for (int k = 0; k < tempList.size(); k++) {
+							if (attributeTableAliasMap.containsKey(tempList.get(k).getName())) {
 								System.err.println("Attributes in \" select * \" have the same attribute name!");
-								errorNum ++;
-							}
-							else
-							{
-								attributeTableAliasMap.put(tempList.get(k).getName(), tableAlias[j]);
+								errorNum++;
+							} else {
+								attributeTableAliasMap.put(tempList.get(k).getName(), tableAlia);
 								attributeTypeMap.put(tempList.get(k).getName(), tempList.get(k).getType());
 							}
 						}
 					}
 					//for the relation
-					else
-					{
+					else {
 						relation = catalog.getRelation(tableName);
-						
+
 						tempList = relation.getAttributes();
-						for(int k = 0; k < tempList.size(); k++)
-						{
-							if(attributeTableAliasMap.containsKey(tempList.get(k).getName()))
-							{
+						for (int k = 0; k < tempList.size(); k++) {
+							if (attributeTableAliasMap.containsKey(tempList.get(k).getName())) {
 								System.err.println("Attributes in \" select * \" have the same attribute name!");
-								errorNum ++;
-							}
-							else
-							{
-								attributeTableAliasMap.put(tempList.get(k).getName(), tableAlias[j]);
+								errorNum++;
+							} else {
+								attributeTableAliasMap.put(tempList.get(k).getName(), tableAlia);
 								attributeTypeMap.put(tempList.get(k).getName(), tempList.get(k).getType());
 							}
 						}
 					}
-					
+
 				}
-				
+
 				//consider the subquery
 				String subqueryAlias[] = new String[typerCheckerMap.size()];
 				subqueryAlias = typerCheckerMap.keySet().toArray(subqueryAlias);
 				TypeChecker tempChecker;
 				String subQueryAttributes[];
-				for(int j = 0; j < subqueryAlias.length; j++)
-				{
-					tempChecker = typerCheckerMap.get(subqueryAlias[j]);
+				for (String subqueryAlia : subqueryAlias) {
+					tempChecker = typerCheckerMap.get(subqueryAlia);
 					HashMap<String, String> tempAttributeMap = tempChecker.getAttributeMap();
 					subQueryAttributes = new String[tempAttributeMap.size()];
 					subQueryAttributes = tempAttributeMap.keySet().toArray(subQueryAttributes);
-					for(int k = 0; k < subQueryAttributes.length; k++)
-					{
-						if(attributeTableAliasMap.containsKey(subQueryAttributes[k]))
-						{
+					for (String subQueryAttribute : subQueryAttributes) {
+						if (attributeTableAliasMap.containsKey(subQueryAttribute)) {
 							System.err.println("Attributes in \" select * \" have the same attribute name!");
-							errorNum ++;
-						}
-						else
-						{
-							attributeTableAliasMap.put(subQueryAttributes[k], subqueryAlias[j]);
-							attributeTypeMap.put(subQueryAttributes[k], tempChecker.getAttributeTypeMap().get(subQueryAttributes[k]));
+							errorNum++;
+						} else {
+							attributeTableAliasMap.put(subQueryAttribute, subqueryAlia);
+							attributeTypeMap.put(subQueryAttribute, tempChecker.getAttributeTypeMap().get(subQueryAttribute));
 						}
 					}
 				}
 			}
 			//select A.* from
-			else if(selectElement instanceof AllFromTable)
-			{
+			else if (selectElement instanceof AllFromTable) {
 				String tableAlias = ((AllFromTable) selectElement).table;
 				TableReference tempTableReference = tableReferenceMap.get(tableAlias);
 				//if the tableAlias is from a table reference.
-				if(tempTableReference != null)
-				{
+				if (tempTableReference != null) {
 					String tableName = tempTableReference.table;
-					
-					if(vgFunctionMap.containsKey(tableName))
-					{
+
+					if (vgFunctionMap.containsKey(tableName)) {
 						GeneralFunctionExpression expression = vgFunctionMap.get(tableName);
 						VGFunction vgFunction = catalog.getVGFunction(expression.functionName);
 						ArrayList<Attribute> tempList = vgFunction.getOutputAtts();
-						for(int k = 0; k < tempList.size(); k++)
-						{
-							if(attributeTableAliasMap.containsKey(tempList.get(k).getName()))
-							{
+						for (Attribute aTempList : tempList) {
+							if (attributeTableAliasMap.containsKey(aTempList.getName())) {
 								System.err.println("Attributes in \" select * \" have the same attribute name!");
-								errorNum ++;
-							}
-							else
-							{
-								attributeTableAliasMap.put(tempList.get(k).getName(), tableAlias);
-								attributeTypeMap.put(tempList.get(k).getName(), tempList.get(k).getType());
+								errorNum++;
+							} else {
+								attributeTableAliasMap.put(aTempList.getName(), tableAlias);
+								attributeTypeMap.put(aTempList.getName(), aTempList.getType());
 							}
 						}
-					}
-					else
-					{
+					} else {
 						Relation relation = catalog.getRelation(tableName);
 						ArrayList<Attribute> tempList = relation.getAttributes();
-						for(int k = 0; k < tempList.size(); k++)
-						{
-							if(attributeTableAliasMap.containsKey(tempList.get(k).getName()))
-							{
+						for (Attribute aTempList : tempList) {
+							if (attributeTableAliasMap.containsKey(aTempList.getName())) {
 								System.err.println("Attributes in \" select * \" have the same attribute name!");
-								errorNum ++;
-							}
-							else
-							{
-								attributeTableAliasMap.put(tempList.get(k).getName(), tableAlias);
-								attributeTypeMap.put(tempList.get(k).getName(), tempList.get(k).getType());
+								errorNum++;
+							} else {
+								attributeTableAliasMap.put(aTempList.getName(), tableAlias);
+								attributeTypeMap.put(aTempList.getName(), aTempList.getType());
 							}
 						}
 					}
-					
+
 				}
 				//if the table alias is from a subquery in from clause.
-				else
-				{
+				else {
 					TypeChecker tempChecker = typerCheckerMap.get(tableAlias);
 					HashMap<String, String> tempAttributeMap = tempChecker.getAttributeMap();
 					String subQueryAttributes[] = new String[tempAttributeMap.size()];
 					subQueryAttributes = tempAttributeMap.keySet().toArray(subQueryAttributes);
-					for(int k = 0; k < subQueryAttributes.length; k++)
-					{
-						if(attributeTableAliasMap.containsKey(subQueryAttributes[k]))
-						{
+					for (String subQueryAttribute : subQueryAttributes) {
+						if (attributeTableAliasMap.containsKey(subQueryAttribute)) {
 							System.err.println("Attributes in \" select * \" have the same attribute name!");
-							errorNum ++;
-						}
-						else
-						{
-							attributeTableAliasMap.put(subQueryAttributes[k], tableAlias);
-							attributeTypeMap.put(subQueryAttributes[k], tempChecker.getAttributeTypeMap().get(subQueryAttributes[k]));
+							errorNum++;
+						} else {
+							attributeTableAliasMap.put(subQueryAttribute, tableAlias);
+							attributeTypeMap.put(subQueryAttribute, tempChecker.getAttributeTypeMap().get(subQueryAttribute));
 						}
 					}
 				}
 			}
 			//select A.B, B, expression
-			else
-			{
-				String alias = ((DerivedColumn)selectElement).alias;
-				if(attributeTableAliasMap.containsKey(alias))
-				{
+			else {
+				String alias = ((DerivedColumn) selectElement).alias;
+				if (attributeTableAliasMap.containsKey(alias)) {
 					System.err.println("Attributes in \" select * \" have the same attribute name!");
-					errorNum ++;
-				}
-				else
-				{
+					errorNum++;
+				} else {
 					attributeTableAliasMap.put(alias, "expression");
 				}
 			}
@@ -723,9 +597,8 @@ public class RandomTableTypeChecker extends TypeChecker {
 				GeneralFunctionExpression expression = vgFunctionMap.get(tableName);
 				VGFunction vgFunction = catalog.getVGFunction(expression.functionName);
 				ArrayList<Attribute> tempList = vgFunction.getOutputAtts();
-				for(int k = 0; k < tempList.size(); k++)
-				{
-					String name = tempList.get(k).getName();
+				for (Attribute aTempList : tempList) {
+					String name = aTempList.getName();
 					ColumnExpression column = new ColumnExpression(fromAlias, name);
 					resultList.add(column);
 				}
@@ -745,10 +618,9 @@ public class RandomTableTypeChecker extends TypeChecker {
 					view = catalog.getView(tableName);
 					tempList = view.getAttributes();
 				}
-				
-				for(int k = 0; k < tempList.size(); k++)
-				{
-					String name = tempList.get(k).getName();
+
+				for (Attribute aTempList : tempList) {
+					String name = aTempList.getName();
 					ColumnExpression column = new ColumnExpression(fromAlias, name);
 					resultList.add(column);
 				}
@@ -759,10 +631,8 @@ public class RandomTableTypeChecker extends TypeChecker {
 		{
 			TypeChecker tempChecker = typerCheckerMap.get(fromAlias);
 			ArrayList<String> outputAttributeStringList = tempChecker.getAttributeList();
-			
-			for(int k = 0; k < outputAttributeStringList.size(); k++)
-			{
-				String name = outputAttributeStringList.get(k);
+
+			for (String name : outputAttributeStringList) {
 				ColumnExpression column = new ColumnExpression(fromAlias, name);
 				resultList.add(column);
 			}
@@ -777,65 +647,51 @@ public class RandomTableTypeChecker extends TypeChecker {
 	public ArrayList<ColumnExpression> getAsteriskTable()throws Exception
 	{
 		ArrayList<ColumnExpression> resultList = new ArrayList<ColumnExpression>();
-		for(int j = 0; j < fromList.size(); j ++)
-		{
-			String fromAlias = fromList.get(j);
-			
+		for (String fromAlias : fromList) {
 			TableReference tempTableReference;
 			String tableName;
 			Relation relation;
 			ArrayList<Attribute> tempList;
-			
-			if(tableReferenceMap.containsKey(fromAlias))
-			{
+
+			if (tableReferenceMap.containsKey(fromAlias)) {
 				tempTableReference = tableReferenceMap.get(fromAlias);
 				tableName = tempTableReference.table;
-				
-				if(vgFunctionMap.containsKey(tableName))
-				{
+
+				if (vgFunctionMap.containsKey(tableName)) {
 					GeneralFunctionExpression expression = vgFunctionMap.get(tableName);
 					VGFunction vgFunction = catalog.getVGFunction(expression.functionName);
 					tempList = vgFunction.getOutputAtts();
-					for(int k = 0; k < tempList.size(); k++)
-					{
-						String name = tempList.get(k).getName();
+					for (Attribute aTempList : tempList) {
+						String name = aTempList.getName();
 						ColumnExpression column = new ColumnExpression(fromAlias, name);
 						resultList.add(column);
 					}
 				}
 				//for the relation
-				else
-				{
+				else {
 					relation = catalog.getRelation(tableName);
-					
+
 					View view;
-					if(relation != null)
-					{
+					if (relation != null) {
 						tempList = relation.getAttributes();
-					}
-					else
-					{
+					} else {
 						view = catalog.getView(tableName);
 						tempList = view.getAttributes();
 					}
-					
-					for(int k = 0; k < tempList.size(); k++)
-					{
-						String name = tempList.get(k).getName();
+
+					for (Attribute aTempList : tempList) {
+						String name = aTempList.getName();
 						ColumnExpression column = new ColumnExpression(fromAlias, name);
 						resultList.add(column);
 					}
 				}
 			}
 			//subquery
-			else if(typerCheckerMap.containsKey(fromAlias))
-			{
+			else if (typerCheckerMap.containsKey(fromAlias)) {
 				TypeChecker tempChecker = typerCheckerMap.get(fromAlias);
 				ArrayList<String> outputAttributeStringList = tempChecker.getAttributeList();
-				
-				for(int k = 0; k < outputAttributeStringList.size(); k++)
-				{
-					String name = outputAttributeStringList.get(k);
+
+				for (String name : outputAttributeStringList) {
 					ColumnExpression column = new ColumnExpression(fromAlias, name);
 					resultList.add(column);
 				}
