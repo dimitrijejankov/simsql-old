@@ -383,7 +383,8 @@ public class RandomTableTypeChecker extends TypeChecker {
 		 * which would be called by the BaselineArrayRandomTypeChecker.
 		 */
 		if (this instanceof BaseLineRandomTableTypeChecker ||
-				this instanceof GeneralRandomTableTypeChecker) {
+				this instanceof GeneralRandomTableTypeChecker ||
+				this instanceof RandomModuloTableTypeChecker) {
 			String viewName = definedSchema.viewName;
 			int end = viewName.lastIndexOf("_");
 

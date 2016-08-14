@@ -487,6 +487,7 @@ public class TypeChecker extends ASTVisitor {
                 root = root.parent;
             }
             if (TypeCheckerHelper.getCheckerType(root) == TypeCheckerHelper.GENERAL_RANDOM_TABLE_TYPECHECKER ||
+                    TypeCheckerHelper.getCheckerType(root) == TypeCheckerHelper.RADNDOM_MODULO_TYPECHECKER ||
                     (TypeCheckerHelper.getCheckerType(root) == TypeCheckerHelper.UNION_VIEW_TYPECHECKER &&
                             ((UnionViewStatementTypeChecker) root).isGeneralUnionViewTypeChecker())
                     ) {
@@ -1235,6 +1236,7 @@ public class TypeChecker extends ASTVisitor {
         }
 
         if (root instanceof GeneralRandomTableTypeChecker ||
+                root instanceof RandomModuloTableTypeChecker ||
                 (root instanceof UnionViewStatementTypeChecker &&
                         ((UnionViewStatementTypeChecker) root).isGeneralUnionViewTypeChecker())
                 ) {

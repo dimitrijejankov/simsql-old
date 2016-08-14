@@ -75,36 +75,27 @@ public class Topologic
 		 */
 		ArrayList<Operator> allOperators = findAllNode(operatorList);
 		ArrayList<Operator> topLogicalList = topologicalSort(allOperators);
-		for(int i = 0; i < topLogicalList.size(); i++)
-		{
-			Operator operator = topLogicalList.get(i);
-			
-			if(operator instanceof TableScan)
-			{
-				TableScan tableScan = (TableScan)operator;
-				
-				if(tableScan.getType() != TableReference.COMMON_TABLE)
-				{
+		for (Operator operator : topLogicalList) {
+			if (operator instanceof TableScan) {
+				TableScan tableScan = (TableScan) operator;
+
+				if (tableScan.getType() != TableReference.COMMON_TABLE) {
 					String tableName = tableScan.getTableName();
-					
-					if(tableName.endsWith("_i"))
-					{
+
+					if (tableName.endsWith("_i")) {
 						MathExpression indexExpression = tableScan.getIndexMathExp();
 						MPNGenerator generator = new MPNGenerator(indexExpression);
-						tableName = tableName.substring(0, tableName.length()-2);
+						tableName = tableName.substring(0, tableName.length() - 2);
 						tableName += "[" + generator.convertToMPN() + "]";
-					}
-					else
-					{
+					} else {
 						int end = tableName.lastIndexOf("_");
 						String prefix = tableName.substring(0, end);
-						String suffix = tableName.substring(end+1, tableName.length());
-						
-						tableName = prefix + "[" +suffix + "]"; 
+						String suffix = tableName.substring(end + 1, tableName.length());
+
+						tableName = prefix + "[" + suffix + "]";
 					}
-					
-					if(!resultSet.contains(tableName))
-					{
+
+					if (!resultSet.contains(tableName)) {
 						resultSet.add(tableName);
 						resultList.add(tableName);
 					}
@@ -178,17 +169,12 @@ public class Topologic
 	{
 		ArrayList<Operator> resultList = new ArrayList<Operator>();
 		HashMap<Operator, Integer> childrenNumMap = new HashMap<Operator, Integer>();
-		
-		for(int i = 0; i < nodeList.size(); i++)
-		{
-			Operator temp = nodeList.get(i);
+
+		for (Operator temp : nodeList) {
 			ArrayList<Operator> children = temp.getChildren();
-			if(children == null)
-			{
+			if (children == null) {
 				childrenNumMap.put(temp, 0);
-			}
-			else
-			{
+			} else {
 				childrenNumMap.put(temp, children.size());
 			}
 		}
@@ -228,13 +214,10 @@ public class Topologic
 				ArrayList<Operator> parents = temp.getParents();
 				if(parents != null)
 				{
-					for(int k = 0; k < parents.size(); k++)
-					{
-						Operator temp2 = parents.get(k);
-						if(childrenNumMap.containsKey(temp2))
-						{
+					for (Operator temp2 : parents) {
+						if (childrenNumMap.containsKey(temp2)) {
 							int num = childrenNumMap.get(temp2);
-							childrenNumMap.put(temp2, num-1);
+							childrenNumMap.put(temp2, num - 1);
 						}
 					}
 				}

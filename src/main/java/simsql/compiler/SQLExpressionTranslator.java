@@ -747,6 +747,12 @@ public class SQLExpressionTranslator {
 	        {
 	        	tempChecker = CompilerProcessor.typeCheck(expression, sql, false);
 	        }
+			else if(expression instanceof ModuloRandomTableStatement)
+			{
+				tempChecker = CompilerProcessor.typeCheck(expression, sql, false);
+			}
+
+
 	        
 	        if(expression instanceof BaseLineRandomTableStatement && tempChecker != null)
 	        {
@@ -762,6 +768,9 @@ public class SQLExpressionTranslator {
 	        else if(expression instanceof GeneralUnionViewStatement && tempChecker != null){
 	        	definedTableSchema = ((GeneralUnionViewStatement)expression).getSchema();
 	        }
+            else if(expression instanceof ModuloRandomTableStatement && tempChecker != null){
+                definedTableSchema = ((ModuloRandomTableStatement)expression).definedTableSchema;
+            }
 	        
 	        /*
         	 * Record the output attribute Name list.

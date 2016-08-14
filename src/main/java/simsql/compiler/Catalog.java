@@ -341,6 +341,30 @@ public class Catalog implements simsql.shell.Catalog {
 		}
 	}
 
+    private String getViewName(ArrayList<String> indexTableNameList, String realName, String index) {
+        String tableName = null;
+
+        for(String tn : indexTableNameList) {
+            if(tn.matches(".*_mod_[0-9]*_[0-9]*$")){
+
+                String[] parts = tn.substring(realName.length() + 1).split("_");
+
+                long idx = Long.parseLong(index);
+                long multiplier = Long.parseLong(parts[1]);
+                long offset = Long.parseLong(parts[2]);
+
+                if(idx % multiplier == offset){
+                    tableName = tn;
+                }
+            }
+            else if(tableName == null && tn.endsWith("_i")) {
+                tableName = realName + "_i";
+            }
+        }
+
+        return tableName;
+    }
+
 	/*
 	 * ------------------------------------------------ View
 	 * ------------------------------------------
@@ -384,9 +408,11 @@ public class Catalog implements simsql.shell.Catalog {
 					int end = viewName.lastIndexOf("_");
 					if (end > 0) {
 						String tempName = viewName.substring(0, end);
+                        String index = viewName.substring(end + 1);
+
 						ArrayList<String> indexTableNameList = ds.getIndexTable(tempName);
-						if (indexTableNameList.size() != 0 && indexTableNameList.contains(tempName + "_i")) {
-							viewName = tempName + "_i";
+						if (indexTableNameList.size() != 0) {
+							viewName = getViewName(indexTableNameList, tempName, index);
 							view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), getObjectType(viewName));
 						}
 					}
