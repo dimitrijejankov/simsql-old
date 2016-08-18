@@ -92,12 +92,12 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 	    	 */
 	    	ArrayList<Expression> expressionList = CompilerProcessor.parse(query);
 	    	CompilerProcessor.simplify(expressionList);
-	    	
+
 	    	boolean empty = true;
 	    	String errMessage = null;
 	    	
 	    	/*
-	         * 3. Do unnesting
+	         * 2. Do unnesting
 	         */
 	        Unnester unnester;
 	        
@@ -366,12 +366,12 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
         	return tempQueryFile;
 		}
 	}
-	
-	
-	
-	
+
+
+
+
 	/*
-	 * querySinkList is the query on the top of the MCMC DAG. 
+	 * querySinkList is the query on the top of the MCMC DAG.
 	 */
 	public SimSQLCompiledQuery executeBayesianModel(ArrayList<TableScan> indexedTableList,
 													ArrayList<Operator> querySinkList)

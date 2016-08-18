@@ -32,7 +32,7 @@ import java.util.ArrayList;
  * @author Dimitrije
  *
  */
-public class RandomModuloTableTypeChecker extends RandomTableTypeChecker {
+public class RandomModuloTableTypeChecker extends GeneralRandomTableTypeChecker {
 
 	/**
 	 * @param allowDuplicatedAttributeAlias

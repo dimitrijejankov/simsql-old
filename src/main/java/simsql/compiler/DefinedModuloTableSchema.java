@@ -34,7 +34,7 @@ public class DefinedModuloTableSchema extends DefinedTableSchema {
 									ArrayList<String> tableAttributeList)
 	{
 		super(viewName, tableAttributeList, true);
-		this.viewName = viewName.toLowerCase() + "_mod_" + multiplier + "_" + offset;
+		this.viewName = viewName.toLowerCase() + "_mod_" + multiplier + "_" + offset + "_i";
 		this.tableAttributeList = tableAttributeList;
 		this.multiplier = multiplier;
 		this.offset = offset;

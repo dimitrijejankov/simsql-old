@@ -386,7 +386,10 @@ public class RandomTableTypeChecker extends TypeChecker {
 				this instanceof GeneralRandomTableTypeChecker ||
 				this instanceof RandomModuloTableTypeChecker) {
 			String viewName = definedSchema.viewName;
-			int end = viewName.lastIndexOf("_");
+
+			int end = this instanceof RandomModuloTableTypeChecker ?
+                    viewName.lastIndexOf("_mod_") :
+                    viewName.lastIndexOf("_");
 
 			String realViewName = viewName.substring(0, end);
 			ArrayList<String> timeTickTableList = catalog.getIndexTableList(realViewName);

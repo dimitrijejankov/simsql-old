@@ -3,7 +3,7 @@ package simsql.compiler;
 
 import java.util.ArrayList;
 
-public class ModuloRandomTableStatement extends RandomTableStatement {
+public class ModuloRandomTableStatement extends GeneralRandomTableStatement {
 
     String multiplier;
     String offset;

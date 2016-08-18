@@ -403,6 +403,17 @@ public class TypeChecker extends ASTVisitor {
         Relation relation = catalog.getRelation(table);
         View view = catalog.getView(table);
 
+        // Replace the table name if it's a modulo relationship.
+        if(tableReference.getTableInferenceType() == TableReference.CONSTANT_INDEX_TABLE &&
+                view != null &&
+                view.getName().matches(".*_mod_[0-9]+_[0-9]+_i")) {
+
+            int idx = view.getName().lastIndexOf("_");
+            int jdx = tableReference.table.lastIndexOf("_");
+
+            tableReference.setTable(view.getName().substring(0, idx) + tableReference.getTable().substring(jdx));
+        }
+
         if (!this.checkValidTableIdentifier(tableReference)) {
             return false;
         }
@@ -486,16 +497,15 @@ public class TypeChecker extends ASTVisitor {
             while (root.parent != null) {
                 root = root.parent;
             }
-            if (TypeCheckerHelper.getCheckerType(root) == TypeCheckerHelper.GENERAL_RANDOM_TABLE_TYPECHECKER ||
-                    TypeCheckerHelper.getCheckerType(root) == TypeCheckerHelper.RADNDOM_MODULO_TYPECHECKER ||
-                    (TypeCheckerHelper.getCheckerType(root) == TypeCheckerHelper.UNION_VIEW_TYPECHECKER &&
-                            ((UnionViewStatementTypeChecker) root).isGeneralUnionViewTypeChecker())
+            if (TypeCheckerHelper.getCheckerType(root) != TypeCheckerHelper.GENERAL_RANDOM_TABLE_TYPECHECKER &&
+                    TypeCheckerHelper.getCheckerType(root) != TypeCheckerHelper.RADNDOM_MODULO_TYPECHECKER &&
+                    (TypeCheckerHelper.getCheckerType(root) != TypeCheckerHelper.UNION_VIEW_TYPECHECKER ||
+                            !((UnionViewStatementTypeChecker) root).isGeneralUnionViewTypeChecker())
                     ) {
-                // nothing to do.
-            } else {
-                System.err.println("The general index or math expression based index can only be in the general table definition!");
-                return false;
+                        System.err.println("The general index or math expression based index can only be in the general table definition!");
+                        return false;
             }
+
 
             ArrayList<MathExpression> expressionList = new ArrayList<MathExpression>();
             GeneralTableIndexExtractor.getGeneralTableIndexInMathExpression(indexMathExp, expressionList);
@@ -862,7 +872,7 @@ public class TypeChecker extends ASTVisitor {
         String multiplier = table.multiplier;
         String tableName = realTableName.substring(0, realTableName.lastIndexOf("_mod_"));
 
-        for(Relation r : catalog.getModuloRelations(tableName)) {
+        for(View r : catalog.getModuloRelations(tableName)) {
 
             String modPart = r.getName().substring(tableName.length());
 

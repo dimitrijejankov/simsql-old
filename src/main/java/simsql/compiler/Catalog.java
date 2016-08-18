@@ -111,13 +111,13 @@ public class Catalog implements simsql.shell.Catalog {
 	}
 
 	/** Returns all modulo relationships with all the information about a given Relation */
-	public List<Relation> getModuloRelations(String baseRel) {
+	public List<View> getModuloRelations(String baseRel) {
 
-        LinkedList<Relation> out = new LinkedList<Relation>();
+        LinkedList<View> out = new LinkedList<View>();
         baseRel = baseRel.toLowerCase();
 
         for(String relName : ds.getAllModuloRelationNames(baseRel)) {
-            out.add(getRelation(relName));
+            out.add(getView(relName));
         }
 
         return out;
@@ -345,7 +345,7 @@ public class Catalog implements simsql.shell.Catalog {
         String tableName = null;
 
         for(String tn : indexTableNameList) {
-            if(tn.matches(".*_mod_[0-9]*_[0-9]*$")){
+            if(tn.matches(".*_mod_[0-9]+_[0-9]+_[i0-9]+$")){
 
                 String[] parts = tn.substring(realName.length() + 1).split("_");
 
@@ -405,10 +405,11 @@ public class Catalog implements simsql.shell.Catalog {
 						view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), getObjectType(viewName));
 					}
 				} else {
-					int end = viewName.lastIndexOf("_");
+					int end = viewName.matches(".*_mod_[0-9]+_[0-9]+_[0-9]+$") ? viewName.lastIndexOf("_mod") : viewName.lastIndexOf("_");
+                    int idx_end = viewName.lastIndexOf("_");
 					if (end > 0) {
 						String tempName = viewName.substring(0, end);
-                        String index = viewName.substring(end + 1);
+                        String index = viewName.substring(idx_end + 1);
 
 						ArrayList<String> indexTableNameList = ds.getIndexTable(tempName);
 						if (indexTableNameList.size() != 0) {
@@ -642,7 +643,7 @@ public class Catalog implements simsql.shell.Catalog {
 				}
 				s = newString + "[" + parts[parts.length - 1] + "]";
 			}
-            else if(s.matches(".*?_mod_.*_.*")) {
+            else if(s.matches(".*_mod_[0-9]+_[0-9]+_[i0-9]+$")) {
                 int end = s.lastIndexOf("_mod");
                 String[] parts = s.substring(end).split("_");
                 s = s.substring(0, end) + "[" + parts[2] + "*n+" + parts[3] + "]";

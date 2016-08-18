@@ -167,6 +167,16 @@ public class CompilerProcessor {
         			}
         			checkerList.add(typeChecker);
         		}
+                else if(expression instanceof ModuloRandomTableStatement)
+                {
+                    ((ModuloRandomTableStatement) expression).setSqlString(sql);
+                    RandomModuloTableTypeChecker typeChecker = new RandomModuloTableTypeChecker(false);
+                    subcheck = typeChecker.visitModuloRandomTableStatement((ModuloRandomTableStatement)expression);
+                    if(!subcheck)
+                    {
+                        return null;
+                    }
+                }
         		else if(expression instanceof GeneralRandomTableStatement)
         		{
         			((GeneralRandomTableStatement) expression).setSqlString(sql);
@@ -309,21 +319,21 @@ public class CompilerProcessor {
 				return null;
 			}
 		}
+        else if(expression instanceof ModuloRandomTableStatement)
+        {
+            ((ModuloRandomTableStatement) expression).setSqlString(sql);
+            typeChecker = new RandomModuloTableTypeChecker(false);
+            subcheck = ((RandomModuloTableTypeChecker)typeChecker).visitModuloRandomTableStatement((ModuloRandomTableStatement)expression);
+            if(!subcheck)
+            {
+                return null;
+            }
+        }
 		else if(expression instanceof GeneralRandomTableStatement)
 		{
 			((GeneralRandomTableStatement) expression).setSqlString(sql);
 			typeChecker = new GeneralRandomTableTypeChecker(false);
 			subcheck = ((GeneralRandomTableTypeChecker)typeChecker).visitGeneralRandomTableStatement((GeneralRandomTableStatement)expression);
-			if(!subcheck)
-			{
-				return null;
-			}
-		}
-		else if(expression instanceof ModuloRandomTableStatement)
-		{
-			((ModuloRandomTableStatement) expression).setSqlString(sql);
-			typeChecker = new RandomModuloTableTypeChecker(false);
-			subcheck = ((RandomModuloTableTypeChecker)typeChecker).visitModuloRandomTableStatement((ModuloRandomTableStatement)expression);
 			if(!subcheck)
 			{
 				return null;
@@ -460,6 +470,18 @@ public class CompilerProcessor {
     				return null;
     			}
     		}
+			else if(expression instanceof ModuloRandomTableStatement)
+			{
+				((ModuloRandomTableStatement) expression).setSqlString(sql);
+				typechecker = new RandomModuloTableTypeChecker(false);
+				((RandomModuloTableTypeChecker)typechecker).setSaved(save);
+				subcheck = ((RandomModuloTableTypeChecker)typechecker).visitModuloRandomTableStatement(
+						(ModuloRandomTableStatement)expression);
+				if(!subcheck)
+				{
+					return null;
+				}
+			}
     		else if(expression instanceof GeneralRandomTableStatement)
     		{
     			((GeneralRandomTableStatement) expression).setSqlString(sql);

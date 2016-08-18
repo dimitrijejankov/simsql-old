@@ -268,6 +268,39 @@ public class ChainGeneration
 				break;
 		}
 	}
+
+    private boolean isModuloTableForIndex(String table, int index) {
+
+        if(!table.matches(".*_mod_[0-9]+_[0-9]+\\Q[i]\\E$"))
+            return false;
+
+        int idx = table.lastIndexOf("_mod");
+
+        String[] splits = table.substring(idx + 1).split("_");
+        String offsetString = splits[2].substring(0, splits[2].length()-3);
+
+        Integer multiplier = Integer.parseInt(splits[1]);
+        Integer offset = Integer.parseInt(offsetString);
+
+        return (index % multiplier) - offset == 0;
+    }
+
+    private boolean isRightModuloTable(HashSet<String> tempList, int targetVersion, String table) {
+
+        int idx = table.matches(".*_mod_[0-9]+_[0-9]+\\Q[i]\\E$") ? table.lastIndexOf("_mod") : table.lastIndexOf("[i]");
+        String realName = table.substring(0, idx);
+
+        if(isModuloTableForIndex(table, targetVersion))
+            return true;
+
+        for(String tb : tempList) {
+            if(tb.matches(realName+ "_mod_[0-9]+_[0-9]+\\Q[i]\\E$") && isModuloTableForIndex(tb, targetVersion)) {
+                    return false;
+            }
+        }
+
+        return !table.matches(".*_mod_[0-9]+_[0-9]+\\Q[i]\\E$");
+    }
 	
 	public void generateTimeTable(HashSet<String> randomTableList, 
 										 HashMap<String, HashSet<String>> forwardEdge, 
@@ -294,6 +327,10 @@ public class ChainGeneration
 							{
 								break;
 							}
+
+							if(!isRightModuloTable(tempList, targetVersion, target)){
+                                continue;
+                            }
 							
 							String originPrefix = getTablePrefix(origin);
 							String targetPrefix = getTablePrefix(target);

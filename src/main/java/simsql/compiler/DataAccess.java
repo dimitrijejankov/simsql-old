@@ -331,9 +331,9 @@ public class DataAccess {
 
             // prepare the SQL statement
             PreparedStatement ps = conn
-                    .prepareStatement("SELECT relName FROM Relation WHERE relName like ?");
+                    .prepareStatement("SELECT objName FROM DBObject WHERE objName like ?");
 
-            ps.setString(1, relName + "_mod_%_%");
+            ps.setString(1, relName + "_mod_%");
 
             // run it
             ResultSet rs = ps.executeQuery();

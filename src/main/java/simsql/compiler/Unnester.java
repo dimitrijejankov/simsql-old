@@ -142,7 +142,7 @@ public class Unnester {
 				tableReferenceList.remove(i);
 				fromElement = unnestFromSubquery((FromSubquery)fromElement);
 				tableReferenceList.add(i, fromElement);
-			}	
+			}
 		}
 		
 		for(int i = 0; i < selectList.size(); i++)
