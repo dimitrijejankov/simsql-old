@@ -24,15 +24,16 @@
  */
 package simsql.compiler;
 
+import simsql.shell.Catalog;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingDeque;
 import simsql.runtime.DataType;
 
-
-
-
+import static simsql.compiler.DefinedModuloTableSchema.isModuloPrefixTableForIndex;
 
 
 /*
@@ -72,6 +73,7 @@ public class PlanInstantiation {
 	private HashMap<String, Operator> randomTablePlanMap;
 	private ChainGeneration chain;
 	private TranslatorHelper translatorHelper;
+    private Catalog catalog;
 	/*
 	 * mcmcDagBundledPlan is the mcmc tree bundled plan. This plan means that we run the mcmc templates, that I could run such
 	 * query plans simutenously. The other plans that may span multiple time ticks is left to future extension.
@@ -79,13 +81,17 @@ public class PlanInstantiation {
 	private HashMap<Integer, ArrayList<Operator>> mcmcDagBundledPlan;
 	
 	/**
-	 * @param randomTablePlanMap
+	 * @param randomPlanTableMap
 	 * @param chain
+	 * @param translatorHelper
+	 * @param queryList
+	 * @param catalog
 	 */
 	public PlanInstantiation(HashMap<Operator, String> randomPlanTableMap,
 							 ChainGeneration chain,
 							 TranslatorHelper translatorHelper,
-							 ArrayList<Operator> queryList) 
+							 ArrayList<Operator> queryList,
+                             Catalog catalog)
 	{
 		super();
 		
@@ -96,6 +102,7 @@ public class PlanInstantiation {
 		this.chain = chain;
 		this.translatorHelper = translatorHelper;
 		this.mcmcDagBundledPlan = processQueryList(queryList);
+        this.catalog = catalog;
 	}
 
 	/*
@@ -575,7 +582,7 @@ public class PlanInstantiation {
 						View view;
 						try
 						{
-							view = SimsqlCompiler.catalog.getView(reverseName);
+							view = catalog.getView(reverseName);
 						}
 						catch(Exception e)
 						{
@@ -646,8 +653,19 @@ public class PlanInstantiation {
 							MathExpression indexExpression = ((TableScan) currentElement).getIndexMathExp();
 							MPNGenerator generator = new MPNGenerator(indexExpression);
 							int version = generator.initializeTime(currentTime);
-							
-							((TableScan) currentElement).setTableName(getTablePrefixUnderscore(tableName) + "_" + version);
+
+                            List<View> views = catalog.getModuloRelations(getTablePrefixUnderscore(tableName));
+
+                            tableName = getTablePrefixUnderscore(tableName) + "_" + version;
+
+                            for (View v : views) {
+                                if(isModuloPrefixTableForIndex(v.getName(), version)) {
+                                    tableName = getTablePrefixUnderscore(v.getName()) + "_" + version;
+                                    break;
+                                }
+                            }
+
+							((TableScan) currentElement).setTableName(tableName);
 							((TableScan) currentElement).setIndexString(version + "");
 							
 							/*

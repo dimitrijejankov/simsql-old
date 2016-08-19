@@ -60,5 +60,39 @@ public class DefinedModuloTableSchema extends DefinedTableSchema {
 	public boolean acceptVisitor(ASTVisitor astVisitor) throws Exception{
 		return astVisitor.visitModuloTableSchemaExpression(this);
 	}
+
+	// Static methods for dealing with modulo tables.
+
+    static boolean isModuloTableForIndex(String table, int index) {
+
+        if(!table.matches(".*_mod_[0-9]+_[0-9]+\\Q[i]\\E$"))
+            return false;
+
+        int idx = table.lastIndexOf("_mod");
+
+        String[] splits = table.substring(idx + 1).split("_");
+        String offsetString = splits[2].substring(0, splits[2].length()-3);
+
+        Integer multiplier = Integer.parseInt(splits[1]);
+        Integer offset = Integer.parseInt(offsetString);
+
+        return (index % multiplier) - offset == 0;
+    }
+
+    static boolean isModuloPrefixTableForIndex(String table, int index) {
+
+        if(!table.matches(".*_mod_[0-9]+_[0-9]+\\Q_i\\E$"))
+            return false;
+
+        int idx = table.lastIndexOf("_mod");
+
+        String[] splits = table.substring(idx + 1).split("_");
+        String offsetString = splits[2].substring(0, splits[2].length());
+
+        Integer multiplier = Integer.parseInt(splits[1]);
+        Integer offset = Integer.parseInt(offsetString);
+
+        return (index % multiplier) - offset == 0;
+    }
 	
 }

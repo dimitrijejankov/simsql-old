@@ -227,7 +227,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 				ChainGeneration chain = new ChainGeneration(topologic, maxLoop);
 				TranslatorHelper translatorHelper = myParser.getTranslatorHelper();
 				planInstantiation = new PlanInstantiation(planTableMap, chain,
-						translatorHelper, queryList);
+						translatorHelper, queryList, getCatalog());
 				timeTick = chain.getMinimumTimeTick();
 				
 			} catch (Exception e) {

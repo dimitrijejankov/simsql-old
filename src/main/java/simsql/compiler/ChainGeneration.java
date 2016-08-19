@@ -24,6 +24,7 @@
  */
 package simsql.compiler;
 
+import javax.ws.rs.HEAD;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import static simsql.compiler.DefinedModuloTableSchema.isModuloTableForIndex;
 
 
 /**
@@ -269,21 +271,20 @@ public class ChainGeneration
 		}
 	}
 
-    private boolean isModuloTableForIndex(String table, int index) {
+    private String getOriginTablePrefix(HashSet<String> tables, String tableName, int idx) {
 
-        if(!table.matches(".*_mod_[0-9]+_[0-9]+\\Q[i]\\E$"))
-            return false;
+        tableName = getTablePrefix(tableName);
 
-        int idx = table.lastIndexOf("_mod");
+        for (String table : tables) {
+            if(table.startsWith(tableName) && isModuloTableForIndex(table, idx)) {
+                return getTablePrefix(table);
+            }
+        }
 
-        String[] splits = table.substring(idx + 1).split("_");
-        String offsetString = splits[2].substring(0, splits[2].length()-3);
-
-        Integer multiplier = Integer.parseInt(splits[1]);
-        Integer offset = Integer.parseInt(offsetString);
-
-        return (index % multiplier) - offset == 0;
+        return tableName;
     }
+
+
 
     private boolean isRightModuloTable(HashSet<String> tempList, int targetVersion, String table) {
 
@@ -331,12 +332,13 @@ public class ChainGeneration
 							if(!isRightModuloTable(tempList, targetVersion, target)){
                                 continue;
                             }
-							
-							String originPrefix = getTablePrefix(origin);
+
+                            String originPrefix = getOriginTablePrefix(tempList, origin, originVersion);
 							String targetPrefix = getTablePrefix(target);
-							
-							String instantiatedOrigin = originPrefix + "[" + originVersion + "]";
+
+                            String instantiatedOrigin = originPrefix + "[" + originVersion + "]";
 							String instantiatedTarget = targetPrefix + "[" + targetVersion + "]";
+
 							putMaxVersionMap(originPrefix, originVersion);
 							putMaxVersionMap(targetPrefix, targetVersion);
 							

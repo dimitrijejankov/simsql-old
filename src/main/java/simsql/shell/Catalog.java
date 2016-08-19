@@ -22,6 +22,8 @@
 
 package simsql.shell;
 import java.io.File;
+import java.util.List;
+
 import simsql.compiler.Relation;
 import simsql.compiler.View;
 
@@ -46,6 +48,9 @@ public interface Catalog {
   // this gets information about a particular relation in the catalog
   Relation getRelation (String relName);	
   View getView (String viewName);
+
+  // this gets all the modulo relations
+  List<View> getModuloRelations(String baseRel);
 
   // prints all the table names
   void listTables();
