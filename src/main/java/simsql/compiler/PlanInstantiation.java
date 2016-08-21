@@ -654,16 +654,7 @@ public class PlanInstantiation {
 							MPNGenerator generator = new MPNGenerator(indexExpression);
 							int version = generator.initializeTime(currentTime);
 
-                            List<View> views = catalog.getModuloRelations(getTablePrefixUnderscore(tableName));
-
-                            tableName = getTablePrefixUnderscore(tableName) + "_" + version;
-
-                            for (View v : views) {
-                                if(isModuloPrefixTableForIndex(v.getName(), version)) {
-                                    tableName = getTablePrefixUnderscore(v.getName()) + "_" + version;
-                                    break;
-                                }
-                            }
+							tableName = getTableNameForVersion(tableName, version);
 
 							((TableScan) currentElement).setTableName(tableName);
 							((TableScan) currentElement).setIndexString(version + "");
@@ -699,7 +690,21 @@ public class PlanInstantiation {
 		generatedPlanMap.put(rootTable, operator);
 		return operator;
 	}
-	
+
+	private String getTableNameForVersion(String tableName, int version) {
+		List<View> views = catalog.getModuloRelations(getTablePrefixUnderscore(tableName));
+
+		tableName = getTablePrefixUnderscore(tableName) + "_" + version;
+
+		for (View v : views) {
+            if(isModuloPrefixTableForIndex(v.getName(), version)) {
+                tableName = getTablePrefixUnderscore(v.getName()) + "_" + version;
+                break;
+            }
+        }
+		return tableName;
+	}
+
 	private void changeNodeProperty(Operator operator, int timeTick)
 	{
 		operator.setNodeName("node_" + translatorHelper.getInstantiateNodeIndex());
@@ -749,8 +754,10 @@ public class PlanInstantiation {
 				MathExpression indexExpression = ((TableScan) operator).getIndexMathExp();
 				MPNGenerator generator = new MPNGenerator(indexExpression);
 				int version = generator.initializeTime(timeTick);
-				
-				relationStatistics.setRelation(getTablePrefixUnderscore(tableName) + "_" + (version));
+
+				tableName = getTableNameForVersion(tableName, version);
+
+				relationStatistics.setRelation(tableName);
 			}
 		}
 	}
