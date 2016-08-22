@@ -1,0 +1,1 @@
+load data from examples/modulo/data.tbl;
