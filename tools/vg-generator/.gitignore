@@ -1,0 +1,5 @@
+*.pyc
+*.vg.cc
+*.cpp
+CMakeLists.txt
+.idea
