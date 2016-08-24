@@ -24,6 +24,9 @@
  */
 package simsql.compiler;
 
+import simsql.shell.*;
+import simsql.shell.Catalog;
+
 import javax.ws.rs.HEAD;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +44,7 @@ import static simsql.compiler.DefinedModuloTableSchema.isModuloTableForIndex;
  */
 public class ChainGeneration
 {
+	private Catalog catalog;
 	private Topologic topologic;
 	/*
 	 * The ruleMap records for each random table, which random tables are needed.
@@ -58,9 +62,12 @@ public class ChainGeneration
 	private int maxLoop;
 	
 	public ChainGeneration(Topologic topologic,
+                           Catalog catalog,
 			               int maxLoop)
 	{
 		this.topologic = topologic;
+        this.catalog = catalog;
+
 		ruleMap = new HashMap<String, HashSet<String>>();
 		simulateTableMap = new HashMap<Integer, TableByTime>();
 		startPointList = new ArrayList<String>();
@@ -275,6 +282,12 @@ public class ChainGeneration
 
         tableName = getTablePrefix(tableName);
 
+        // Check if there is a random relation for this index.
+        View temp = catalog.getView(tableName + "_" + idx);
+        if(temp != null && temp.getName().equals(tableName + "_" + idx))
+            return tableName;
+
+        // Else check if there is a modulo table for this index.
         for (String table : tables) {
             if(table.startsWith(tableName) && isModuloTableForIndex(table, idx)) {
                 return getTablePrefix(table);

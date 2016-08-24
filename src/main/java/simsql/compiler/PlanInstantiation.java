@@ -692,10 +692,16 @@ public class PlanInstantiation {
 	}
 
 	private String getTableNameForVersion(String tableName, int version) {
+
+        tableName = getTablePrefixUnderscore(tableName) + "_" + version;
+
+        // Check if there is a random relation for this index.
+        View temp = catalog.getView(tableName);
+        if(temp != null && temp.getName().equals(tableName))
+            return tableName;
+
+        // Else check if there is a modulo table for this index.
 		List<View> views = catalog.getModuloRelations(getTablePrefixUnderscore(tableName));
-
-		tableName = getTablePrefixUnderscore(tableName) + "_" + version;
-
 		for (View v : views) {
             if(isModuloPrefixTableForIndex(v.getName(), version)) {
                 tableName = getTablePrefixUnderscore(v.getName()) + "_" + version;
