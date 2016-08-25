@@ -201,7 +201,7 @@ public class PlanHelper {
 				
 				if(viewName.endsWith("_i"))
 				{
-					String tablePrefix = getTablePrefixUnderscore(viewName);
+					String tablePrefix = getRealTableNameUnderscore(viewName);
 					ArrayList<String> tempList = catalog.getIndexTableList(tablePrefix);
 					if(tempList != null)
 					{
@@ -255,7 +255,7 @@ public class PlanHelper {
 						
 						if(viewName.endsWith("_i"))
 						{
-							String tablePrefix = getTablePrefixUnderscore(viewName);
+							String tablePrefix = getRealTableNameUnderscore(viewName);
 							ArrayList<String> tempList = catalog.getIndexTableList(tablePrefix);
 							if(tempList != null)
 							{
@@ -342,126 +342,10 @@ public class PlanHelper {
 		return result;
 	}
 	
-	public static String DFS(ArrayList<Operator> elementList,
-			ArrayList<String> sqlList)throws Exception
+	private static String getRealTableNameUnderscore(String table)
 	{
-		//create the root
-		String result = "";
-		
-		/*
-		 * Here, I use a BFS algorithms to traverse all the nodes in the graph, and output all 
-		 * of such sentences.
-		 */
-		HashSet<Operator> finishedQueue = new HashSet<Operator>();
-		Stack<Operator> availableQueue = new Stack<Operator>();
-		
-		for(int i = elementList.size()-1; i >= 0; i--)
-		{
-			result += "\r\n%------------------------------------- plan " + i + "-----------------------------------";
-			result += sqlList.get(i).replaceAll("\n", "\n%\t");
-			result += "\r\n%";
-			Operator element = elementList.get(i);
-			availableQueue.add(element);
-			
-			while(!availableQueue.isEmpty())
-			{
-				Operator currentElement = availableQueue.pop();
-				
-				if(finishedQueue.contains(currentElement))
-				{
-					continue;
-				}
-				else
-				{
-					finishedQueue.add(currentElement);
-				}
-				/*
-				 * deal with the current elment
-				 */
-				result += "\r\n";
-				result += currentElement.visitNode();
-				
-				ArrayList<Operator> children = currentElement.getChildren();
-				
-				if(children != null)
-				{
-					for(int j = 0; j < children.size(); j++)
-					{
-						Operator temp = children.get(j);
-						
-						if(!finishedQueue.contains(temp))
-						{
-							availableQueue.push(temp);
-						}
-					}
-				}
-			}
-		}
-		
-		
-		return result;
-	}
-	
-	public static String DFS(ArrayList<Operator> elementList)throws Exception
-	{
-		//create the root
-		String result = "";
-		
-		/*
-		 * Here, I use a BFS algorithms to traverse all the nodes in the graph, and output all 
-		 * of such sentences.
-		 */
-		HashSet<Operator> finishedQueue = new HashSet<Operator>();
-		Stack<Operator> availableQueue = new Stack<Operator>();
-		
-		for(int i = elementList.size()-1; i >= 0; i--)
-		{
-			result += "\r\n%------------------------------------- plan " + i + "-----------------------------------";
-			Operator element = elementList.get(i);
-			availableQueue.add(element);
-			
-			while(!availableQueue.isEmpty())
-			{
-				Operator currentElement = availableQueue.pop();
-				
-				if(finishedQueue.contains(currentElement))
-				{
-					continue;
-				}
-				else
-				{
-					finishedQueue.add(currentElement);
-				}
-				/*
-				 * deal with the current elment
-				 */
-				result += "\r\n";
-				result += currentElement.visitNode();
-				
-				ArrayList<Operator> children = currentElement.getChildren();
-				
-				if(children != null)
-				{
-					for(int j = 0; j < children.size(); j++)
-					{
-						Operator temp = children.get(j);
-						
-						if(!finishedQueue.contains(temp))
-						{
-							availableQueue.push(temp);
-						}
-					}
-				}
-			}
-		}
-		
-		
-		return result;
-	}
-	
-	private static String getTablePrefixUnderscore(String table)
-	{
-		int start = table.lastIndexOf("_");
+
+		int start = table.matches(".*_mod_[0-9]+_[0-9]+_i$") ?  table.lastIndexOf("_mod") : table.lastIndexOf("_");
 		
 		if(start < 0)
 			return table;

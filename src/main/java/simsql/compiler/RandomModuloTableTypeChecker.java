@@ -48,7 +48,7 @@ public class RandomModuloTableTypeChecker extends GeneralRandomTableTypeChecker 
 
     @Override
     public void saveView(DefinedTableSchema tableAttributes, ArrayList<DataType> gottenAttributeTypeList, String sql) throws Exception {
-        super.saveView(tableAttributes, gottenAttributeTypeList, sql);
+        super.saveToCatalog(tableAttributes, gottenAttributeTypeList, sql);
 
         String viewName = tableAttributes.viewName;
 

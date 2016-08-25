@@ -56,24 +56,32 @@ public class GeneralRandomTableTypeChecker extends RandomTableTypeChecker
 	 * @return
 	 */
 	public boolean visitGeneralRandomTableStatement(
-			GeneralRandomTableStatement generalRandomTableStatement) throws Exception
-	{
+			GeneralRandomTableStatement generalRandomTableStatement) throws Exception {
 
 		return super.visitRandomTableStatement(generalRandomTableStatement);
 	}
 
 	public void saveView(DefinedTableSchema tableAttributes, 
             ArrayList<DataType> gottenAttributeTypeList,
-            String sql) throws Exception
-	{
-		String viewName;
-		
-		viewName = tableAttributes.viewName;
-		
-		ArrayList<String> attributeNameList = tableAttributes.tableAttributeList;
-		ArrayList<DataType> attributeTypeList = gottenAttributeTypeList;
+            String sql) throws Exception {
 
-		ArrayList<Attribute> schema = new ArrayList<Attribute>();
+        String tableName = tableAttributes.viewName;
+
+		saveToCatalog(tableAttributes, gottenAttributeTypeList, sql);
+		catalog.addMCDependecy(tableName, this.getIndexedRandomTableList());
+
+        int end = tableName.lastIndexOf("_");
+        String realViewName = tableName.substring(0, end);
+        catalog.addIndexTable(realViewName, tableName);
+	}
+
+	void saveToCatalog(DefinedTableSchema tableAttributes, ArrayList<DataType> attributeTypeList, String sql) throws Exception {
+
+        String viewName = tableAttributes.viewName;
+
+		ArrayList<String> attributeNameList = tableAttributes.tableAttributeList;
+
+        ArrayList<Attribute> schema = new ArrayList<Attribute>();
 		// The view explicitly define the schema
 		if (attributeNameList != null) {
 			for (int i = 0; i < attributeNameList.size(); i++) {
@@ -94,11 +102,5 @@ public class GeneralRandomTableTypeChecker extends RandomTableTypeChecker
 
 		View view = new View(viewName, sql, schema, DataAccess.OBJ_RANDRELATION);
 		catalog.addView(view);
-		
-		int end = viewName.lastIndexOf("_");
-		String realViewName = viewName.substring(0, end);
-		catalog.addIndexTable(realViewName, viewName);
-		
-		catalog.addMCDependecy(viewName, this.getIndexedRandomTableList());
 	}
 }
