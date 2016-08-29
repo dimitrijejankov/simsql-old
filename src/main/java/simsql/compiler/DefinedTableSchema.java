@@ -39,18 +39,18 @@ import java.util.ArrayList;
 public class DefinedTableSchema extends SQLExpression {
 	public String viewName;
 	public ArrayList<String> tableAttributeList;
-	public boolean isAlignd; //denote whether we use the "_" to handle the TimeTick_based table
+	public boolean isAligned; //denote whether we use the "_" to handle the TimeTick_based table
 	
-	public DefinedTableSchema(String tableName, ArrayList<String> tableAttributeList, boolean isAlignd) {
+	public DefinedTableSchema(String tableName, ArrayList<String> tableAttributeList, boolean isAligned) {
 		super();
 		this.viewName = tableName.toLowerCase();
 		this.tableAttributeList = tableAttributeList;
-		this.isAlignd = isAlignd;
+		this.isAligned = isAligned;
 	}
 	
-	public DefinedTableSchema(String tableName, boolean isAlignd)
+	public DefinedTableSchema(String tableName, boolean isAligned)
 	{
-		this(tableName, null, isAlignd);
+		this(tableName, null, isAligned);
 	}
 
 

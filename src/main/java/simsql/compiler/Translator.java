@@ -32,7 +32,7 @@ package simsql.compiler; // package mcdb.compiler.logicPlan.translator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+
 import simsql.runtime.DataType;
 
 /**
@@ -486,7 +486,7 @@ public class Translator {
 			outputAttributeTypeList.add(realAttributes.get(i).getType());
 		}
 		
-		boolean isAligned = schema.isAlignd;
+		boolean isAligned = schema.isAligned;
 		//String elementName;
 		//ArrayList<String> constantTableList;
 		//ArrayList<MathOperator> individualGeneralIndexList;

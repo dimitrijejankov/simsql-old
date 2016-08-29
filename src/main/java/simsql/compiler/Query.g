@@ -621,6 +621,11 @@ createRandomTableStatement returns[RandomTableStatement statement]:
 	          {
 	            $statement = $generalRandomStatement.statement;
 	          }
+	          |
+              multidimensionalStatement
+              {
+                $statement = $multidimensionalStatement.statement;
+              }
 	      )
           /*------------------------------end-------------------------------
           */
@@ -666,6 +671,16 @@ generalRandomStatement returns[RandomTableStatement statement]:
           randomParameters
           {
             $statement = new GeneralRandomTableStatement($generalSchema.schema,
+                               $randomParameters.tableReference,
+                               $randomParameters.withStatementList,
+                               $randomParameters.statement);
+          };
+
+multidimensionalStatement returns[MultidimensionalTableStatement statement]:
+          multidimensionalSchema AS
+          randomParameters
+          {
+            $statement = new MultidimensionalTableStatement($multidimensionalSchema.schema,
                                $randomParameters.tableReference,
                                $randomParameters.withStatementList,
                                $randomParameters.statement);
@@ -725,6 +740,54 @@ generalSchema returns[DefinedTableSchema schema]:
         }
       )
       ;
+
+multidimensionalSchema returns[MultidimensionalTableSchema schema]:
+      schemaName ids=multidimensionalSchemaIndices
+      (
+        LPAREN
+        attributeList
+        RPAREN
+        {
+          $schema = new MultidimensionalTableSchema($schemaName.name, $ids.indices, $attributeList.attributeList, true);
+        }
+        |
+        {
+          $schema = new MultidimensionalTableSchema($schemaName.name, $ids.indices, true);
+        }
+      )
+      ;
+
+multidimensionalSchemaIndices returns[MultidimensionalSchemaIndices indices]:
+    LBRACKET idx=GENERALTABLEINDEX COLON spec=multidimensionalSchemaIndexSpecification RBRACKET
+    {
+        $indices = new MultidimensionalSchemaIndices();
+        $indices.add($idx.text, $spec.index);
+    }
+    (
+        LBRACKET idx=GENERALTABLEINDEX COLON multidimensionalSchemaIndexSpecification RBRACKET
+        {
+            $indices.add($idx.text, $spec.index);
+        }
+    )+
+    ;
+
+multidimensionalSchemaIndexSpecification returns[MultidimensionalSchemaIndexSpecification index]:
+    rb=INTEGER TREEDOT INTEGER
+    {
+        $index = new MultidimensionalSchemaIndexSpecification($rb.text, true);
+    }
+    |
+    rb=INTEGER TREEDOT
+    {
+        $index = new MultidimensionalSchemaIndexSpecification($rb.text, true);
+    }
+    |
+    rb=INTEGER
+    {
+        $index = new MultidimensionalSchemaIndexSpecification($rb.text, false);
+    }
+    ;
+
 /* ---------------------------------------end----------------------------------------
 */
 					
@@ -1665,7 +1728,7 @@ conditionExists returns [BooleanPredicate predicate]:
 /*
  * 7 -------------------------------------basic elements ---------------------------
  */ 
-            
+
 /** We have this to enable case insensitivity in our keywords */
 fragment A  : ('a'|'A') ;
 fragment B  : ('b'|'B') ;
@@ -1760,13 +1823,14 @@ DROP: D R O P;
 VGFUNCTION: V G F U N C T I O N;
 FUNCTION: F U N C T I O N;
 
-GENERALTABLEINDEX: I;
+GENERALTABLEINDEX: I|A|S|D|F|G|H|J|K|L|Z|X|C|V|B|N|M|Q|W|E|R|T|Y|U|O|P;
 UNION: U N I O N;
 
 
 ASTERISK : '*';
 SEMICOLON: ';';
 COMMA: ',';
+TREEDOT:'...';
 TWODOT:',..,';
 DOT: '.';
 COLON: ':';
@@ -1787,8 +1851,8 @@ LESSEQUAL: '<=';
 GREATEREQUAL: '>=';
 IDENTIFIER  : ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
 STRING: '\'' ('a'..'z'|'A'..'Z'|'0'..'9'|'/'|'('|')'|':'|'\\'|('\\\'')|'.'|'-'|'_'|' '|'%'|'#')+ '\'';
-//INTEGER: (('1'..'9')('0'..'9')*)|'0';
-NUMERIC: ((('1'..'9')('0'..'9')*)|'0')(|('.'(('0'..'9')+)));
+INTEGER: (('1'..'9')('0'..'9')*)|'0';
+NUMERIC: INTEGER |('.'(('0'..'9')+));
 
 
 /** Skipped tokens (whitespace) */

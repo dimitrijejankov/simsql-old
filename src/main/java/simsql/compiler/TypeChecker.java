@@ -907,7 +907,7 @@ public class TypeChecker extends ASTVisitor{
 		Relation relation = catalog.getRelation(tableName);
 		View view = catalog.getSchemaView(tableName);
 		
-		boolean isAligned = table.isAlignd;
+		boolean isAligned = table.isAligned;
 		
 		/*String realTableName;
 		if(!isAligned)
