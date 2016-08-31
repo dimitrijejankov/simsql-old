@@ -58,40 +58,16 @@ public class GeneralRandomTableTypeChecker extends RandomTableTypeChecker
 	public boolean visitGeneralRandomTableStatement(
 			GeneralRandomTableStatement generalRandomTableStatement) throws Exception
 	{
-		boolean subCheck = super.visitRandomTableStatement(generalRandomTableStatement);
-		
-		return subCheck;
+		return super.visitRandomTableStatement(generalRandomTableStatement);
 	}
 
 	public void saveView(DefinedTableSchema tableAttributes, 
             ArrayList<DataType> gottenAttributeTypeList,
             String sql) throws Exception
 	{
-		String viewName;
-		
-		viewName = tableAttributes.viewName;
-		
-		ArrayList<String> attributeNameList = tableAttributes.tableAttributeList;
-		ArrayList<DataType> attributeTypeList = gottenAttributeTypeList;
 
-		ArrayList<Attribute> schema = new ArrayList<Attribute>();
-		// The view explicitly define the schema
-		if (attributeNameList != null) {
-			for (int i = 0; i < attributeNameList.size(); i++) {
-				String name = attributeNameList.get(i);
-				DataType type = attributeTypeList.get(i);
-				Attribute attribute = new Attribute(name, type, viewName);
-				schema.add(attribute);
-			}
-		}
-		else {
-			for (int i = 0; i < attributeTypeList.size(); i++) {
-				String name = attributeList.get(i);
-				DataType type = attributeTypeList.get(i);
-				Attribute attribute = new Attribute(name, type, viewName);
-				schema.add(attribute);
-			}
-		}
+		ArrayList<Attribute> schema = saveAttributes(tableAttributes, gottenAttributeTypeList);
+		String viewName = tableAttributes.getViewName();
 
 		View view = new View(viewName, sql, schema, DataAccess.OBJ_RANDRELATION);
 		catalog.addView(view);

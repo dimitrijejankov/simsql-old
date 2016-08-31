@@ -177,6 +177,10 @@ public class SQLExpressionTranslator {
 	        {
 	        	tempChecker = CompilerProcessor.typeCheck(expression, sql, false);
 	        }
+            else if(expression instanceof MultidimensionalTableStatement)
+            {
+                tempChecker = CompilerProcessor.typeCheck(expression, sql, false);
+            }
 	        else if(expression instanceof GeneralRandomTableStatement)
 	        {
 	        	tempChecker = CompilerProcessor.typeCheck(expression, sql, false);
@@ -194,6 +198,10 @@ public class SQLExpressionTranslator {
 	        {
 	        	definedTableSchema = ((BaseLineRandomTableStatement)expression).definedTableSchema;
 	        }
+            else if(expression instanceof MultidimensionalTableStatement && tempChecker != null)
+            {
+                definedTableSchema = ((MultidimensionalTableStatement)expression).definedTableSchema;
+            }
 	        else if(expression instanceof GeneralRandomTableStatement && tempChecker != null)
 		    {
 	        	definedTableSchema = ((GeneralRandomTableStatement)expression).definedTableSchema;
@@ -735,6 +743,10 @@ public class SQLExpressionTranslator {
 	        {
 	        	tempChecker = CompilerProcessor.typeCheck(expression, sql, false);
 	        }
+			else if(expression instanceof MultidimensionalTableStatement)
+			{
+				tempChecker = CompilerProcessor.typeCheck(expression, sql, false);
+			}
 	        else if(expression instanceof GeneralRandomTableStatement)
 	        {
 	        	tempChecker = CompilerProcessor.typeCheck(expression, sql, false);
@@ -752,6 +764,10 @@ public class SQLExpressionTranslator {
 	        {
 	        	definedTableSchema = ((BaseLineRandomTableStatement)expression).definedTableSchema;
 	        }
+			else if(expression instanceof MultidimensionalTableStatement && tempChecker != null)
+			{
+				definedTableSchema = ((MultidimensionalTableStatement)expression).definedTableSchema;
+			}
 	        else if(expression instanceof GeneralRandomTableStatement && tempChecker != null)
 		    {
 	        	definedTableSchema = ((GeneralRandomTableStatement)expression).definedTableSchema;

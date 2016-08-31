@@ -447,7 +447,7 @@ public class RandomTableTypeChecker extends TypeChecker {
 		{
 			errorNum ++;
 			System.err.println("The number of attributes defined in the random table [" +
-					definedSchema.viewName + "] does not match its defintion in its subquery!");
+					definedSchema.getViewName() + "] does not match its defintion in its subquery!");
 			return false;
 		}
 		
@@ -459,7 +459,7 @@ public class RandomTableTypeChecker extends TypeChecker {
 		if(this instanceof BaseLineRandomTableTypeChecker ||
 				this instanceof GeneralRandomTableTypeChecker)
 		{
-			String viewName = definedSchema.viewName;
+			String viewName = definedSchema.getViewName();
 			int end = viewName.lastIndexOf("_");
 			
 			String realViewName = viewName.substring(0, end);
@@ -1129,34 +1129,37 @@ public class RandomTableTypeChecker extends TypeChecker {
             ArrayList<DataType> gottenAttributeTypeList,
             String sql) throws Exception
 	{
-		String viewName;
-		
-		viewName = tableAttributes.viewName;
-		
+		ArrayList<Attribute> schema = saveAttributes(tableAttributes, gottenAttributeTypeList);
+
+		String viewName = tableAttributes.getViewName();
+		View view = new View(viewName, sql, schema, DataAccess.OBJ_RANDRELATION);
+		catalog.addView(view);
+	}
+
+	protected ArrayList<Attribute> saveAttributes(DefinedTableSchema tableAttributes, ArrayList<DataType> gottenAttributeTypeList) {
+
 		ArrayList<String> attributeNameList = tableAttributes.tableAttributeList;
-		ArrayList<DataType> attributeTypeList = gottenAttributeTypeList;
+		String viewName = tableAttributes.getViewName();
 
 		ArrayList<Attribute> schema = new ArrayList<Attribute>();
 		// The view explicitly define the schema
 		if (attributeNameList != null) {
 			for (int i = 0; i < attributeNameList.size(); i++) {
 				String name = attributeNameList.get(i);
-				DataType type = attributeTypeList.get(i);
+				DataType type = gottenAttributeTypeList.get(i);
 				Attribute attribute = new Attribute(name, type, viewName);
 				schema.add(attribute);
 			}
 		}
 		else {
-			for (int i = 0; i < attributeTypeList.size(); i++) {
+			for (int i = 0; i < gottenAttributeTypeList.size(); i++) {
 				String name = attributeList.get(i);
-				DataType type = attributeTypeList.get(i);
+				DataType type = gottenAttributeTypeList.get(i);
 				Attribute attribute = new Attribute(name, type, viewName);
 				schema.add(attribute);
 			}
 		}
-
-		View view = new View(viewName, sql, schema, DataAccess.OBJ_RANDRELATION);
-		catalog.addView(view);
+		return schema;
 	}
 
 	public String getOutTableName() {

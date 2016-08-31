@@ -883,15 +883,8 @@ public class TypeChecker extends ASTVisitor{
 	public boolean visitOrderByColumn(OrderByColumn orderByColumn)throws Exception {
 		MathExpression expression = orderByColumn.expression;
 		ArrayList<DataType> subTypeList = expression.acceptVisitor(this);
-		
-		if(subTypeList == null)
-		{
-			return false;
-		}
-		else
-		{
-			return true;
-		}
+
+		return subTypeList != null;
 	}
 
 	/* (non-Javadoc)
@@ -899,77 +892,61 @@ public class TypeChecker extends ASTVisitor{
 	 */
 	@Override
 	public boolean visitDefinedTableSchemaExpression(DefinedTableSchema table) throws Exception{
-		
-		String tableName = table.viewName;
+
+		String tableName = table.getViewName();
 		ArrayList<String> tableAttributeList = table.tableAttributeList;
 		HashSet<String> stringSet = new HashSet<String>();
-		
+
 		Relation relation = catalog.getRelation(tableName);
 		View view = catalog.getSchemaView(tableName);
-		
-		boolean isAligned = table.isAligned;
-		
-		/*String realTableName;
-		if(!isAligned)
-		{
-			realTableName = tableName;
-		}
-		else
-		{
-			int start = tableName.lastIndexOf("_");
-			realTableName = tableName.substring(0, start);
-		}
-		
-		if(realTableName.endsWith("_i"))
-		{
-			System.err.println("Schema [" + realTableName + "] ends with \"_i\", which is not allowed!");
-			return false;
-		}
-		else
-		{
-			int start = realTableName.lastIndexOf("_");
-			if(start >= 0)
-			{
-				String suffix = realTableName.substring(start+1, realTableName.length());
-				if(suffix != null)
-				{
-					boolean valid = false;
-					for(int i = 0; i < suffix.length(); i++)
-					{
-						if(suffix.charAt(i) < '0' || suffix.charAt(i) > '9')
-						{
-							valid = true;
-							break;
-						}
-					}
-					
-					if(!valid)
-					{
-						System.err.println("Schema [" + realTableName + "] ends with \"_<number>\", which is not allowed!");
-						return false;
-					}
-				}
-			}
-		}*/
-		
+
 		if(relation != null || view!= null)
 		{
 			System.err.println("Entity [" + tableName + "] does exist!");
 			return false;
 		}
-		
+
 		if(tableAttributeList != null)
 		{
-			for(int i = 0; i < tableAttributeList.size(); i++)
-			{
-				if(stringSet.contains(tableAttributeList.get(i)))
-				{
+			for (String aTableAttributeList : tableAttributeList) {
+				if (stringSet.contains(aTableAttributeList)) {
 					System.err.println("The attributes in Relation [" + tableName + "] overlapped!");
 					return false;
+				} else {
+					stringSet.add(aTableAttributeList);
 				}
-				else
-				{
-					stringSet.add(tableAttributeList.get(i));
+			}
+		}
+		return true;
+	}
+
+	/* (non-Javadoc)
+ * @see astVisitor.ASTVisitor#visitTableExpression(component.sqlExpression.TableAttributes)
+ */
+	@Override
+	public boolean visitMultidimensionalTableSchemaExpression(MultidimensionalTableSchema table) throws Exception {
+
+		String tableName = table.getViewName();
+		ArrayList<String> tableAttributeList = table.tableAttributeList;
+		HashSet<String> stringSet = new HashSet<String>();
+
+		Relation relation = catalog.getRelation(tableName);
+		View view = catalog.getSchemaView(tableName);
+
+		if(relation != null || view!= null)
+		{
+			System.err.println("Entity [" + tableName + "] does exist!");
+			return false;
+		}
+
+		if(tableAttributeList != null)
+		{
+			for (String aTableAttributeList : tableAttributeList) {
+				if (stringSet.contains(aTableAttributeList)) {
+					System.err.println("The attributes in Relation [" + tableName + "] overlapped!");
+					return false;
+				} else {
+					stringSet.add(aTableAttributeList);
 				}
 			}
 		}
@@ -980,7 +957,7 @@ public class TypeChecker extends ASTVisitor{
 	public boolean visitDefinedArrayTableSchemaExpression(DefinedArrayTableSchema definedArrayTableSchema) throws Exception {
 		String lowerBound = definedArrayTableSchema.lowerBound;
 		String upBound = definedArrayTableSchema.upBound;
-		String viewName = definedArrayTableSchema.viewName;
+		String viewName = definedArrayTableSchema.getViewName();
 		ArrayList<String> tableAttributeList = definedArrayTableSchema.tableAttributeList;
 		TypeChecker typeChecker = new TypeChecker(null, false);
 		

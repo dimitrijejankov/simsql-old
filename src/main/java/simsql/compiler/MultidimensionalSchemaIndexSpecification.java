@@ -15,7 +15,20 @@ public class MultidimensionalSchemaIndexSpecification {
     }
 
     public MultidimensionalSchemaIndexSpecification(String lowerLimit, Boolean unconstrained) {
+        this.upperLimit = null;
         this.lowerLimit = Integer.parseInt(lowerLimit);
         this.unconstrained = unconstrained;
+    }
+
+    String getStringValue(){
+        if(unconstrained){
+            return "_" + lowerLimit + "to";
+        }
+
+        if(upperLimit != null){
+            return "_" + lowerLimit + "to" + upperLimit;
+        }
+
+        return "_" + lowerLimit;
     }
 }

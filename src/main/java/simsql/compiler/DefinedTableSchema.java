@@ -37,7 +37,7 @@ import java.util.ArrayList;
  *
  */
 public class DefinedTableSchema extends SQLExpression {
-	public String viewName;
+	protected String viewName;
 	public ArrayList<String> tableAttributeList;
 	public boolean isAligned; //denote whether we use the "_" to handle the TimeTick_based table
 	
@@ -53,7 +53,6 @@ public class DefinedTableSchema extends SQLExpression {
 		this(tableName, null, isAligned);
 	}
 
-
 	/* (non-Javadoc)
 	 * @see component.sqlExpression.SQLExpression#acceptVisitor(astVisitor.ASTVisitor)
 	 */
@@ -61,5 +60,8 @@ public class DefinedTableSchema extends SQLExpression {
 	public boolean acceptVisitor(ASTVisitor astVisitor) throws Exception{
 		return astVisitor.visitDefinedTableSchemaExpression(this);
 	}
-	
+
+    public String getViewName() {
+        return viewName;
+    }
 }

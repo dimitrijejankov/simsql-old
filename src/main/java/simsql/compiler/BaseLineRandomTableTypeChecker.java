@@ -88,8 +88,8 @@ public class BaseLineRandomTableTypeChecker extends RandomTableTypeChecker
 	{
 		String viewName;
 		
-		viewName = tableAttributes.viewName;
-		
+		viewName = tableAttributes.getViewName();
+
 		ArrayList<String> attributeNameList = tableAttributes.tableAttributeList;
 		ArrayList<DataType> attributeTypeList = gottenAttributeTypeList;
 

@@ -91,7 +91,7 @@ public class ViewTypeChecker extends TypeChecker{
 			return false;
 		}
 		
-		String viewName = definedSchema.viewName;
+		String viewName = definedSchema.getViewName();
 		ArrayList<String> viewAttributeList = definedSchema.tableAttributeList;
 		ArrayList<DataType> gottenAttributeTypeList = getTableAttributes(statement.selectList);
 		
@@ -236,7 +236,7 @@ public class ViewTypeChecker extends TypeChecker{
             ArrayList<DataType> gottenAttributeTypeList,
             String sql) throws Exception
 	{
-		String viewName = tableAttributes.viewName;
+		String viewName = tableAttributes.getViewName();
 		ArrayList<String> attributeNameList = tableAttributes.tableAttributeList;
 		ArrayList<DataType> attributeTypeList = gottenAttributeTypeList;
 

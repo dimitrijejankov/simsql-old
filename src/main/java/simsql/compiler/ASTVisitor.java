@@ -72,6 +72,7 @@ public abstract class ASTVisitor {
 	 public abstract boolean visitAsteriskTable(AsteriskTable asteriskTable)throws Exception;
 	 public abstract boolean visitSelectStatement(SelectStatement selectStatement) throws Exception;
 	 public abstract boolean visitDefinedTableSchemaExpression(DefinedTableSchema table)throws Exception;
+     public abstract boolean visitMultidimensionalTableSchemaExpression(MultidimensionalTableSchema table) throws Exception;
 	 public abstract boolean visitDefinedArrayTableSchemaExpression(DefinedArrayTableSchema definedArrayTableSchema)throws Exception;
 	 public abstract boolean visitWithStatementExpression(WithStatement withStatement)throws Exception;
 	 public abstract boolean visitTableReferenceExpression(TableReference tableReference)throws Exception;

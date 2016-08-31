@@ -11,6 +11,8 @@ public class MultidimensionalTableSchema extends DefinedTableSchema  {
         super(viewName, tableAttributeList, isAligned);
         this.multidimensionalSchemaIndices = multidimensionalSchemaIndices;
 
+        if(!multidimensionalSchemaIndices.checkLabelingOrder())
+            throw new RuntimeException("Wrong index order!");
     }
 
     public MultidimensionalTableSchema(String viewName, MultidimensionalSchemaIndices multidimensionalSchemaIndices, boolean isAligned) {
@@ -20,6 +22,11 @@ public class MultidimensionalTableSchema extends DefinedTableSchema  {
 
     @Override
     public boolean acceptVisitor(ASTVisitor astVisitor) throws Exception{
-        return true;
+        return astVisitor.visitMultidimensionalTableSchemaExpression(this);
+    }
+
+    @Override
+    public String getViewName() {
+        return super.getViewName() + multidimensionalSchemaIndices.getSuffix();
     }
 }

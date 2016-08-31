@@ -11,7 +11,7 @@ public class MultidimensionalTableStatement extends RandomTableStatement {
         super(schema, outerTable, withList, selectStatement);
     }
 
-    public boolean acceptVisitor(RandomTableTypeChecker astVisitor) throws Exception {
-        return true;
+    public boolean acceptVisitor(MultidimensionalTableTypeChecker astVisitor) throws Exception {
+        return astVisitor.visitMultidimensionalTableStatement(this);
     }
 }

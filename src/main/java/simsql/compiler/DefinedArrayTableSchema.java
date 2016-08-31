@@ -48,7 +48,7 @@ public class DefinedArrayTableSchema extends DefinedTableSchema {
 	
 	public String toString()
 	{
-		return viewName + "[" + lowerBound + "..." + upBound + "]";
+		return getViewName() + "[" + lowerBound + "..." + upBound + "]";
 	}
 
 

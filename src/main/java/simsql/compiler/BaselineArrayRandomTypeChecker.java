@@ -90,7 +90,7 @@ public class BaselineArrayRandomTypeChecker extends RandomTableTypeChecker {
 		 * 2. check the random table in the general form. The check includes checking the schema under the different
 		 * time ticks has the same form.
 		 */
-		DefinedTableSchema tempSchema = new DefinedTableSchema(arraySchema.viewName + "_i", 
+		DefinedTableSchema tempSchema = new DefinedTableSchema(arraySchema.getViewName() + "_i",
 															   arraySchema.tableAttributeList,
 																true);
 		GeneralRandomTableStatement tempStatement = new GeneralRandomTableStatement(tempSchema,
@@ -117,7 +117,7 @@ public class BaselineArrayRandomTypeChecker extends RandomTableTypeChecker {
 		String initializedQuery;
 		for(int i = lower; i <= up; i++)
 		{
-			tempSchema = new DefinedTableSchema(arraySchema.viewName + "_" + i, 
+			tempSchema = new DefinedTableSchema(arraySchema.viewName + "_" + i,
 												arraySchema.tableAttributeList,
 												true);
 			
@@ -265,7 +265,7 @@ public class BaselineArrayRandomTypeChecker extends RandomTableTypeChecker {
 	{
 		String viewName;
 		
-		viewName = tableAttributes.viewName;
+		viewName = tableAttributes.getViewName();
 		
 		ArrayList<String> attributeNameList = tableAttributes.tableAttributeList;
 		ArrayList<DataType> attributeTypeList = gottenAttributeTypeList;

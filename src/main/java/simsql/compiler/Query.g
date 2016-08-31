@@ -22,7 +22,7 @@
 grammar Query;
 
 options {
-	k = 3;
+	k = 4;
 	backtrack = true;
 	memoize=true;
 }
@@ -764,7 +764,7 @@ multidimensionalSchemaIndices returns[MultidimensionalSchemaIndices indices]:
         $indices.add($idx.text, $spec.index);
     }
     (
-        LBRACKET idx=GENERALTABLEINDEX COLON multidimensionalSchemaIndexSpecification RBRACKET
+        LBRACKET idx=GENERALTABLEINDEX COLON spec=multidimensionalSchemaIndexSpecification RBRACKET
         {
             $indices.add($idx.text, $spec.index);
         }
@@ -772,9 +772,9 @@ multidimensionalSchemaIndices returns[MultidimensionalSchemaIndices indices]:
     ;
 
 multidimensionalSchemaIndexSpecification returns[MultidimensionalSchemaIndexSpecification index]:
-    rb=INTEGER TREEDOT INTEGER
+    rb=INTEGER TREEDOT lb=INTEGER
     {
-        $index = new MultidimensionalSchemaIndexSpecification($rb.text, true);
+        $index = new MultidimensionalSchemaIndexSpecification($rb.text, $lb.text);
     }
     |
     rb=INTEGER TREEDOT
@@ -1822,8 +1822,8 @@ OUT: O U T;
 DROP: D R O P;
 VGFUNCTION: V G F U N C T I O N;
 FUNCTION: F U N C T I O N;
+GENERALTABLEINDEX: I|J|K|L;
 
-GENERALTABLEINDEX: I|A|S|D|F|G|H|J|K|L|Z|X|C|V|B|N|M|Q|W|E|R|T|Y|U|O|P;
 UNION: U N I O N;
 
 

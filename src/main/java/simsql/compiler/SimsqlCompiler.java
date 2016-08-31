@@ -203,7 +203,7 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 		    		ArrayList<Operator> children = new ArrayList<Operator>();
 		    		children.add(element);
 		    		ArrayList<String> tableNameList = new ArrayList<String>();
-		    		tableNameList.add(checker.getDefinedSchema().viewName);
+		    		tableNameList.add(checker.getDefinedSchema().getViewName());
 		    		Operator frameOutput = new FrameOutput(nodeName, children, parents, tableNameList);
 		    		
 		    		element.addParent(frameOutput);
@@ -480,7 +480,7 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 				        	sqlList.add(baseLineQueryList.get(j));
 				        	
 				        	DefinedTableSchema definedTableSchema = ((BaseLineRandomTableStatement)baseLineArrayElement).definedTableSchema;
-				        	String viewName = definedTableSchema.viewName;
+				        	String viewName = definedTableSchema.getViewName();
 				        	
 				        	definitionMap.put(element, viewName);
 			        	}
@@ -502,11 +502,28 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 		        	sqlList.add(sql);
 		        	
 		        	DefinedTableSchema definedTableSchema = ((BaseLineRandomTableStatement)expression).definedTableSchema;
-		        	String viewName = definedTableSchema.viewName;
+		        	String viewName = definedTableSchema.getViewName();
 		        	
 		        	definitionMap.put(element, viewName);
 		        	empty = false;
 		        }
+				else if(expression instanceof MultidimensionalTableStatement)
+				{
+					UnnestedRandomTableStatement result = ((RandomTableUnnester)unnester).unnestRandomTableStatement((RandomTableStatement)expression);
+					//System.out.println(result);
+					Operator element = translator.translate(result);
+					//System.out.println(Process.toString(element));
+
+		        	/*
+		        	 * 5. PostProcessing
+		        	 */
+					sinkList.add(element);
+					sqlList.add(sql);
+					DefinedTableSchema definedTableSchema = ((MultidimensionalTableStatement)expression).definedTableSchema;
+					String viewName = definedTableSchema.getViewName();
+
+					definitionMap.put(element, viewName);
+				}
 		        else if(expression instanceof GeneralRandomTableStatement)
 		        {
 		        	UnnestedRandomTableStatement result = ((RandomTableUnnester)unnester).unnestRandomTableStatement((RandomTableStatement)expression);
@@ -520,7 +537,7 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 		        	sinkList.add(element);
 		        	sqlList.add(sql);
 		        	DefinedTableSchema definedTableSchema = ((GeneralRandomTableStatement)expression).definedTableSchema;
-		        	String viewName = definedTableSchema.viewName;
+		        	String viewName = definedTableSchema.getViewName();
 		        	
 		        	definitionMap.put(element, viewName);
 		        	empty = false;
@@ -539,7 +556,7 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 			        	sqlList.add(sql);
 			        	
 			        	DefinedTableSchema definedTableSchema = ((UnionViewStatement)expression).getSchema();
-			        	String viewName = definedTableSchema.viewName;
+			        	String viewName = definedTableSchema.getViewName();
 			        	
 			        	definitionMap.put(element, viewName);
 			        	empty = false;

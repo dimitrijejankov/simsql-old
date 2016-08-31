@@ -90,7 +90,7 @@ public class MaterializedViewTypeChecker extends TypeChecker
 			return false;
 		}
 		
-		String viewName = definedSchema.viewName;
+		String viewName = definedSchema.getViewName();
 		ArrayList<String> viewAttributeList = definedSchema.tableAttributeList;
 		ArrayList<DataType> gottenAttributeTypeList = getTableAttributes(statement.selectList);
 		
@@ -113,7 +113,7 @@ public class MaterializedViewTypeChecker extends TypeChecker
 	
 	public void saveMaterilizedView() throws Exception
 	{
-		String viewName = definedSchema.viewName;
+		String viewName = definedSchema.getViewName();
 		ArrayList<String> attributeNameList = definedSchema.tableAttributeList;
 		ArrayList<DataType> attributeTypeList = gottenAttributeTypeList;
 

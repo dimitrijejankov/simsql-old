@@ -472,10 +472,10 @@ public class Translator {
 		String vgWrapperName = UnionViewHelper.UNION_VIEW_NAME_PREFIX + translatorHelper.getVgWrapperIndex();
 		String vgFunctionName = UnionViewHelper.UNION_VIEW_FUNCTION_PREFIX + translatorHelper.getVgWrapperIndex();
 		inputSeedAttributeName = firstViewName + "_seed";
-		String outputSeedAttributeName = schema.viewName + "_seed2";
+		String outputSeedAttributeName = schema.getViewName() + "_seed2";
 		Operator outerRelationOperator = seedProjection;
 		VGFunctionStatistics vgFunctionStatistics;
-		viewName = schema.viewName;
+		viewName = schema.getViewName();
 		
 		ArrayList<DataType> outputAttributeTypeList = new ArrayList<DataType>();
 		

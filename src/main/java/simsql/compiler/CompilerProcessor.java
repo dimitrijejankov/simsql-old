@@ -84,160 +84,8 @@ public class CompilerProcessor {
         
         return expressionList;
 	}
-	
-	//typecheck the expressions from the Parser
-	public static ArrayList<TypeChecker> typeCheck (ArrayList<Expression> expressionList,
-			                                       String query)  throws Exception
-	{
-		ArrayList<TypeChecker> checkerList = null;
-		StringTokenizer token = new StringTokenizer(query, ";");
-		boolean subcheck;
-		
-		if(expressionList != null)
-        {
-			checkerList = new ArrayList<TypeChecker>();
-			
-        	for(int i = 0; i < expressionList.size(); i++)
-        	{
-        		String sql = (String)(token.nextElement());
-        		Expression expression = expressionList.get(i);
-        		
-        		if(expression instanceof SelectStatement)
-        		{
-        			TypeChecker typechecker = new TypeChecker(true);
-        			subcheck = typechecker.visitSelectStatement((SelectStatement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        			checkerList.add(typechecker);
-        		}
-        		else if(expression instanceof ViewStatement)
-        		{
-        			((ViewStatement) expression).setSqlString(sql);
-        			ViewTypeChecker typechecker = new ViewTypeChecker(false);
-        			subcheck = typechecker.visitViewStatement((ViewStatement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        			checkerList.add(typechecker);
-				}
-				else if(expression instanceof MaterializedViewStatement)
-        		{
-        			((MaterializedViewStatement) expression).setSqlString(sql);
-        			MaterializedViewTypeChecker typeChecker = new MaterializedViewTypeChecker(false);
-        			subcheck = ((MaterializedViewTypeChecker)typeChecker).visitMaterializedViewStatement((MaterializedViewStatement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        		}
-        		else if(expression instanceof UnionViewStatement)
-        		{
-        			((UnionViewStatement)expression).setSqlString(sql);
-        			UnionViewStatementTypeChecker typeChecker = new UnionViewStatementTypeChecker();
-        			subcheck = typeChecker.visitUnionViewStatement((UnionViewStatement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        			checkerList.add(typeChecker);
-        		}
-        		else if(expression instanceof BaseLineRandomTableStatement)
-        		{
-        			((BaseLineRandomTableStatement) expression).setSqlString(sql);
-        			BaseLineRandomTableTypeChecker typeChecker = new BaseLineRandomTableTypeChecker(false);
-        			subcheck = ((BaseLineRandomTableTypeChecker)typeChecker).visitBaseLineRandomTableStatement((BaseLineRandomTableStatement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        			checkerList.add(typeChecker);
-        		}
-        		else if(expression instanceof BaseLineArrayRandomTableStatement)
-        		{
-        			((BaseLineArrayRandomTableStatement) expression).setSqlString(sql);
-        			BaselineArrayRandomTypeChecker typeChecker = new BaselineArrayRandomTypeChecker();
-        			subcheck = ((BaselineArrayRandomTypeChecker)typeChecker).visitBaselineArrayRandomTableStatement(
-        					(BaseLineArrayRandomTableStatement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        			checkerList.add(typeChecker);
-        		}
-        		else if(expression instanceof GeneralRandomTableStatement)
-        		{
-        			((GeneralRandomTableStatement) expression).setSqlString(sql);
-        			GeneralRandomTableTypeChecker typeChecker = new GeneralRandomTableTypeChecker(false);
-        			subcheck = ((GeneralRandomTableTypeChecker)typeChecker).visitGeneralRandomTableStatement((GeneralRandomTableStatement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        			checkerList.add(typeChecker);
-        		}
-        		else if(expression instanceof RandomTableStatement)
-        		{
-        			((RandomTableStatement) expression).setSqlString(sql);
-        			RandomTableTypeChecker typechecker = new RandomTableTypeChecker(false);
-        			subcheck = typechecker.visitRandomTableStatement((RandomTableStatement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        			checkerList.add(typechecker);
-        		}
-        		else if(expression instanceof TableDefinitionStatement)
-        		{
-        			TableDefineChecker typechecker = new TableDefineChecker();
-        			subcheck = typechecker.visitTableDefinitionStatement((TableDefinitionStatement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        			checkerList.add(typechecker);
-        		}
-        		else if(expression instanceof VGFunctionDefinitionStatement)
-        		{
-        			VGFunctionDefineChecker typechecker = new VGFunctionDefineChecker();
-        			subcheck = typechecker.visitVGFunctionDefinitionStatement((VGFunctionDefinitionStatement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        			checkerList.add(typechecker);
-        		}
-        		else if(expression instanceof FunctionDefinitionStatement)
-        		{
-        			FunctionDefineChecker typechecker = new FunctionDefineChecker();
-        			subcheck = typechecker.visitFunctionDefinitionStatement((FunctionDefinitionStatement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        			checkerList.add(typechecker);
-        		}
-        		else if(expression instanceof DropElement)
-        		{
-        			TypeChecker typeChecker = new TypeChecker(false);
-        			subcheck = typeChecker.visitDropElement((DropElement)expression);
-        			if(!subcheck)
-        			{
-        				return null;
-        			}
-        			checkerList.add(typeChecker);
-        		}
-        	}
-        }
-		else
-		{
-			checkerList = null;
-		}
-		
-		return checkerList;
-	}
+
+
 	
 	//typecheck the expressions from the Parser
 	public static TypeChecker typeCheck(Expression expression,
@@ -304,6 +152,17 @@ public class CompilerProcessor {
 			typeChecker = new BaselineArrayRandomTypeChecker();
 			subcheck = ((BaselineArrayRandomTypeChecker)typeChecker).visitBaselineArrayRandomTableStatement(
 					(BaseLineArrayRandomTableStatement)expression);
+			if(!subcheck)
+			{
+				return null;
+			}
+		}
+		else if(expression instanceof MultidimensionalTableStatement)
+		{
+			((MultidimensionalTableStatement) expression).setSqlString(sql);
+			typeChecker = new MultidimensionalTableTypeChecker(false);
+			subcheck = ((MultidimensionalTableTypeChecker)typeChecker).visitMultidimensionalTableStatement(
+					(MultidimensionalTableStatement)expression);
 			if(!subcheck)
 			{
 				return null;
@@ -450,6 +309,17 @@ public class CompilerProcessor {
     				return null;
     			}
     		}
+			else if(expression instanceof MultidimensionalTableStatement)
+			{
+				((MultidimensionalTableStatement) expression).setSqlString(sql);
+				typechecker = new MultidimensionalTableTypeChecker(false);
+				((MultidimensionalTableTypeChecker)typechecker).setSaved(save);
+				subcheck = ((MultidimensionalTableTypeChecker)typechecker).visitMultidimensionalTableStatement((MultidimensionalTableStatement)expression);
+				if(!subcheck)
+				{
+					return null;
+				}
+			}
     		else if(expression instanceof GeneralRandomTableStatement)
     		{
     			((GeneralRandomTableStatement) expression).setSqlString(sql);

@@ -301,7 +301,7 @@ public class UnionViewStatementTypeChecker extends TypeChecker {
 		if(unionViewStatement instanceof BaselineUnionViewStatement ||
 				unionViewStatement instanceof GeneralUnionViewStatement)
 		{
-			String viewName = schema.viewName;
+			String viewName = schema.getViewName();
 			int end = viewName.lastIndexOf("_");
 			
 			String realViewName = viewName.substring(0, end);
@@ -421,7 +421,7 @@ public class UnionViewStatementTypeChecker extends TypeChecker {
             UnionViewStatement generalUnionViewStatement,
             HashSet<String> dependedRandomTableSet) throws Exception
 	{
-		String viewName = schema.viewName;
+		String viewName = schema.getViewName();
 		ArrayList<String> attributeNameList = schema.tableAttributeList;
 		ArrayList<DataType> attributeTypeList = gottenAttributeTypeList;
 
