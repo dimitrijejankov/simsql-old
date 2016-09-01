@@ -42,6 +42,7 @@ public class DataAccess {
 	public static final int OBJ_VALUES_TABLE = 4;
 	public static final int OBJ_GENERAL_FUNCTION = 5;
 	public static final int OBJ_UNION_VIEW = 6;
+	public static final int OBJ_MULRELATION = 7;
 
 	/** Database connection */
 	Connection conn;

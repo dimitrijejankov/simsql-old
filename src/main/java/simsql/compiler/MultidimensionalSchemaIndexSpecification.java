@@ -20,6 +20,28 @@ public class MultidimensionalSchemaIndexSpecification {
         this.unconstrained = unconstrained;
     }
 
+    /**
+     * Parses a MultidimensionalSchemaIndexSpecification from string.
+     * @param indexString the string format should look like the following examples : 1 1to 1to2
+     */
+    public MultidimensionalSchemaIndexSpecification(String indexString) {
+
+        String[] parts = indexString.split("to");
+
+        if(parts.length == 2)
+        {
+            lowerLimit = Integer.parseInt(parts[0]);
+            upperLimit = Integer.parseInt(parts[1]);
+        }
+        else if(parts.length == 1){
+            lowerLimit = Integer.parseInt(parts[0]);
+            this.unconstrained = indexString.endsWith("to");
+        }
+        else {
+            throw new RuntimeException("MultidimensionalSchemaIndexSpecification: Wrong index format.");
+        }
+    }
+
     String getStringValue(){
         if(unconstrained){
             return "_" + lowerLimit + "to";
@@ -30,5 +52,16 @@ public class MultidimensionalSchemaIndexSpecification {
         }
 
         return "_" + lowerLimit;
+    }
+
+    public boolean checkRange(Integer value) {
+        if(upperLimit != null) {
+            return value <= upperLimit && value >= lowerLimit;
+        }
+        else if(unconstrained) {
+            return value >= lowerLimit;
+        }
+
+        return value.equals(lowerLimit);
     }
 }

@@ -1,10 +1,11 @@
 package simsql.compiler;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class MultidimensionalSchemaIndices {
 
-    private final static String[] labelingOrder = { "i", "j", "k", "l", "m", "n", "o",
+    public final static String[] labelingOrder = { "i", "j", "k", "l", "m", "n", "o",
                                                     "p", "q", "r", "s", "t", "u", "v",
                                                     "w", "x", "y", "z", "a", "b", "c",
                                                     "d", "e", "f", "g", "h" };
@@ -13,6 +14,21 @@ public class MultidimensionalSchemaIndices {
 
     public MultidimensionalSchemaIndices() {
         indices = new LinkedHashMap<String, MultidimensionalSchemaIndexSpecification>();
+    }
+
+    /**
+     * Creates a new instance of MultidimensionalSchemaIndices from a general multidimensional table name.
+     * @param generalTableName For example the input string resembles the following format : md_2_2to3_3to.
+     */
+    public MultidimensionalSchemaIndices(String generalTableName) {
+        int offset = generalTableName.indexOf("_");
+        String tableName = generalTableName.substring(offset + 1);
+
+        String parts[] = tableName.split("_");
+
+        for(int i = 0; i < parts.length; ++i) {
+            indices.put(labelingOrder[i], new MultidimensionalSchemaIndexSpecification(parts[i]));
+        }
     }
 
     public void add(String idx, MultidimensionalSchemaIndexSpecification spec) {
@@ -44,6 +60,20 @@ public class MultidimensionalSchemaIndices {
                 return false;
 
             i++;
+        }
+
+        return true;
+    }
+
+    Boolean areIndicesForThisTable(HashMap<String, Integer> ids) {
+
+        if(ids.size() != indices.size())
+            return false;
+
+        for(String id : ids.keySet()) {
+            if(!indices.get(id).checkRange(ids.get(id))) {
+                return false;
+            }
         }
 
         return true;

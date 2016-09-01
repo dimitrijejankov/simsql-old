@@ -22,7 +22,7 @@ public class MultidimensionalTableTypeChecker extends RandomTableTypeChecker {
         ArrayList<Attribute> schema = saveAttributes(tableAttributes, gottenAttributeTypeList);
         String viewName = tableAttributes.getViewName();
 
-        View view = new View(viewName, sql, schema, DataAccess.OBJ_RANDRELATION);
+        View view = new View(viewName, sql, schema, DataAccess.OBJ_MULRELATION);
         catalog.addView(view);
 
         int end = viewName.indexOf("_");

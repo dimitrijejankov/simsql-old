@@ -48,6 +48,7 @@ import simsql.compiler.PlanInstantiation;
 import simsql.compiler.TempScanHelper;
 import simsql.compiler.FrameOutput;
 import simsql.compiler.PlanHelper;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -60,526 +61,361 @@ import java.util.StringTokenizer;
 // This is a simple query processor skeleton that supports a Parser->Optimizer->Translator->Runtime data flow
 public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, SimSQLOptimizedQuery, DataFlowQuery, HadoopResult> {
 
-	private SimSQLCompiledQuery parsedQuery;
-	private boolean isMCMC;
-	
-	//private FoulaOptimizer myOptimizer;
-	private CompiledOptimizer myOptimizer;
-	private WrappedTranslator myTranslator;
-	private HadoopRuntime myRuntime;
-	private SimsqlCompiler myParser;
+    private SimSQLCompiledQuery parsedQuery;
+    private boolean isMCMC;
 
-	// data structures for MCMC
-	private PlanInstantiation planInstantiation;
-	private int maxLoop;
-	
-	private HadoopResult previousResult;
-	private int timeTick;
-	private boolean isFirstIteration;
-	
-        // remembers the output from the last iteration... used to save/delete this output
-	private ArrayList <Relation> lastTime = new ArrayList <Relation> ();
+    //private FoulaOptimizer myOptimizer;
+    private CompiledOptimizer myOptimizer;
+    private WrappedTranslator myTranslator;
+    private HadoopRuntime myRuntime;
+    private SimsqlCompiler myParser;
 
-	public void saveOutputsFromLastIter () {
-		for (Relation relation : lastTime) {
+    // data structures for MCMC
+    private PlanInstantiation planInstantiation;
+    private int maxLoop;
 
-		  // first, we see if this is one of the MCMC tables
-		  String oldName = relation.getName ();
+    private HadoopResult previousResult;
+    private int timeTick;
+    private boolean isFirstIteration;
 
-		  // strip off the MC iteration
-		  String [] parts = oldName.split ("_");
-		  String without = "";
-		  for (int i = 0; i < parts.length - 1; i++) {
-			without += parts[i] + "_";		
-		  }
+    // remembers the output from the last iteration... used to save/delete this output
+    private ArrayList<Relation> lastTime = new ArrayList<Relation>();
 
-		  if (parts[parts.length - 1] == "0")
-			without += "0";
-		  else
-		        without += "i";
+    public void saveOutputsFromLastIter() {
+        for (Relation relation : lastTime) {
 
-		  // see if this is a view
-		  View res = getCatalog().getView (without);
+            // first, we see if this is one of the MCMC tables
+            String oldName = relation.getName();
 
-		  // if not, move on
-		  if (res == null) 
-			continue;
-                  
-		  // rename the attributes to match the view
-	 	  int index = 0;
-		  for (Attribute a : relation.getAttributes ()) {
-			a.setName (res.getAttributes ().get (index).getName ());
-			index++;
-		  }
+            // strip off the MC iteration
+            String[] parts = oldName.split("_");
+            String without = "";
+            for (int i = 0; i < parts.length - 1; i++) {
+                without += parts[i] + "_";
+            }
 
-		  // now save the relation
-		  String newName = relation.getName () + "_saved";
-		  relation.setName (newName);
-		  relation.setFileName (null);
-		  getCatalog().addRelation (relation);	
-		  myTranslator.getPhysicalDatabase().rename (oldName, newName);
-		}
-		lastTime = new ArrayList <Relation> ();
-	}	
+            if (parts[parts.length - 1] == "0")
+                without += "0";
+            else
+                without += "i";
 
-        public void deleteOutputsFromLastIter () {
-		for (Relation relation : lastTime) {
-			getPhysicalDatabase().deleteTable (relation.getName ());
-		}
-	}
+            // see if this is a view
+            View res = getCatalog().getView(without);
 
-	public MCMCQueryProcessor()
-	{
-		parsedQuery = null;
-		isMCMC = false;
-		//myOptimizer = new FoulaOptimizer();
-		myOptimizer = new CompiledOptimizer();
-		myTranslator = new WrappedTranslator();
-		
-		myRuntime = new HadoopRuntime(myTranslator.getPhysicalDatabase());
-		myParser = new SimsqlCompiler(
-				myTranslator.getPhysicalDatabase(),
-				myRuntime.getRuntimeParameters()
-				);
-		previousResult = null;
-		timeTick = -1;
-		isFirstIteration = true;
-	}
+            // if not, move on
+            if (res == null)
+                continue;
 
-  /** added by Luis for the MCMC stuff. */
-  public MCMCQueryProcessor(CompiledOptimizer opt, SimsqlCompiler comp) {
-    parsedQuery = null;
-    isMCMC = false;
-    myOptimizer = opt;
-    myTranslator = null;
-    myRuntime = null;
-    myParser = comp;
-    previousResult = null;
-    timeTick = -1;
-    isFirstIteration = true;
-  }
+            // rename the attributes to match the view
+            int index = 0;
+            for (Attribute a : relation.getAttributes()) {
+                a.setName(res.getAttributes().get(index).getName());
+                index++;
+            }
 
-	public int getIteration () {
-		return timeTick;
-	}
+            // now save the relation
+            String newName = relation.getName() + "_saved";
+            relation.setName(newName);
+            relation.setFileName(null);
+            getCatalog().addRelation(relation);
+            myTranslator.getPhysicalDatabase().rename(oldName, newName);
+        }
+        lastTime = new ArrayList<Relation>();
+    }
 
-	public Catalog getCatalog() {
-		return myParser.getCatalog();
-	}
+    public void deleteOutputsFromLastIter() {
+        for (Relation relation : lastTime) {
+            getPhysicalDatabase().deleteTable(relation.getName());
+        }
+    }
 
-	public PhysicalDatabase<DataFlowQuery> getPhysicalDatabase() {
-		return myTranslator.getPhysicalDatabase();
-	}
+    public MCMCQueryProcessor() {
+        parsedQuery = null;
+        isMCMC = false;
+        //myOptimizer = new FoulaOptimizer();
+        myOptimizer = new CompiledOptimizer();
+        myTranslator = new WrappedTranslator();
 
-	public RuntimeParameter getRuntimeParameter() {
-		return myRuntime.getRuntimeParameters();
-	}
+        myRuntime = new HadoopRuntime(myTranslator.getPhysicalDatabase());
+        myParser = new SimsqlCompiler(
+                myTranslator.getPhysicalDatabase(),
+                myRuntime.getRuntimeParameters()
+        );
+        previousResult = null;
+        timeTick = -1;
+        isFirstIteration = true;
+    }
 
-	public Compiler<SimSQLCompiledQuery> getCompiler() {
-		return myParser;
-	}
+    public int getIteration() {
+        return timeTick;
+    }
 
-	public Optimizer<SimSQLCompiledQuery, SimSQLOptimizedQuery> getOptimizer() {
-		return myOptimizer;
-	}
+    public Catalog getCatalog() {
+        return myParser.getCatalog();
+    }
 
-	public CodeGenerator<SimSQLOptimizedQuery, DataFlowQuery> getTranslator() {
-		return myTranslator;
-	}
+    public PhysicalDatabase<DataFlowQuery> getPhysicalDatabase() {
+        return myTranslator.getPhysicalDatabase();
+    }
 
-	public Runtime<DataFlowQuery, HadoopResult> getRuntime() {
-		return myRuntime;
-	}
+    public RuntimeParameter getRuntimeParameter() {
+        return myRuntime.getRuntimeParameters();
+    }
 
-	public void killRuntime () {
-		myRuntime.killRuntime ();
-	}
+    public Compiler<SimSQLCompiledQuery> getCompiler() {
+        return myParser;
+    }
 
-	public void reset() {
-		parsedQuery = null;
-		planInstantiation = null;
-		timeTick = -1;
-		isFirstIteration = true;
-		previousResult = null;
-		isMCMC = false;
-	}
+    public Optimizer<SimSQLCompiledQuery, SimSQLOptimizedQuery> getOptimizer() {
+        return myOptimizer;
+    }
 
-	public void doneParsing(SimSQLCompiledQuery parseResult){
-		/*
+    public CodeGenerator<SimSQLOptimizedQuery, DataFlowQuery> getTranslator() {
+        return myTranslator;
+    }
+
+    public Runtime<DataFlowQuery, HadoopResult> getRuntime() {
+        return myRuntime;
+    }
+
+    public void killRuntime() {
+        myRuntime.killRuntime();
+    }
+
+    public void reset() {
+        parsedQuery = null;
+        planInstantiation = null;
+        timeTick = -1;
+        isFirstIteration = true;
+        previousResult = null;
+        isMCMC = false;
+    }
+
+    public void doneParsing(SimSQLCompiledQuery parseResult) {
+        /*
 		 * Here, for MCDB2 queries, we have already done postProcessing in
 		 * SimsqlCompiler, so here we just transfer the object.
 		 * 
 		 * For MCMC queries, we should do postProcessing here, including the
 		 */
-		if (parseResult.getFName() != null) {
-			parsedQuery = parseResult;
-		} else {
-			isMCMC = true;
-			try {
-				ArrayList<Operator> sinkList = parseResult.sinkList;
-				ArrayList<Operator> queryList = parseResult.queryList;
-				ArrayList<String> sqlList = parseResult.sqlList;
-				HashMap<Operator, String> planTableMap = parseResult.definitionMap;
-				maxLoop = parseResult.getMaxLoop();
+        if (parseResult.getFName() != null) {
+            parsedQuery = parseResult;
+        } else {
+            isMCMC = true;
+            try {
+                ArrayList<Operator> sinkList = parseResult.sinkList;
+                ArrayList<Operator> queryList = parseResult.queryList;
+                ArrayList<String> sqlList = parseResult.sqlList;
+                HashMap<Operator, String> planTableMap = parseResult.definitionMap;
+                maxLoop = parseResult.getMaxLoop();
 
-				Topologic topologic = new Topologic(sinkList, planTableMap);
+                Topologic topologic = new Topologic(sinkList, planTableMap);
 
-				ChainGeneration chain = new ChainGeneration(topologic, maxLoop);
-				TranslatorHelper translatorHelper = myParser.getTranslatorHelper();
-				planInstantiation = new PlanInstantiation(planTableMap, chain,
-						translatorHelper, queryList);
-				timeTick = chain.getMinimumTimeTick();
-				
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
+                ChainGeneration chain = new ChainGeneration(topologic, maxLoop);
+                TranslatorHelper translatorHelper = myParser.getTranslatorHelper();
+                planInstantiation = new PlanInstantiation(planTableMap, chain,
+                        translatorHelper, queryList);
+                timeTick = chain.getMinimumTimeTick();
 
-	public SimSQLCompiledQuery nextIter() {
-		if (!isMCMC) {
-			SimSQLCompiledQuery oneToReturn = parsedQuery;
-			parsedQuery = null;
-			return oneToReturn;
-		}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-		if(timeTick <= maxLoop)
-		{
-			SimSQLCompiledQuery compiledQuery = generatePlan(planInstantiation,
-										timeTick, 
-										previousResult,
-										isFirstIteration);
-			
-			if(isFirstIteration)// from now on, it is not the first iteration
-			{
-				isFirstIteration = false;
-			}
-			System.out.println ("Monte Carlo iteration " + timeTick	+ "/" + maxLoop);
-			timeTick++;
-			
-			return compiledQuery;
-		}
-		else
-		{
-			timeTick = -1;
-			return null;
-		}
-		
-	}
+    public SimSQLCompiledQuery nextIter() {
+        if (!isMCMC) {
+            SimSQLCompiledQuery oneToReturn = parsedQuery;
+            parsedQuery = null;
+            return oneToReturn;
+        }
 
-	/*
-	 * Name should follows the expression: identifier[num], and then the
-	 * function returns identifier
-	 */
-	private String getParameterName(String name) {
-		int start = name.indexOf("[");
-		return name.substring(0, start).trim();
-	}
+        if (timeTick <= maxLoop) {
+            SimSQLCompiledQuery compiledQuery = generatePlan(planInstantiation,
+                    timeTick,
+                    previousResult,
+                    isFirstIteration);
 
-	private int getVersion(String table) {
-		int start = table.indexOf("[");
-		int end = table.indexOf("]");
-		String index = table.substring(start + 1, end);
-		return Integer.parseInt(index);
-	}
+            if (isFirstIteration)// from now on, it is not the first iteration
+            {
+                isFirstIteration = false;
+            }
+            System.out.println("Monte Carlo iteration " + timeTick + "/" + maxLoop);
+            timeTick++;
 
-  public void setPreviousResult(HadoopResult queryResult) {
-    previousResult = queryResult;
-  }
+            return compiledQuery;
+        } else {
+            timeTick = -1;
+            return null;
+        }
 
-	public void doneExecuting(HadoopResult queryResult, String outputFile) {
+    }
 
-		// unlink all the unnecessary files
-		for (String f : queryResult.getFilesToUnlink()) {
-			getPhysicalDatabase().deleteTable(getPhysicalDatabase().getTableName(f));
-		}
+    public void doneExecuting(HadoopResult queryResult, String outputFile) {
 
-		// there might be some empty files that got left around... they were allocated before
-		// the query was executed, but they were never actually used (so they don't appear in
-		// the return set of "getFilesToUnlink"
-		getPhysicalDatabase().removeZeroSizeRelations ("query_block");
+        // unlink all the unnecessary files
+        for (String f : queryResult.getFilesToUnlink()) {
+            getPhysicalDatabase().deleteTable(getPhysicalDatabase().getTableName(f));
+        }
 
-		// build a relation for the iterator creation
-		if (queryResult.getOutputRelation(getPhysicalDatabase()) != null) {
+        // there might be some empty files that got left around... they were allocated before
+        // the query was executed, but they were never actually used (so they don't appear in
+        // the return set of "getFilesToUnlink"
+        getPhysicalDatabase().removeZeroSizeRelations("query_block");
 
- 		        Relation rel = queryResult.getOutputRelation(getPhysicalDatabase());
+        // build a relation for the iterator creation
+        if (queryResult.getOutputRelation(getPhysicalDatabase()) != null) {
 
-			// where are we printing?
-			if (outputFile == null) {
+            Relation rel = queryResult.getOutputRelation(getPhysicalDatabase());
 
-				// only print out if we are at the end
-				if (timeTick == -1 || timeTick == maxLoop + 1)
-					getPhysicalDatabase().printRelation(rel);
-			} else {
+            // where are we printing?
+            if (outputFile == null) {
 
-				// a file
-				getPhysicalDatabase().saveRelation(rel, outputFile);
-			}
+                // only print out if we are at the end
+                if (timeTick == -1 || timeTick == maxLoop + 1)
+                    getPhysicalDatabase().printRelation(rel);
+            } else {
 
-			// delete that old file
-			getPhysicalDatabase().unregisterTable (rel.getName ());
+                // a file
+                getPhysicalDatabase().saveRelation(rel, outputFile);
+            }
 
-			previousResult = queryResult;
-			
-			ArrayList<Relation> finalRelations = previousResult.getFinalRelations();
-		
-			// kill the outputs from the last iteration...
-			deleteOutputsFromLastIter ();
+            // delete that old file
+            getPhysicalDatabase().unregisterTable(rel.getName());
 
-			lastTime = previousResult.getFinalRelations();
-			for(int i = 0; i < finalRelations.size(); i++)
-			{
-				Relation relation = finalRelations.get(i);
-				Relation relation2 = getCatalog().getRelation(relation.getName());
+            previousResult = queryResult;
 
-				if (relation2 != null) {
-				  getCatalog().updateTableStatistics(relation2, relation);
-				}
-			}
-		}
-	}
+            ArrayList<Relation> finalRelations = previousResult.getFinalRelations();
 
-  public void otherDoneExecuting(HadoopResult queryResult) {
-			previousResult = queryResult;			
-			ArrayList<Relation> finalRelations = previousResult.getFinalRelations();
+            // kill the outputs from the last iteration...
+            deleteOutputsFromLastIter();
 
-			lastTime = previousResult.getFinalRelations();
-			for(int i = 0; i < finalRelations.size(); i++)
-			{
-				Relation relation = finalRelations.get(i);
-				Relation relation2 = getCatalog().getRelation(relation.getName());
+            lastTime = previousResult.getFinalRelations();
+            for (int i = 0; i < finalRelations.size(); i++) {
+                Relation relation = finalRelations.get(i);
+                Relation relation2 = getCatalog().getRelation(relation.getName());
 
-				if (relation2 != null) {
-				  getCatalog().updateTableStatistics(relation2, relation);
-				}
-			}
-  }
+                if (relation2 != null) {
+                    getCatalog().updateTableStatistics(relation2, relation);
+                }
+            }
+        }
+    }
 
-	public SimSQLCompiledQuery generatePlan(PlanInstantiation planInstantiation,
-								int timeTick, 
-								HadoopResult previousResult,
-								boolean dataInCatalog){
-		SimSQLCompiledQuery compiledQuery = new SimSQLCompiledQuery("_" + timeTick + ".sql.pl");
-		
-		try
-		{
-			String tempQueryFile = compiledQuery.getFName();
-			BufferedWriter wri = new BufferedWriter(new FileWriter(tempQueryFile, false));
+    public SimSQLCompiledQuery generatePlan(PlanInstantiation planInstantiation,
+                                            int timeTick,
+                                            HadoopResult previousResult,
+                                            boolean dataInCatalog) {
+        SimSQLCompiledQuery compiledQuery = new SimSQLCompiledQuery("_" + timeTick + ".sql.pl");
+
+        try {
+            String tempQueryFile = compiledQuery.getFName();
+            BufferedWriter wri = new BufferedWriter(new FileWriter(tempQueryFile, false));
 	
 			/*
 			 * 1. Instantiate the plan.
 			 */
-			ArrayList<Operator> generatedSinkList = planInstantiation.generatePlan(timeTick, timeTick+1);
+            ArrayList<Operator> generatedSinkList = planInstantiation.generatePlan(timeTick, timeTick + 1);
 	
 			/*
 			 * 1. If dataInCatalog, we should change the tableScan from the local
 			 * file; furthermore, we should change the statistics accordingly.
 			 */
-			if (!dataInCatalog) {
-				updatePlanByPreviousResult(generatedSinkList, previousResult);
-			}
-	
-			wri.write(":- dynamic compExp/5.\r\n");
-			wri.write(":- dynamic stats/6.\r\n");
-			wri.write(":- dynamic relation/3.\r\n");
-	
-			for (int i = 0; i < generatedSinkList.size(); i++) {
-				Operator element = generatedSinkList.get(i);
-				wri.write("parent(planRoot, " + element.getNodeName() + ").\r\n");
-			}
-	
-			wri.write(PlanHelper.BFS(generatedSinkList));
+            if (!dataInCatalog) {
+                updatePlanByPreviousResult(generatedSinkList, previousResult);
+            }
 
-			PlanStatistics statistics = new PlanStatistics(generatedSinkList);
-			wri.write(statistics.getStatistics());
+            wri.write(":- dynamic compExp/5.\r\n");
+            wri.write(":- dynamic stats/6.\r\n");
+            wri.write(":- dynamic relation/3.\r\n");
 
-			wri.write(statistics.getAttributeTypeStatistics());
-			wri.write("attributeType(isPres, bottom).\r\n");
+            for (int i = 0; i < generatedSinkList.size(); i++) {
+                Operator element = generatedSinkList.get(i);
+                wri.write("parent(planRoot, " + element.getNodeName() + ").\r\n");
+            }
 
-			wri.close();
+            wri.write(PlanHelper.BFS(generatedSinkList));
 
-			for (int i = 0; i < generatedSinkList.size(); i++) {
-				Operator element = generatedSinkList.get(i);
-				if (element instanceof FrameOutput) {
-					compiledQuery.addMaterilizedView((FrameOutput) element);
-				}
-			}
+            PlanStatistics statistics = new PlanStatistics(generatedSinkList);
+            wri.write(statistics.getStatistics());
 
-			return compiledQuery;
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-			throw new RuntimeException("exception happens in generatePlan");
-		}
-	}
-	
-	public void updatePlanByPreviousResult(ArrayList<Operator> generatedSinkList, HadoopResult previousResult)
-			throws Exception {
-		HashMap<String, PreviousTable> tableMap = new HashMap<String, PreviousTable>();
+            wri.write(statistics.getAttributeTypeStatistics());
+            wri.write("attributeType(isPres, bottom).\r\n");
+
+            wri.close();
+
+            for (int i = 0; i < generatedSinkList.size(); i++) {
+                Operator element = generatedSinkList.get(i);
+                if (element instanceof FrameOutput) {
+                    compiledQuery.addMaterilizedView((FrameOutput) element);
+                }
+            }
+
+            return compiledQuery;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("exception happens in generatePlan");
+        }
+    }
+
+    public void updatePlanByPreviousResult(ArrayList<Operator> generatedSinkList, HadoopResult previousResult)
+            throws Exception {
+        HashMap<String, PreviousTable> tableMap = new HashMap<String, PreviousTable>();
 
 		/*
 		 * 1. Get the directory and attributeList.
 		 */
-		for(int i = 0; i < previousResult.getFinalRelations().size(); i++)
-		{
-			Relation outRelation = previousResult.getFinalRelations().get(i);
-			
-			String file = outRelation.getFileName();
-			String relName = outRelation.getName();
-			
-			ArrayList<String> attributeNameList = new ArrayList<String>();
-			HashMap<String, String> attributeTypeMap = new HashMap<String, String>();
-			ArrayList<String> randamAttributeList = new ArrayList<String>();
-			
-			ArrayList<Attribute> attributeList = outRelation.getAttributes();
-			Attribute attribute;
-			String attrbuteType;
-			for(int j = 0; j < attributeList.size(); j++)
-			{
-				attribute = attributeList.get(j);
-				attributeNameList.add(attribute.getName());
-				attrbuteType = attribute.getType().writeOut();				// TO-DO
-				attributeTypeMap.put(attribute.getName(), attrbuteType);
-				if(attribute.getIsRandom())
-				{
-					randamAttributeList.add(attribute.getName());
-				}
-			}
-			
-			PreviousTable resultTable = new PreviousTable(file,
-					relName, attributeNameList, attributeTypeMap, randamAttributeList);
-			
-			resultTable.setTupleNum(outRelation.getTupleNum());
-			
-			for(int j = 0; j < attributeList.size(); j++)
-			{
-				attribute = attributeList.get(j);
-				resultTable.addStat(attribute.getName(), attribute.getUniqueValue());
-				
-			}
-			tableMap.put(relName, resultTable);
-		}
+        for (int i = 0; i < previousResult.getFinalRelations().size(); i++) {
+            Relation outRelation = previousResult.getFinalRelations().get(i);
+
+            String file = outRelation.getFileName();
+            String relName = outRelation.getName();
+
+            ArrayList<String> attributeNameList = new ArrayList<String>();
+            HashMap<String, String> attributeTypeMap = new HashMap<String, String>();
+            ArrayList<String> randamAttributeList = new ArrayList<String>();
+
+            ArrayList<Attribute> attributeList = outRelation.getAttributes();
+            Attribute attribute;
+            String attrbuteType;
+            for (int j = 0; j < attributeList.size(); j++) {
+                attribute = attributeList.get(j);
+                attributeNameList.add(attribute.getName());
+                attrbuteType = attribute.getType().writeOut();                // TO-DO
+                attributeTypeMap.put(attribute.getName(), attrbuteType);
+                if (attribute.getIsRandom()) {
+                    randamAttributeList.add(attribute.getName());
+                }
+            }
+
+            PreviousTable resultTable = new PreviousTable(file,
+                    relName, attributeNameList, attributeTypeMap, randamAttributeList);
+
+            resultTable.setTupleNum(outRelation.getTupleNum());
+
+            for (int j = 0; j < attributeList.size(); j++) {
+                attribute = attributeList.get(j);
+                resultTable.addStat(attribute.getName(), attribute.getUniqueValue());
+
+            }
+            tableMap.put(relName, resultTable);
+        }
 		
 		/*
 		 * 3. Update the plan.
 		 */
-		ArrayList<Operator> allNodeList = PostProcessorHelper.findAllNode(generatedSinkList);
-		for (int i = 0; i < allNodeList.size(); i++) {
-			Operator operator = allNodeList.get(i);
+        ArrayList<Operator> allNodeList = PostProcessorHelper.findAllNode(generatedSinkList);
+        for (int i = 0; i < allNodeList.size(); i++) {
+            Operator operator = allNodeList.get(i);
 
-			if (operator instanceof TableScan) {
-				String tableName = ((TableScan) operator).getTableName();
-				if (tableMap.containsKey(tableName)) {
-					PreviousTable hdfsTable = tableMap.get(tableName);
-					((TableScan) operator).setTableInfo(hdfsTable);
-				}
-			}
-		}
-	}
-	
-	public void addStatistics(HashMap<String, PreviousTable> tableMap){
-		try
-		{
-			for (String table : tableMap.keySet()) {
-				String filename = TempScanHelper.statFilePrefix + table;
-				String content = FileOperation.getFile_info(filename);
-				
-				int start = content.indexOf("sim_r_no,");
-				start += new String("sim_r_no,").length();
-				int end = content.indexOf(">", start);
-				
-				int tupleNum = Integer.parseInt(content.substring(start, end));
-				PreviousTable tableInfo = tableMap.get(table);
-				tableInfo.setTupleNum(tupleNum);
-	
-				/*
-				 * 2. The Statistics of each attributes in the table.
-				 */
-				ArrayList<String> attributeList = tableInfo.getAttributeList();
-				for (int i = 0; i < attributeList.size(); i++) {
-					String attributeName = attributeList.get(i);
-					
-					start = content.indexOf("sim_val_" + attributeName + ",");
-					start += new String("sim_val_" + attributeName + ",").length();
-					
-					end = content.indexOf(">", start);
-					int statNum = Integer.parseInt(content.substring(start, end));
-					tableInfo.addStat(attributeName, statNum);
-				}
-			}
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-			throw new RuntimeException("Exception happens addStatistics");
-		}
-	}
-	
-	private PreviousTable parseResultTableMetaData(String line) {
-		int start, end;
-		start = line.indexOf("(");
-		end = line.lastIndexOf(")");
-
-		String info = line.substring(start + 1, end).trim();
-		start = info.indexOf(",");
-		String file = info.substring(0, start);
-		info = info.substring(start + 1, info.length());
-
-		start = file.indexOf("file_");
-		start += new String("file_").length();
-		String tableName = file.substring(start, file.length());
-
-		start = info.indexOf("[");
-		end = info.indexOf("]");
-		String attributeListStr = info.substring(start + 1, end);
-		info = info.substring(end + 1, info.length());
-
-		start = info.indexOf("[");
-		end = info.indexOf("]");
-		String attributeTypeListStr = info.substring(start + 1, end);
-		info = info.substring(end + 1, info.length());
-
-		start = info.indexOf("[");
-		end = info.indexOf("]");
-		String randAttriListStr = info.substring(start + 1, end);
-
-		String[] attributes = parseToken(attributeListStr);
-		String[] attributeTypes = parseToken(attributeTypeListStr);
-		String[] randAttibutes = parseToken(randAttriListStr);
-
-		ArrayList<String> attributeList = new ArrayList<String>();
-		HashMap<String, String> attributeMap = new HashMap<String, String>();
-		ArrayList<String> randamAttributeList = new ArrayList<String>();
-
-		for (int i = 0; i < attributes.length; i++) {
-			//here we put a filter to help Foula.
-			if(!attributeTypes[i].equals("seed") && !attributes[i].equals("mcdb_mcdb_value_table_1_mcdb_mcdb_value_table_1_attr_0_0"))
-			{
-				attributeList.add(attributes[i]);
-				attributeMap.put(attributes[i], attributeTypes[i]);
-			}
-		}
-
-		for (int i = 0; i < randAttibutes.length; i++) {
-			randamAttributeList.add(randAttibutes[i]);
-		}
-
-		PreviousTable resultTable = new PreviousTable(file,
-				tableName, attributeList, attributeMap, randamAttributeList);
-		return resultTable;
-	}
-	
-	private String[] parseToken(String line) {
-		ArrayList<String> list = new ArrayList<String>();
-		StringTokenizer token = new StringTokenizer(line, ", ");
-		while (token.hasMoreElements()) {
-			list.add((String) token.nextElement());
-		}
-
-		String result[] = new String[list.size()];
-		list.toArray(result);
-		return result;
-	}
+            if (operator instanceof TableScan) {
+                String tableName = ((TableScan) operator).getTableName();
+                if (tableMap.containsKey(tableName)) {
+                    PreviousTable hdfsTable = tableMap.get(tableName);
+                    ((TableScan) operator).setTableInfo(hdfsTable);
+                }
+            }
+        }
+    }
 
 }

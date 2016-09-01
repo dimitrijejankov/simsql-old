@@ -3028,7 +3028,7 @@ public class TypeChecker extends ASTVisitor{
 				}
 				else
 				{
-					int objectType = catalog.getOjbectType(objectName);					
+					int objectType = catalog.getObjectType(objectName);
 					if(objectType == DataAccess.OBJ_VIEW)
 					{
 						subCheck = false;
@@ -3054,7 +3054,7 @@ public class TypeChecker extends ASTVisitor{
 				}
 				else
 				{
-					int objectType = catalog.getOjbectType(objectName);
+					int objectType = catalog.getObjectType(objectName);
 					if(objectType == DataAccess.OBJ_RANDRELATION)
 					{
 						subCheck = false;
@@ -3072,7 +3072,7 @@ public class TypeChecker extends ASTVisitor{
 				}
 				else
 				{
-					int objectType = catalog.getOjbectType(objectName);
+					int objectType = catalog.getObjectType(objectName);
 					if(objectType != DataAccess.OBJ_UNION_VIEW)
 					{
 						subCheck = false;
@@ -3163,7 +3163,7 @@ public class TypeChecker extends ASTVisitor{
 							}
 							else
 							{
-								int objectType = catalog.getOjbectType(tempOjbectName);					
+								int objectType = catalog.getObjectType(tempOjbectName);
 								if(objectType == DataAccess.OBJ_VIEW)
 								{
 									subCheck = false;

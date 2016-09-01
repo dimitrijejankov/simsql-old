@@ -772,17 +772,17 @@ multidimensionalSchemaIndices returns[MultidimensionalSchemaIndices indices]:
     ;
 
 multidimensionalSchemaIndexSpecification returns[MultidimensionalSchemaIndexSpecification index]:
-    rb=INTEGER TREEDOT lb=INTEGER
+    rb=NUMERIC TREEDOT lb=NUMERIC
     {
         $index = new MultidimensionalSchemaIndexSpecification($rb.text, $lb.text);
     }
     |
-    rb=INTEGER TREEDOT
+    rb=NUMERIC TREEDOT
     {
         $index = new MultidimensionalSchemaIndexSpecification($rb.text, true);
     }
     |
-    rb=INTEGER
+    rb=NUMERIC
     {
         $index = new MultidimensionalSchemaIndexSpecification($rb.text, false);
     }
@@ -1851,8 +1851,7 @@ LESSEQUAL: '<=';
 GREATEREQUAL: '>=';
 IDENTIFIER  : ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
 STRING: '\'' ('a'..'z'|'A'..'Z'|'0'..'9'|'/'|'('|')'|':'|'\\'|('\\\'')|'.'|'-'|'_'|' '|'%'|'#')+ '\'';
-INTEGER: (('1'..'9')('0'..'9')*)|'0';
-NUMERIC: INTEGER |('.'(('0'..'9')+));
+NUMERIC: (('1'..'9')('0'..'9')*)|'0'|('.'(('0'..'9')+));
 
 
 /** Skipped tokens (whitespace) */
