@@ -353,20 +353,12 @@ tableReference returns [SQLExpression expression]:
             */
             indexTableReference AS? aliasName=IDENTIFIER
             {
-                 $expression = new TableReference($indexTableReference.table,
-		                  $aliasName.text,
-		                  $indexTableReference.index, 
-		                  $indexTableReference.type, 
-		                  $indexTableReference.indexMathExp);
+                 $expression = $indexTableReference.value;
             }
             |
             indexTableReference
             {
-	            $expression = new TableReference($indexTableReference.table, 
-		                 $indexTableReference.table, 
-		                 $indexTableReference.index, 
-		                 $indexTableReference.type,
-		                 $indexTableReference.indexMathExp);
+	            $expression = $indexTableReference.value;
             }
             /* ---------------------------------end------------------------
             */
@@ -409,22 +401,24 @@ tableReference returns [SQLExpression expression]:
             	ValuesTableHelper.addValuesTable(valueTableName, valuesTable);
             };
             
-indexTableReference returns [String table, String index, int type, MathExpression indexMathExp]:
+indexTableReference returns [TableReference value]:
             tableName=IDENTIFIER LBRACKET indexString=NUMERIC RBRACKET
             {
-                  $table = $tableName.text+"_"+$indexString.text;
-                  $index = $indexString.text;
-                  $type = TableReference.CONSTANT_INDEX_TABLE;
-                  $indexMathExp = null;
+                  $value = new TableReference($tableName.text+"_"+$indexString.text,
+                                              $tableName.text+"_"+$indexString.text,
+                                              $indexString.text,
+                                              TableReference.CONSTANT_INDEX_TABLE,
+                                              null);
             }
             |
             tableName=IDENTIFIER LBRACKET valueExpression RBRACKET
             {
-                   $table = $tableName.text + "_i";
-                   $index = null;
-                   $type = TableReference.GENERAL_INDEX_TABLE;
-                   $indexMathExp =  $valueExpression.expression;
-            };            
+                  $value = new TableReference($tableName.text + "_i",
+                                              $tableName.text + "_i",
+                                              null,
+                                              TableReference.GENERAL_INDEX_TABLE,
+                                              $valueExpression.expression);
+            };
 
 tempTable returns [ValuesTable valuesTable]:
 		    VALUES 

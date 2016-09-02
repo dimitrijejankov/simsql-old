@@ -23,6 +23,7 @@ package simsql.compiler; // package mcdb.catalog;
 
 import java.util.ArrayList;
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 
 import static simsql.compiler.MultidimensionalTableSchema.getIndicesFromQualifiedName;
@@ -350,6 +351,16 @@ public class Catalog implements simsql.shell.Catalog {
 			if (objectType == DataAccess.OBJ_VIEW || objectType == DataAccess.OBJ_RANDRELATION ||
                 objectType == DataAccess.OBJ_UNION_VIEW || objectType == DataAccess.OBJ_MULRELATION ) {
 				view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), objectType);
+			}
+			else if(viewName.matches("^[^_]+_i$")) {
+                String tempViewName = viewName.substring(0, viewName.length() - 2);
+
+                ArrayList<String> indexTableNameList = ds.getIndexTable(tempViewName);
+                if (indexTableNameList.size() != 0) {
+                    Collections.sort(indexTableNameList);
+                    viewName = indexTableNameList.get(indexTableNameList.size() - 1);
+                    view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), getObjectType(viewName));
+                }
 			}
 			else if(viewName.matches("^[^_]+(_[0-9]+)+$")) {
 				/*
