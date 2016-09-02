@@ -440,8 +440,8 @@ public class TypeChecker extends ASTVisitor{
 		
 		String table = tableReference.table;
 		//String alias = tableReference.alias;
-		String indexString = tableReference.indexString;
-		MathExpression indexMathExp = tableReference.expression;
+		String indexString = tableReference.getIndexString();
+		MathExpression indexMathExp = tableReference.getExpression();
 		
 		Relation relation = catalog.getRelation(table);
 		View view = catalog.getView(table);

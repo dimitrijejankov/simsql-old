@@ -406,18 +406,16 @@ indexTableReference returns [TableReference value]:
             {
                   $value = new TableReference($tableName.text+"_"+$indexString.text,
                                               $tableName.text+"_"+$indexString.text,
-                                              $indexString.text,
-                                              TableReference.CONSTANT_INDEX_TABLE,
-                                              null);
+                                              TableReference.CONSTANT_INDEX_TABLE);
+                  $value.setIndexString($indexString.text);
             }
             |
             tableName=IDENTIFIER LBRACKET valueExpression RBRACKET
             {
                   $value = new TableReference($tableName.text + "_i",
                                               $tableName.text + "_i",
-                                              null,
-                                              TableReference.GENERAL_INDEX_TABLE,
-                                              $valueExpression.expression);
+                                              TableReference.GENERAL_INDEX_TABLE);
+                  $value.setExpression($valueExpression.expression);
             };
 
 tempTable returns [ValuesTable valuesTable]:

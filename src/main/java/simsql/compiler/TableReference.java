@@ -21,7 +21,7 @@
 
 package simsql.compiler; // package mcdb.compiler.parser.expression.sqlExpression;
 
-
+import static simsql.compiler.MultidimensionalSchemaIndices.labelingOrder;
 
 
 // import mcdb.compiler.parser.astVisitor.ASTVisitor;
@@ -32,20 +32,25 @@ package simsql.compiler; // package mcdb.compiler.parser.expression.sqlExpressio
  *  
  */
 
+import java.util.HashMap;
+
 public class TableReference extends SQLExpression{
 	public static final int COMMON_TABLE = 0;
 	public static final int CONSTANT_INDEX_TABLE = 1;
 	public static final int GENERAL_INDEX_TABLE = 2;
-	
+	public static final int MULTIDIMENSIONAL_CONSTANT_INDEX_TABLE = 3;
+	public static final int MULTIDIMENSIONAL_GENERAL_INDEX_TABLE = 4;
+
 	public String table;
 	public String alias;
 	
 	/*
 	 * --------------------For simulation-----------------------
 	 */
-	public String indexString;
+
+	public HashMap<String, String> indexStrings;
 	private int type;
-	public MathExpression expression;
+	public HashMap<String, MathExpression> expressions;
 	/*
 	 * ----------------------------end--------------------------
 	 */
@@ -58,20 +63,39 @@ public class TableReference extends SQLExpression{
 	
 	public TableReference(String table, String alias)
 	{
-		this(table, alias, null, COMMON_TABLE);
+		this(table, alias, COMMON_TABLE);
 	}
 	
-	public TableReference(String table, 
-						  String alias, 
-						  String indexString,
-						  int type)
+	public TableReference(String table, String alias, int type)
 	{
 		this.table = table;
 		this.alias = alias;
-		this.indexString = indexString;
 		this.type = type;
-		expression = null;
+		this.expressions = new HashMap<String, MathExpression>();
+		this.indexStrings = new HashMap<String, String>();
 	}
+
+    public TableReference(String table, String alias, String indexString, int type)
+    {
+        this.table = table;
+        this.alias = alias;
+        this.type = type;
+        this.expressions = new HashMap<String, MathExpression>();
+        this.indexStrings.put("i", indexString);
+    }
+
+    public TableReference(String table,
+                          String alias,
+                          String indexString,
+                          int type,
+                          MathExpression expression)
+    {
+        this.table = table;
+        this.alias = alias;
+        this.type = type;
+        this.indexStrings.put("i", indexString);
+        this.expressions.put("i", expression);
+    }
 	
 	public boolean isConstantRandomTable()
 	{
@@ -81,19 +105,6 @@ public class TableReference extends SQLExpression{
 	public boolean isGeneralIndexTable()
 	{
 		return  (type == GENERAL_INDEX_TABLE);
-	}
-	
-	public TableReference(String table, 
-			  String alias, 
-			  String indexString,
-			  int type,
-			  MathExpression expression)
-	{
-		this.table = table;
-		this.alias = alias;
-		this.indexString = indexString;
-		this.type = type;
-		this.expression = expression;
 	}
 
 	public String getTable() {
@@ -111,21 +122,18 @@ public class TableReference extends SQLExpression{
 	public void setAlias(String alias) {
 		this.alias = alias;
 	}
-	
-	
+
 	public int getTableInferenceType()
 	{
 		return type;
 	}
-	
-	
 
 	public MathExpression getExpression() {
-		return expression;
+		return expressions.get("i");
 	}
 
 	public void setExpression(MathExpression expression) {
-		this.expression = expression;
+		expressions.put("i", expression);
 	}
 
 	/* (non-Javadoc)
@@ -141,4 +149,12 @@ public class TableReference extends SQLExpression{
 	{
 		return table +" as " + alias;
 	}
+
+    public String getIndexString() {
+        return indexStrings.get("i");
+    }
+
+    public void setIndexString(String indexString) {
+        this.indexStrings.put("i", indexString);
+    }
 }

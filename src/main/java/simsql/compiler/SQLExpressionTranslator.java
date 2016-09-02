@@ -718,7 +718,7 @@ public class SQLExpressionTranslator {
 	{
 		HashMap<String, Operator> viewPlanMap = translatorHelper.viewPlanMap;
 		String viewName = view.getName();
-		String indexString = tableReference.indexString;
+		String indexString = tableReference.getIndexString();
 		int type = tableReference.getTableInferenceType();
 		
 		ArrayList<String> outputAttributeList = null;
@@ -860,7 +860,7 @@ public class SQLExpressionTranslator {
 					relationStatistics,
 					indexString,
 					tableReference.getTableInferenceType(),
-					tableReference.expression);
+					tableReference.getExpression());
 		}
 		else
 		{
@@ -878,7 +878,7 @@ public class SQLExpressionTranslator {
 									relationStatistics,
 									indexString,
 									tableReference.getTableInferenceType(),
-									tableReference.expression);	
+									tableReference.getExpression());
 		}
 		
 		/*
