@@ -404,19 +404,34 @@ tableReference returns [SQLExpression expression]:
 indexTableReference returns [TableReference value]:
             tableName=IDENTIFIER LBRACKET indexString=NUMERIC RBRACKET
             {
-                  $value = new TableReference($tableName.text+"_"+$indexString.text,
-                                              $tableName.text+"_"+$indexString.text,
+                  $value = new TableReference($tableName.text,
+                                              null,
                                               TableReference.CONSTANT_INDEX_TABLE);
-                  $value.setIndexString($indexString.text);
+                  $value.addIndexString($indexString.text);
             }
+            (
+            LBRACKET indexString=NUMERIC RBRACKET
+                {
+                    $value.setType(TableReference.MULTIDIMENSIONAL_CONSTANT_INDEX_TABLE);
+                    $value.addIndexString($indexString.text);
+                }
+            )*
             |
-            tableName=IDENTIFIER LBRACKET valueExpression RBRACKET
+            tableName=IDENTIFIER LBRACKET ex=valueExpression RBRACKET
             {
-                  $value = new TableReference($tableName.text + "_i",
-                                              $tableName.text + "_i",
+                  $value = new TableReference($tableName.text,
+                                              null,
                                               TableReference.GENERAL_INDEX_TABLE);
-                  $value.setExpression($valueExpression.expression);
-            };
+                  $value.addExpression($ex.expression);
+            }
+            (
+            LBRACKET ex=valueExpression RBRACKET
+                {
+                    $value.setType(TableReference.MULTIDIMENSIONAL_GENERAL_INDEX_TABLE);
+                    $value.addExpression($ex.expression);
+                }
+            )*
+            ;
 
 tempTable returns [ValuesTable valuesTable]:
 		    VALUES 
@@ -764,19 +779,19 @@ multidimensionalSchemaIndices returns[MultidimensionalSchemaIndices indices]:
     ;
 
 multidimensionalSchemaIndexSpecification returns[MultidimensionalSchemaIndexSpecification index]:
-    rb=NUMERIC TREEDOT lb=NUMERIC
+    lb=NUMERIC TREEDOT rb=NUMERIC
     {
-        $index = new MultidimensionalSchemaIndexSpecification($rb.text, $lb.text);
+        $index = new MultidimensionalSchemaIndexSpecification($lb.text, $rb.text);
     }
     |
-    rb=NUMERIC TREEDOT
+    lb=NUMERIC TREEDOT
     {
-        $index = new MultidimensionalSchemaIndexSpecification($rb.text, true);
+        $index = new MultidimensionalSchemaIndexSpecification($lb.text, true);
     }
     |
-    rb=NUMERIC
+    lb=NUMERIC
     {
-        $index = new MultidimensionalSchemaIndexSpecification($rb.text, false);
+        $index = new MultidimensionalSchemaIndexSpecification($lb.text, false);
     }
     ;
 
@@ -809,7 +824,7 @@ randomParameters returns[SQLExpression tableReference,
                 ValuesTable valuesTable = new ValuesTable(tempTableRowList);
              
                 String valueTableName = ValuesTableHelper.getValuesTableName();
-	              $tableReference = new TableReference(valueTableName, valueTableName);
+	              $tableReference = new TableReference(valueTableName, null);
 	              ValuesTableHelper.addValuesTable(valueTableName, valuesTable);
 	              
 	              $withStatementList = $withStatements.withStatementList;

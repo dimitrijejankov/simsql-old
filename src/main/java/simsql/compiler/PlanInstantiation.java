@@ -166,7 +166,7 @@ public class PlanInstantiation {
 					
 					String tablename = tableScan.getTableName();
 					
-					if(Integer.parseInt(tableScan.getIndexString()) >= start_index)
+					if(Integer.parseInt(tableScan.getIndexStrings().get("i")) >= start_index)
 					{
 						Operator linkedOperator = generatedPlanMap.get(transferTableName(tablename));
 						integratePlan(tableScan, linkedOperator);
@@ -229,7 +229,7 @@ public class PlanInstantiation {
 						TableScan tableScan = replacedTableList.get(k);
 						String tablename = tableScan.getTableName();
 						
-						if(Integer.parseInt(tableScan.getIndexString()) >= start_index)
+						if(Integer.parseInt(tableScan.getIndexStrings().get("i")) >= start_index)
 						{
 							Operator linkedOperator = generatedPlanMap.get(transferTableName(tablename));
 							if(linkedOperator == null)
@@ -648,7 +648,7 @@ public class PlanInstantiation {
 							int version = generator.initializeTime(currentTime);
 							
 							((TableScan) currentElement).setTableName(getTablePrefixUnderscore(tableName) + "_" + version);
-							((TableScan) currentElement).setIndexString(version + "");
+							((TableScan) currentElement).getIndexStrings().put("i", version + "");
 							
 							/*
 							 * Keep the state of current table scan, which should be replaced in the integrated plan.

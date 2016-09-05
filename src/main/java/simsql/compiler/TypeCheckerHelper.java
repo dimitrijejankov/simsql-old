@@ -49,7 +49,8 @@ public class TypeCheckerHelper {
 	public static final int TYPECHECKER = 6;
 	public static final int BASELINE_ARRAY_RANDOM_TABLE_TYPECHECKER = 7;
 	public static final int UNION_VIEW_TYPECHECKER = 8;
-	
+	public static final int MULTIDIMENSIONAL_VIEW_TYPECHECKER = 9;
+
 	public static boolean hasAggregate(MathExpression expression)
 	{
 		if(expression instanceof AggregateExpression)
@@ -236,6 +237,10 @@ public class TypeCheckerHelper {
 		if(typeChecker instanceof BaseLineRandomTableTypeChecker)
 		{
 			return BASELINE_RANDOM_TABLE_TYPECHECKER;
+		}
+		else if(typeChecker instanceof MultidimensionalTableTypeChecker)
+		{
+			return MULTIDIMENSIONAL_VIEW_TYPECHECKER;
 		}
 		else if(typeChecker instanceof GeneralRandomTableTypeChecker)
 		{

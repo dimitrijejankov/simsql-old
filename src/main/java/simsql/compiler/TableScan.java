@@ -42,8 +42,8 @@ public class TableScan extends Operator{
 	private RelationStatistics relationStatistics;
 	private Catalog catalog;
 	
-	private String indexString;
-	private MathExpression indexMathExp;
+	private HashMap<String, String> indexStrings;
+	private HashMap<String, MathExpression> indexMathExpressions;
 	private int type;
 	
 	/*
@@ -53,7 +53,6 @@ public class TableScan extends Operator{
 	
 	/**
 	 * @param nodeName
-	 * @param translatedStatement
 	 * @param children
 	 * @param parents
 	 */
@@ -63,8 +62,9 @@ public class TableScan extends Operator{
 	{
 		super(nodeName, children, parents);
 		this.type = TableReference.COMMON_TABLE;
-		tableInfo = null;
-		indexMathExp = null;
+		this.tableInfo = null;
+		this.indexMathExpressions = new HashMap<String, MathExpression>();
+        this.indexMathExpressions = new HashMap<String, MathExpression>();
 	}
 	
 	
@@ -75,17 +75,17 @@ public class TableScan extends Operator{
 					 ArrayList<String> attributeList,
 					 RelationStatistics relationStatistics,
 					 int type,
-					 MathExpression exp)
+					 HashMap<String, MathExpression> indexMathExpressions)
 	{
 		super(nodeName, children, parents);
 		this.tableName = tableName;
 		this.attributeList = attributeList;
 		this.relationStatistics = relationStatistics;
 		this.catalog = SimsqlCompiler.catalog;
-		this.indexString = null;
-		tableInfo = null;
+        this.tableInfo = null;
 		this.type = type;
-		this.indexMathExp = exp;
+		this.indexStrings = new HashMap<String, String>();
+        this.indexMathExpressions = indexMathExpressions;
 	}
 	
 	public TableScan(String nodeName, 
@@ -94,19 +94,19 @@ public class TableScan extends Operator{
 			 String tableName, 
 			 ArrayList<String> attributeList,
 			 RelationStatistics relationStatistics,
-			 String indexString,
+			 HashMap<String, String> indexStrings,
 			 int type,
-			 MathExpression exp)
+			 HashMap<String, MathExpression> indexMathExpressions)
 	{
 		super(nodeName, children, parents);
 		this.tableName = tableName;
 		this.attributeList = attributeList;
 		this.relationStatistics = relationStatistics;
 		this.catalog = SimsqlCompiler.catalog;
-		this.indexString = indexString;
-		tableInfo = null;
+        this.tableInfo = null;
 		this.type = type;
-		this.indexMathExp = exp;
+        this.indexStrings = indexStrings;
+		this.indexMathExpressions = indexMathExpressions;
 	}
 
 	/*
@@ -135,23 +135,29 @@ public class TableScan extends Operator{
 		this.type = type;
 	}
 
-	public String getIndexString() {
-		return indexString;
-	}
+    public HashMap<String, String> getIndexStrings() {
+        return indexStrings;
+    }
 
+    public void setIndexStrings(HashMap<String, String> indexStrings) {
+        this.indexStrings = indexStrings;
+    }
 
-	public void setIndexString(String indexString) {
-		this.indexString = indexString;
-	}
+    public HashMap<String, MathExpression> getIndexMathExpressions() {
+        return indexMathExpressions;
+    }
 
+    public void setIndexMathExpressions(HashMap<String, MathExpression> indexMathExpressions) {
+        this.indexMathExpressions = indexMathExpressions;
+    }
 
-	/* (non-Javadoc)
-	 * @see logicOperator.relationOperator.Operator#visitNode()
-	 */
+    /* (non-Javadoc)
+         * @see logicOperator.relationOperator.Operator#visitNode()
+         */
 	@Override
 	public String visitNode()throws Exception{
 		String result = "";
-		if(indexString == null && type == TableReference.COMMON_TABLE)
+		if(indexStrings.size() == 0 && type == TableReference.COMMON_TABLE)
 		{
 			
 			result += this.getNodeStructureString();
@@ -263,7 +269,7 @@ public class TableScan extends Operator{
 			{
 				result += this.getNodeStructureString();
 				
-				String indexString = new MPNGenerator(this.indexMathExp).convertToMPN();
+				String indexString = new MPNGenerator(this.indexMathExpressions.get("i")).convertToMPN();
 				result += "tablescan(" + this.getNodeName() + ", '" +
 						tableName.substring(0, tableName.length()-2) + 
 						"_" + indexString;
@@ -558,15 +564,15 @@ public class TableScan extends Operator{
 		ArrayList<String> c_attributeList = copyHelper.copyStringList(attributeList);
 		
 		RelationStatistics c_relationStatistics = this.relationStatistics;
-		
-		String c_indexString;
-		if(this.indexString == null)
+
+        HashMap<String, String> c_indexStrings;
+		if(this.indexStrings == null)
 		{
-			c_indexString = null;
+			c_indexStrings = null;
 		}
 		else
 		{
-			c_indexString = new String(indexString);
+			c_indexStrings = new HashMap<String, String>(indexStrings);
 		}
 		
 		TableScan tablescan = new TableScan(commonContent.nodeName,
@@ -575,9 +581,9 @@ public class TableScan extends Operator{
 				c_tableName, 
 				c_attributeList,
 				c_relationStatistics,
-				c_indexString,
+				c_indexStrings,
 				this.type,
-				this.indexMathExp);
+				this.indexMathExpressions);
 		
 		tablescan.setNameMap(commonContent.nameMap);
 		tablescan.setMapSpaceNameSet(commonContent.mapSpaceNameSet);
@@ -594,29 +600,12 @@ public class TableScan extends Operator{
 		}
 		return tablescan;
 	}
-	
-	public String getGeneralTableIndexExp()
-	{
-		if(indexMathExp != null)
-		{
-			return "generalTableindex";
-		}
-		else
-		{
-			return null;
-		}
-	}
-	
+
 	
 
 
 	public MathExpression getIndexMathExp() {
-		return indexMathExp;
-	}
-
-
-	public void setIndexMathExp(MathExpression indexMathExp) {
-		this.indexMathExp = indexMathExp;
+		return indexMathExpressions.get("i");
 	}
 
 

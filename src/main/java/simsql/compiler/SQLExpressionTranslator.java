@@ -31,9 +31,7 @@ import java.util.HashMap;
 
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
-
-
-
+import simsql.runtime.Hash;
 
 
 // import mcdb.catalog.Attribute;
@@ -718,7 +716,7 @@ public class SQLExpressionTranslator {
 	{
 		HashMap<String, Operator> viewPlanMap = translatorHelper.viewPlanMap;
 		String viewName = view.getName();
-		String indexString = tableReference.getIndexString();
+		HashMap<String, String> indexStrings = tableReference.getIndexStrings();
 		int type = tableReference.getTableInferenceType();
 		
 		ArrayList<String> outputAttributeList = null;
@@ -844,30 +842,30 @@ public class SQLExpressionTranslator {
 		/*
 		 * 4. Create the TableScan node.
 		 */
-		if(!viewName.equals(tableReference.table))
+		if(!viewName.equals(tableReference.getTable()))
 		{
-			relationStatistics = new RelationStatistics(tableReference.table,
+			relationStatistics = new RelationStatistics(tableReference.getTable(),
 					   directory, 
 					   attributeList2,
-					   indexString,
+					   indexStrings,
 					   type
 					   );
 			tableScan = new TableScan(nodeName,
 					children,
 					parents,
-					tableReference.table,
+					tableReference.getTable(),
 					attributeList,
 					relationStatistics,
-					indexString,
+					indexStrings,
 					tableReference.getTableInferenceType(),
-					tableReference.getExpression());
+					tableReference.getExpressions());
 		}
 		else
 		{
 			relationStatistics = new RelationStatistics(viewName,
 					   directory, 
 					   attributeList2,
-					   indexString,
+					   indexStrings,
 					   type
 					   );
 			tableScan = new TableScan(nodeName,
@@ -876,9 +874,9 @@ public class SQLExpressionTranslator {
 									viewName,
 									attributeList,
 									relationStatistics,
-									indexString,
+									indexStrings,
 									tableReference.getTableInferenceType(),
-									tableReference.getExpression());
+									tableReference.getExpressions());
 		}
 		
 		/*

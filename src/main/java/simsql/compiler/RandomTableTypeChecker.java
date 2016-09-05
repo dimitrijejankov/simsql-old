@@ -102,21 +102,21 @@ public class RandomTableTypeChecker extends TypeChecker {
 		checkState = OUTTABLESTAGE;
 		if(outerTable instanceof TableReference)
 		{
-			outTableName = ((TableReference) outerTable).alias;
+			outTableName = ((TableReference) outerTable).getAlias();
 			/*
 			 * Here if sentence can not be executed. I write here just for keeping the format
 			 * of the method for typecheck the visitSelectStatement
 			 */
-			if(tableReferenceMap.containsKey(((TableReference) outerTable).alias))
+			if(tableReferenceMap.containsKey(((TableReference) outerTable).getAlias()))
 			{
-				System.err.println("Relation [" + ((TableReference) outerTable).alias +
+				System.err.println("Relation [" + ((TableReference) outerTable).getAlias() +
 						"] is ambigurous!");
 				errorNum ++;
 			}
 			else
 			{
-				tableReferenceMap.put(((TableReference) outerTable).alias, ((TableReference) outerTable));
-				fromList.add(((TableReference) outerTable).alias);
+				tableReferenceMap.put(((TableReference) outerTable).getAlias(), ((TableReference) outerTable));
+				fromList.add(((TableReference) outerTable).getAlias());
 			}
 		}
 		else if(outerTable instanceof FromSubquery)
@@ -226,16 +226,16 @@ public class RandomTableTypeChecker extends TypeChecker {
 			
 			if(fromElement instanceof TableReference)
 			{
-				if(tableReferenceMap.containsKey(((TableReference) fromElement).alias))
+				if(tableReferenceMap.containsKey(((TableReference) fromElement).getAlias()))
 				{
-					System.err.println("Relation [" + ((TableReference) fromElement).alias +
+					System.err.println("Relation [" + ((TableReference) fromElement).getAlias() +
 							"] is ambigurous!");
 					errorNum ++;
 				}
 				else
 				{
-					tableReferenceMap.put(((TableReference) fromElement).alias, ((TableReference) fromElement));
-					fromList.add(((TableReference) fromElement).alias);
+					tableReferenceMap.put(((TableReference) fromElement).getAlias(), ((TableReference) fromElement));
+					fromList.add(((TableReference) fromElement).getAlias());
 				}
 			}
 			else if(fromElement instanceof FromSubquery)
@@ -268,7 +268,7 @@ public class RandomTableTypeChecker extends TypeChecker {
 			
 			if(fromElement instanceof TableReference)
 			{
-				String table = ((TableReference) fromElement).table;
+				String table = ((TableReference) fromElement).getTable();
 				//String alias = ((TableReference) fromElement).alias;
 				
 				//if the table is referenced to a VGFunction
@@ -538,7 +538,7 @@ public class RandomTableTypeChecker extends TypeChecker {
 				for(int j = 0; j < tableAlias.length; j++)
 				{
 					tempTableReference = tableReferenceMap.get(tableAlias[j]);
-					tableName = tempTableReference.table;
+					tableName = tempTableReference.getTable();
 					
 					//for the VGFunction
 					if(vgFunctionMap.containsKey(tableName))
@@ -617,7 +617,7 @@ public class RandomTableTypeChecker extends TypeChecker {
 				//if the tableAlias is from a table reference.
 				if(tempTableReference != null)
 				{
-					String tableName = tempTableReference.table;
+					String tableName = tempTableReference.getTable();
 					
 					if(vgFunctionMap.containsKey(tableName))
 					{
@@ -716,7 +716,7 @@ public class RandomTableTypeChecker extends TypeChecker {
 		if(tableReferenceMap.containsKey(fromAlias))
 		{
 			TableReference tempTableReference = tableReferenceMap.get(fromAlias);
-			String tableName = tempTableReference.table;
+			String tableName = tempTableReference.getTable();
 			
 			if(vgFunctionMap.containsKey(tableName))
 			{
@@ -789,7 +789,7 @@ public class RandomTableTypeChecker extends TypeChecker {
 			if(tableReferenceMap.containsKey(fromAlias))
 			{
 				tempTableReference = tableReferenceMap.get(fromAlias);
-				tableName = tempTableReference.table;
+				tableName = tempTableReference.getTable();
 				
 				if(vgFunctionMap.containsKey(tableName))
 				{
@@ -865,7 +865,7 @@ public class RandomTableTypeChecker extends TypeChecker {
 					if(tableReferenceMap.containsKey(fromAlias))
 					{
 						tempTableReference = tableReferenceMap.get(fromAlias);
-						tableName = tempTableReference.table;
+						tableName = tempTableReference.getTable();
 						
 						if(vgFunctionMap.containsKey(tableName))
 						{
@@ -928,7 +928,7 @@ public class RandomTableTypeChecker extends TypeChecker {
 				if(tableReferenceMap.containsKey(fromAlias))
 				{
 					TableReference tempTableReference = tableReferenceMap.get(fromAlias);
-					String tableName = tempTableReference.table;
+					String tableName = tempTableReference.getTable();
 					
 					if(vgFunctionMap.containsKey(tableName))
 					{
@@ -1012,7 +1012,7 @@ public class RandomTableTypeChecker extends TypeChecker {
 					if(tableReferenceMap.containsKey(fromAlias))
 					{
 						tempTableReference = tableReferenceMap.get(fromAlias);
-						tableName = tempTableReference.table;
+						tableName = tempTableReference.getTable();
 						
 						if(vgFunctionMap.containsKey(tableName))
 						{
@@ -1068,7 +1068,7 @@ public class RandomTableTypeChecker extends TypeChecker {
 				if(tableReferenceMap.containsKey(fromAlias))
 				{
 					TableReference tempTableReference = tableReferenceMap.get(fromAlias);
-					String tableName = tempTableReference.table;
+					String tableName = tempTableReference.getTable();
 					
 					if(vgFunctionMap.containsKey(tableName))
 					{

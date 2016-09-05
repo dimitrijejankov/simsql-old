@@ -38,7 +38,7 @@ public class RelationStatistics implements StatisticsOperator
 	private String directory;
 	private ArrayList<String> attributeList;
 	
-	private String indexString;
+	private HashMap<String, String> indexStrings;
 	private int type;
 	
 	private PreviousTable tableInfo;
@@ -51,7 +51,7 @@ public class RelationStatistics implements StatisticsOperator
 		this.relation = relation;
 		this.directory = directory;
 		this.attributeList = attributeList;
-		this.indexString = null;
+		this.indexStrings = new HashMap<String, String>();
 		this.tableInfo = null;
 		this.type = type;
 	}
@@ -59,13 +59,13 @@ public class RelationStatistics implements StatisticsOperator
 	public RelationStatistics(String relation, 
 			String directory,
 			ArrayList<String> attributeList,
-			String indexString,
+		  	HashMap<String, String> indexStrings,
 			int type) {
 		super();
 		this.relation = relation;
 		this.directory = directory;
 		this.attributeList = attributeList;
-		this.indexString = indexString;
+		this.indexStrings = indexStrings;
 		this.tableInfo = null;
 		this.type = type;
 	}
@@ -79,7 +79,7 @@ public class RelationStatistics implements StatisticsOperator
 		
 		if(!ValuesTableHelper.getValuesTableMap().containsKey(relation))
 		{
-			if(indexString == null && type == TableReference.COMMON_TABLE)//
+			if(indexStrings.size() == 0 && type == TableReference.COMMON_TABLE)//
 			{
 				result += "relation('";
 				result += relation;

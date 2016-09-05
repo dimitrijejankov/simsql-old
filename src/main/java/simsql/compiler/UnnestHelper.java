@@ -51,7 +51,7 @@ public class UnnestHelper {
 		
 		if(element instanceof TableReference)
 		{
-			String tableName = ((TableReference) element).table;
+			String tableName = ((TableReference) element).getTable();
 			HashMap<String, GeneralFunctionExpression> vgFunctionMap = typeChecker.getVgFunctionMap();
 			Catalog catalog = SimsqlCompiler.catalog;
 			

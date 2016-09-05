@@ -352,8 +352,8 @@ public class Catalog implements simsql.shell.Catalog {
                 objectType == DataAccess.OBJ_UNION_VIEW || objectType == DataAccess.OBJ_MULRELATION ) {
 				view = new View(viewName, ds.getSQL(viewName), ds.getAttsFromView(viewName), objectType);
 			}
-			else if(viewName.matches("^[^_]+_i$")) {
-                String tempViewName = viewName.substring(0, viewName.length() - 2);
+			else if(viewName.matches("^[^_]+(_[a-z])+$")) {
+                String tempViewName = viewName.substring(0, viewName.indexOf("_"));
 
                 ArrayList<String> indexTableNameList = ds.getIndexTable(tempViewName);
                 if (indexTableNameList.size() != 0) {

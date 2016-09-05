@@ -93,9 +93,11 @@ public class Simplifier {
 				}
 				else if(fromElement instanceof TableReference)
 				{
-					if(((TableReference)fromElement).getExpression() != null)
+					TableReference tmp = ((TableReference)fromElement);
+
+					if(tmp.getExpression("i") != null)
 					{
-						((TableReference)fromElement).setExpression(simplifyMathExpression(((TableReference)fromElement).getExpression()));
+						tmp.setExpression("i", simplifyMathExpression(tmp.getExpression("i")));
 					}
 				}
 			}
@@ -468,9 +470,9 @@ public class Simplifier {
 		}
 		else if(expression instanceof TableReference)
 		{
-			temp_expression = ((TableReference)expression).getExpression();
+			temp_expression = ((TableReference)expression).getExpression("i");
 			temp_expression = simplifyMathExpression(temp_expression);
-			((TableReference)expression).setExpression(temp_expression);
+			((TableReference)expression).setExpression("i", temp_expression);
 		}
 		else if(expression instanceof GeneralTableName)
 		{

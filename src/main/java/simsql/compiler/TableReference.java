@@ -22,6 +22,8 @@
 package simsql.compiler; // package mcdb.compiler.parser.expression.sqlExpression;
 
 import static simsql.compiler.MultidimensionalSchemaIndices.labelingOrder;
+import static simsql.compiler.MultidimensionalTableSchema.getTableNameFromIndices;
+import static simsql.compiler.MultidimensionalTableSchema.getGeneralIndexTableNameFromExpressions;
 
 
 // import mcdb.compiler.parser.astVisitor.ASTVisitor;
@@ -41,8 +43,8 @@ public class TableReference extends SQLExpression{
 	public static final int MULTIDIMENSIONAL_CONSTANT_INDEX_TABLE = 3;
 	public static final int MULTIDIMENSIONAL_GENERAL_INDEX_TABLE = 4;
 
-	public String table;
-	public String alias;
+	private String table;
+	private String alias;
 	
 	/*
 	 * --------------------For simulation-----------------------
@@ -68,8 +70,8 @@ public class TableReference extends SQLExpression{
 	
 	public TableReference(String table, String alias, int type)
 	{
-		this.table = table;
-		this.alias = alias;
+		this.setTable(table);
+		this.setAlias(alias);
 		this.type = type;
 		this.expressions = new HashMap<String, MathExpression>();
 		this.indexStrings = new HashMap<String, String>();
@@ -77,9 +79,7 @@ public class TableReference extends SQLExpression{
 
     public TableReference(String table, String alias, String indexString, int type)
     {
-        this.table = table;
-        this.alias = alias;
-        this.type = type;
+        this(table, alias, type);
         this.expressions = new HashMap<String, MathExpression>();
         this.indexStrings.put("i", indexString);
     }
@@ -90,9 +90,7 @@ public class TableReference extends SQLExpression{
                           int type,
                           MathExpression expression)
     {
-        this.table = table;
-        this.alias = alias;
-        this.type = type;
+        this(table, alias, type);
         this.indexStrings.put("i", indexString);
         this.expressions.put("i", expression);
     }
@@ -108,35 +106,73 @@ public class TableReference extends SQLExpression{
 	}
 
 	public String getTable() {
+
+	    if(type == MULTIDIMENSIONAL_CONSTANT_INDEX_TABLE || type == CONSTANT_INDEX_TABLE) {
+	        return getTableNameFromIndices(table, indexStrings);
+        }
+
+        if(type == MULTIDIMENSIONAL_GENERAL_INDEX_TABLE || type == GENERAL_INDEX_TABLE) {
+            return getGeneralIndexTableNameFromExpressions(table, expressions);
+        }
+
 		return table;
 	}
 
-	public void setTable(String table) {
-		this.table = table;
-	}
-
 	public String getAlias() {
-		return alias;
+		return alias == null ? table : alias;
 	}
 
-	public void setAlias(String alias) {
-		this.alias = alias;
-	}
+    public HashMap<String, String> getIndexStrings() {
+        return indexStrings;
+    }
 
-	public int getTableInferenceType()
-	{
-		return type;
-	}
+    public HashMap<String, MathExpression> getExpressions() {
+        return expressions;
+    }
 
-	public MathExpression getExpression() {
-		return expressions.get("i");
-	}
+    public int getTableInferenceType()
+    {
+        return type;
+    }
 
-	public void setExpression(MathExpression expression) {
-		expressions.put("i", expression);
-	}
+    public MathExpression getExpression(String index) {
+        return expressions.get(index);
+    }
 
-	/* (non-Javadoc)
+    public String getIndexString(String index) {
+        return indexStrings.get(index);
+    }
+    public void setTable(String table) {
+        this.table = table;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
+    }
+
+    public void setType(Integer type) {
+        this.type = type;
+    }
+
+    public void setExpression(String index, MathExpression expression) {
+        expressions.put(index, expression);
+    }
+
+    public void addExpression(MathExpression expression) {
+        String index = labelingOrder[expressions.size()];
+        setExpression(index, expression);
+    }
+
+    public void setIndexString(String index, String indexString) {
+        this.indexStrings.put(index, indexString);
+    }
+
+    public void addIndexString(String indexString) {
+        String index = labelingOrder[indexStrings.size()];
+        setIndexString(index, indexString);
+    }
+
+    /* (non-Javadoc)
 	 * @see component.expression.Expression#acceptVisitor(astVisitor.ASTVisitor)
 	 */
 	@Override
@@ -147,14 +183,7 @@ public class TableReference extends SQLExpression{
 	@Override
 	public String toString()
 	{
-		return table +" as " + alias;
+		return getTable() +" as " + getAlias();
 	}
 
-    public String getIndexString() {
-        return indexStrings.get("i");
-    }
-
-    public void setIndexString(String indexString) {
-        this.indexStrings.put("i", indexString);
-    }
 }

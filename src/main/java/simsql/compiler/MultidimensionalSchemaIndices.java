@@ -21,6 +21,8 @@ public class MultidimensionalSchemaIndices {
      * @param generalTableName For example the input string resembles the following format : md_2_2to3_3to.
      */
     public MultidimensionalSchemaIndices(String generalTableName) {
+        indices = new LinkedHashMap<String, MultidimensionalSchemaIndexSpecification>();
+
         int offset = generalTableName.indexOf("_");
         String tableName = generalTableName.substring(offset + 1);
 

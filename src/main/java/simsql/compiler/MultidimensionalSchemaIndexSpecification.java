@@ -8,7 +8,7 @@ public class MultidimensionalSchemaIndexSpecification {
 
     Boolean unconstrained;
 
-    public MultidimensionalSchemaIndexSpecification(String upperLimit, String lowerLimit) {
+    public MultidimensionalSchemaIndexSpecification(String lowerLimit, String upperLimit) {
         this.upperLimit = Integer.parseInt(upperLimit);
         this.lowerLimit = Integer.parseInt(lowerLimit);
         this.unconstrained = false;

@@ -146,7 +146,7 @@ public class ViewTypeChecker extends TypeChecker{
 					if(tableReferenceMap.containsKey(fromAlias))
 					{
 						tempTableReference = tableReferenceMap.get(fromAlias);
-						tableName = tempTableReference.table;
+						tableName = tempTableReference.getTable();
 						
 						
 						relation = SimsqlCompiler.catalog.getRelation(tableName);
@@ -188,7 +188,7 @@ public class ViewTypeChecker extends TypeChecker{
 				if(tableReferenceMap.containsKey(fromAlias))
 				{
 					TableReference tempTableReference = tableReferenceMap.get(fromAlias);
-					String tableName = tempTableReference.table;
+					String tableName = tempTableReference.getTable();
 					
 					Relation relation = SimsqlCompiler.catalog.getRelation(tableName);
 					ArrayList<Attribute> tempList;

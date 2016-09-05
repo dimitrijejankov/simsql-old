@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Stack;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import static simsql.compiler.MultidimensionalTableSchema.getTableNameFromGeneralName;
 
 
 public class PlanHelper {
@@ -133,7 +134,7 @@ public class PlanHelper {
 				
 				if(tableScan.getType() != TableReference.COMMON_TABLE)
 				{
-					String indexStr = tableScan.getIndexString();
+					String indexStr = tableScan.getIndexStrings().get("i");
 					int timeTick = Integer.parseInt(indexStr);	
 					if(!resultList.contains(timeTick))
 					{
@@ -166,9 +167,9 @@ public class PlanHelper {
 		int timeTick = -1;
 		for(int i = 0; i < indexedTableList.size(); i++)
 		{
-			if(timeTick < Integer.parseInt(indexedTableList.get(i).getIndexString()))
+			if(timeTick < Integer.parseInt(indexedTableList.get(i).getIndexStrings().get("i")))
 			{
-				timeTick = Integer.parseInt(indexedTableList.get(i).getIndexString());
+				timeTick = Integer.parseInt(indexedTableList.get(i).getIndexStrings().get("i"));
 			}
 		}
 		
@@ -211,6 +212,19 @@ public class PlanHelper {
 						}
 					}
 				}
+				else if (viewName.matches("^[^_]+(_[0-9]+to[0-9]+|_[0-9]+to|_[0-9]+)+$")) {
+				    String tablePrefix = getTableNameFromGeneralName(viewName);
+
+                    ArrayList<String> tempList = catalog.getIndexTableList(tablePrefix);
+
+                    if(tempList != null)
+                    {
+                        for(String s: tempList)
+                        {
+                            resultSet.add(s);
+                        }
+                    }
+                }
 			}
 			catch(Exception e)
 			{

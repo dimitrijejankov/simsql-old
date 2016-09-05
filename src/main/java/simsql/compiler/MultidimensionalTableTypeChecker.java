@@ -2,7 +2,6 @@ package simsql.compiler;
 
 
 import simsql.runtime.DataType;
-
 import java.util.ArrayList;
 
 public class MultidimensionalTableTypeChecker extends RandomTableTypeChecker {
@@ -19,16 +18,21 @@ public class MultidimensionalTableTypeChecker extends RandomTableTypeChecker {
 
     @Override
     public void saveView(DefinedTableSchema tableAttributes, ArrayList<DataType> gottenAttributeTypeList, String sql) throws Exception {
-        ArrayList<Attribute> schema = saveAttributes(tableAttributes, gottenAttributeTypeList);
-        String viewName = tableAttributes.getViewName();
 
-        View view = new View(viewName, sql, schema, DataAccess.OBJ_MULRELATION);
+        if(!(tableAttributes instanceof MultidimensionalTableSchema))
+            throw new RuntimeException("Schema has to be a MultidimensionalTableSchema");
+
+        MultidimensionalTableSchema schema = (MultidimensionalTableSchema)tableAttributes;
+
+        ArrayList<Attribute> schemaAttributes = saveAttributes(schema, gottenAttributeTypeList);
+        String viewName = schema.getViewName();
+
+        View view = new View(viewName, sql, schemaAttributes, DataAccess.OBJ_MULRELATION);
         catalog.addView(view);
 
-        int end = viewName.indexOf("_");
-        String realViewName = viewName.substring(0, end);
-        catalog.addIndexTable(realViewName, viewName);
+        String realViewName = viewName.substring(0, viewName.indexOf("_"));
 
+        catalog.addIndexTable(realViewName, viewName);
         catalog.addMCDependecy(viewName, this.getIndexedRandomTableList());
     }
 }

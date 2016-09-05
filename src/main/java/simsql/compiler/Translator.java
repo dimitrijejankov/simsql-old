@@ -810,7 +810,7 @@ public class Translator {
 		{
 			TableReference tempTableReference = tableReferenceMap.get(alias);
 			
-			tableName = tempTableReference.table;
+			tableName = tempTableReference.getTable();
 			
 			relation = catalog.getRelation(tableName);
 			View view;
@@ -1046,8 +1046,8 @@ public class Translator {
 			SQLExpression reference = addedTableReferenceList.get(i);
 			if(reference instanceof TableReference)
 			{
-				String tableName = ((TableReference)reference).table;
-				String tableAlias = ((TableReference)reference).alias;
+				String tableName = ((TableReference) reference).getTable();
+				String tableAlias = ((TableReference) reference).getAlias();
 				Relation relation = catalog.getRelation(tableName);
 				View view;
 				if(relation != null)
@@ -1164,7 +1164,7 @@ public class Translator {
 			{
 				TableReference tempTableReference = tableReferenceMap.get(tableAlias);
 				
-				tableName = tempTableReference.table;
+				tableName = tempTableReference.getTable();
 				
 				relation = catalog.getRelation(tableName);
 				View view;
@@ -1173,11 +1173,13 @@ public class Translator {
 					translatorElement = sqlExpressionTranslator.tableScan(relation, tableAlias);
 					translatedElementList.add(translatorElement);
 				}
-				else if(((TableReference)tempTableReference).getTableInferenceType() == TableReference.CONSTANT_INDEX_TABLE ||
-						((TableReference)tempTableReference).getTableInferenceType() == TableReference.GENERAL_INDEX_TABLE)
+				else if((tempTableReference).getTableInferenceType() == TableReference.CONSTANT_INDEX_TABLE ||
+						(tempTableReference).getTableInferenceType() == TableReference.GENERAL_INDEX_TABLE ||
+						(tempTableReference).getTableInferenceType() == TableReference.MULTIDIMENSIONAL_CONSTANT_INDEX_TABLE ||
+						(tempTableReference).getTableInferenceType() == TableReference.MULTIDIMENSIONAL_GENERAL_INDEX_TABLE)
 				{
 					view = catalog.getView(tableName);
-					translatorElement = sqlExpressionTranslator.indexTableScan(view, tableAlias, (TableReference)tempTableReference);
+					translatorElement = sqlExpressionTranslator.indexTableScan(view, tableAlias, tempTableReference);
 					translatedElementList.add(translatorElement);
 				}
 				else
@@ -2149,7 +2151,7 @@ public class Translator {
 		//if the tableAlias is from a table reference.
 		if(tempTableReference != null)
 		{
-			String tableName = tempTableReference.table;
+			String tableName = tempTableReference.getTable();
 			
 			Catalog catalog = SimsqlCompiler.catalog;
 			
@@ -2667,7 +2669,7 @@ public class Translator {
 			String tableAlias = fromList.get(i);
 			TableReference tempTableReference = tableReferenceMap.get(tableAlias);
 			
-			String tableName = tempTableReference.table;
+			String tableName = tempTableReference.getTable();
 			Relation relation;
 			
 			if(vgFunctionMap.containsKey(tableName)) //consider the VGFunction
@@ -2700,7 +2702,7 @@ public class Translator {
 				if(tableReferenceMap.containsKey(tableAlias))
 				{
 					
-					tableName = tempTableReference.table;
+					tableName = tempTableReference.getTable();
 					
 					relation = catalog.getRelation(tableName);
 					View view;
@@ -2709,8 +2711,10 @@ public class Translator {
 						translatorElement = sqlExpressionTranslator.tableScan(relation, tableAlias);
 						translatedElementList.add(translatorElement);
 					}
-					else if(((TableReference)tempTableReference).getTableInferenceType() == TableReference.CONSTANT_INDEX_TABLE ||
-							((TableReference)tempTableReference).getTableInferenceType() == TableReference.GENERAL_INDEX_TABLE)
+					else if((tempTableReference).getTableInferenceType() == TableReference.CONSTANT_INDEX_TABLE ||
+							(tempTableReference).getTableInferenceType() == TableReference.GENERAL_INDEX_TABLE ||
+							(tempTableReference).getTableInferenceType() == TableReference.MULTIDIMENSIONAL_GENERAL_INDEX_TABLE ||
+                            (tempTableReference).getTableInferenceType() == TableReference.MULTIDIMENSIONAL_CONSTANT_INDEX_TABLE)
 					{
 						view = catalog.getView(tableName);
 						translatorElement = sqlExpressionTranslator.indexTableScan(view, tableAlias, (TableReference)tempTableReference);

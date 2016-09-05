@@ -259,7 +259,7 @@ public class Unnester {
 				String alias = "";
 				if(element instanceof TableReference)
 				{
-					alias = ((TableReference) element).alias;
+					alias = ((TableReference) element).getAlias();
 				}
 				else if(element instanceof FromSubquery)
 				{
