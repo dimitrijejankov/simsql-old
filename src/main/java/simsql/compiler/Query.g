@@ -354,6 +354,7 @@ tableReference returns [SQLExpression expression]:
             indexTableReference AS? aliasName=IDENTIFIER
             {
                  $expression = $indexTableReference.value;
+                 $indexTableReference.value.setAlias($aliasName.text);
             }
             |
             indexTableReference
