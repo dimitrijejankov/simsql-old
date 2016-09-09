@@ -22,6 +22,7 @@
 package simsql.compiler;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -160,18 +161,18 @@ public class MPNGenerator {
 		return result;
 	}
 
-	public int initializeTime(int currentTime) {
-		return (int)initializeTime(mathExpression, currentTime);
+	public int initializeTime(HashMap<String, Integer> indices) {
+		return (int)initializeTime(mathExpression, indices);
 	}
 	
-	public double initializeTime(MathExpression exp, int currentTime) {
+	public double initializeTime(MathExpression exp, HashMap<String, Integer> indices) {
 		if(exp instanceof ArithmeticExpression)
 		{
-			return initializeArithmeticExpressionTime((ArithmeticExpression)exp, currentTime);
+			return initializeArithmeticExpressionTime((ArithmeticExpression)exp, indices);
 		}
 		else if(exp instanceof GeneralFunctionExpression)
 		{
-			return initializeFunctionTime((GeneralFunctionExpression)exp, currentTime);
+			return initializeFunctionTime((GeneralFunctionExpression)exp, indices);
 		}
 		else if(exp instanceof NumericExpression)
 		{
@@ -179,7 +180,7 @@ public class MPNGenerator {
 		}
 		else if(exp instanceof GeneralTableIndex)
 		{
-			return currentTime;
+			return indices.get(exp.toString());
 		}
 		else
 		{
@@ -187,11 +188,11 @@ public class MPNGenerator {
 		}
 	}
 	
-	public double initializeArithmeticExpressionTime(ArithmeticExpression exp, int currentTime)
+	public double initializeArithmeticExpressionTime(ArithmeticExpression exp, HashMap<String, Integer> indices)
 	{
 		ArrayList<Integer> operatorList = exp.operatorList;
 		ArrayList<MathExpression> operandList = exp.operandList;
-		double value = initializeTime(operandList.get(0), currentTime);
+		double value = initializeTime(operandList.get(0), indices);
 				
 		for(int i = 0; i < operatorList.size(); i++)
 		{
@@ -203,19 +204,19 @@ public class MPNGenerator {
 				switch(operator)
 				{
 					case FinalVariable.PLUS:
-						value += initializeTime(expression, currentTime);
+						value += initializeTime(expression, indices);
 						break;
 						
 					case FinalVariable.MINUS:
-						value -= initializeTime(expression, currentTime);
+						value -= initializeTime(expression, indices);
 						break;
 						
 					case FinalVariable.TIMES:
-						value *= initializeTime(expression, currentTime);
+						value *= initializeTime(expression, indices);
 						break;
 						
 					case FinalVariable.DIVIDE:
-						value /= initializeTime(expression, currentTime);
+						value /= initializeTime(expression, indices);
 						break;
 						
 					default:
@@ -226,7 +227,7 @@ public class MPNGenerator {
 		return value;
 	}
 	
-	public double initializeFunctionTime(GeneralFunctionExpression exp, int currentTime)
+	public double initializeFunctionTime(GeneralFunctionExpression exp, HashMap<String, Integer> indices)
 	{
 		String name = exp.functionName.toLowerCase();
 		ArrayList<MathExpression> paraList = exp.parasList;
@@ -235,7 +236,7 @@ public class MPNGenerator {
 		for(int i = 0; i < paraList.size(); i++)
 		{
 			MathExpression expression = paraList.get(i);
-			paraValueList.add(initializeTime(expression, currentTime));
+			paraValueList.add(initializeTime(expression, indices));
 		}
 		
 		/*
@@ -251,7 +252,7 @@ public class MPNGenerator {
 		}
 	}
 	
-	public double compute(String indexString, int value)
+	public double compute(String indexString, HashMap<String, Integer> indices)
 	{
 		
 		//replace the tokenForComma
@@ -262,7 +263,7 @@ public class MPNGenerator {
         try
         {
         	MathExpression mathExpression = parser.valueExpression().expression;
-        	return initializeTime(mathExpression, value);
+        	return initializeTime(mathExpression, indices);
         }
         catch(Exception e)
         {

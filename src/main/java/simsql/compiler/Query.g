@@ -1331,9 +1331,9 @@ mul_expr returns [MathExpression expression]:
 			)*;
  
 valueExpressionPrimary returns [MathExpression expression]:
-            GENERALTABLEINDEX
+            gi=GENERALTABLEINDEX
             {
-                $expression = new GeneralTableIndex();
+                $expression = new GeneralTableIndex($gi.text);
             }
             |
             signedNumeric

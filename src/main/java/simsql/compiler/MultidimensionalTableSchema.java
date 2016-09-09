@@ -51,8 +51,16 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
     }
 
     /**
-     * Extracts the indices from a table qualified name
-     *
+     * This method extracts the table name from it's qualified name.
+     * For example, if the qualified name is "md[1][2][3] the table name would be md
+     **/
+    public static String getTableNameFromBracketsName(String qualifiedName) {
+        int offset = qualifiedName.indexOf('[');
+        return qualifiedName.substring(0, offset);
+    }
+
+    /**
+     * Extracts the indices from a table qualified name.
      * @param qualifiedName For example, if the qualified name is "md_1_2_3" the indices would be 1, 2, 3
      * @return hash map with indices and their integer values.
      */
@@ -69,7 +77,14 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
         return ret;
     }
 
-    public static String getTableNameFromIndices(String prefix, HashMap<String, String> indices) {
+
+    /**
+     * Generate qualified table name from prefix an indices.
+     * @param prefix the table prefix
+     * @param indices a HashMap with key value pairs, for example {i : 1, j : 2, k : 4}
+     * @return qualified table name for example tablePrefix_1_2_4
+     */
+    public static String getTableNameFromIndices(String prefix, HashMap<String, Integer> indices) {
 
         for (int i = 0; i < indices.size(); ++i) {
             if (!indices.containsKey(labelingOrder[i]))
@@ -81,6 +96,30 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
         return prefix;
     }
 
+    /**
+     * Generate brackets table name from prefix an indices.
+     * @param prefix the table prefix
+     * @param indices a HashMap with key value pairs, for example {i : 1, j : 2, k : 4}
+     * @return brackets table name for example tablePrefix[1][2][4]
+     */
+    public static String getBracketsTableNameFromIndices(String prefix, HashMap<String, Integer> indices) {
+
+        for (int i = 0; i < indices.size(); ++i) {
+            if (!indices.containsKey(labelingOrder[i]))
+                throw new RuntimeException("Wrong indices order!");
+
+            prefix += "[" + indices.get(labelingOrder[i]) + "]";
+        }
+
+        return prefix;
+    }
+
+    /**
+     * Generate general index table name from expressions
+     * @param prefix the table name prefix
+     * @param expressions a HashMap with key value pairs with index string as key and expression as value
+     * @return general index table name for example tablePrefix_i_j_k
+     */
     public static String getGeneralIndexTableNameFromExpressions(String prefix, HashMap<String, MathExpression> expressions) {
         for (int i = 0; i < expressions.size(); ++i) {
             if (!expressions.containsKey(labelingOrder[i]))

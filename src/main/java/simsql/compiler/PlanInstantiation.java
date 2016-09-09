@@ -79,7 +79,7 @@ public class PlanInstantiation {
 	private HashMap<Integer, ArrayList<Operator>> mcmcDagBundledPlan;
 	
 	/**
-	 * @param randomTablePlanMap
+	 * @param randomPlanTableMap
 	 * @param chain
 	 */
 	public PlanInstantiation(HashMap<Operator, String> randomPlanTableMap,
@@ -166,7 +166,7 @@ public class PlanInstantiation {
 					
 					String tablename = tableScan.getTableName();
 					
-					if(Integer.parseInt(tableScan.getIndexStrings().get("i")) >= start_index)
+					if(tableScan.getIndexStrings().get("i") >= start_index)
 					{
 						Operator linkedOperator = generatedPlanMap.get(transferTableName(tablename));
 						integratePlan(tableScan, linkedOperator);
@@ -229,7 +229,7 @@ public class PlanInstantiation {
 						TableScan tableScan = replacedTableList.get(k);
 						String tablename = tableScan.getTableName();
 						
-						if(Integer.parseInt(tableScan.getIndexStrings().get("i")) >= start_index)
+						if(tableScan.getIndexStrings().get("i") >= start_index)
 						{
 							Operator linkedOperator = generatedPlanMap.get(transferTableName(tablename));
 							if(linkedOperator == null)
@@ -549,7 +549,11 @@ public class PlanInstantiation {
 						{
 							MathExpression indexExpression = ((TableScan) currentElement).getIndexMathExp();
 							MPNGenerator generator = new MPNGenerator(indexExpression);
-							int version = generator.initializeTime(currentTime);
+
+							HashMap<String, Integer> indices = new HashMap<String, Integer>();
+							indices.put("i", currentTime);
+
+							int version = generator.initializeTime(indices);
 							//((TableScan) currentElement).setTableName(getTablePrefixUnderscore(tableName) + "_" + version);
 							//((TableScan) currentElement).setIndexString(version + "");
 							alreadyInPlanTables.add(getTablePrefixUnderscore(tableName) + "[" + version + "]");
@@ -645,10 +649,14 @@ public class PlanInstantiation {
 						{
 							MathExpression indexExpression = ((TableScan) currentElement).getIndexMathExp();
 							MPNGenerator generator = new MPNGenerator(indexExpression);
-							int version = generator.initializeTime(currentTime);
+
+							HashMap<String, Integer> indices = new HashMap<String, Integer>();
+							indices.put("i", currentTime);
+
+							Integer version = generator.initializeTime(indices);
 							
 							((TableScan) currentElement).setTableName(getTablePrefixUnderscore(tableName) + "_" + version);
-							((TableScan) currentElement).getIndexStrings().put("i", version + "");
+							((TableScan) currentElement).getIndexStrings().put("i", version);
 							
 							/*
 							 * Keep the state of current table scan, which should be replaced in the integrated plan.
@@ -730,7 +738,11 @@ public class PlanInstantiation {
 			{
 				MathExpression indexExpression = ((TableScan) operator).getIndexMathExp();
 				MPNGenerator generator = new MPNGenerator(indexExpression);
-				int version = generator.initializeTime(timeTick);
+
+				HashMap<String, Integer> indices = new HashMap<String, Integer>();
+				indices.put("i", timeTick);
+
+				int version = generator.initializeTime(indices);
 				
 				relationStatistics.setRelation(getTablePrefixUnderscore(tableName) + "_" + (version));
 			}

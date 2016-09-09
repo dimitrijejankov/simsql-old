@@ -42,7 +42,7 @@ public class TableScan extends Operator{
 	private RelationStatistics relationStatistics;
 	private Catalog catalog;
 	
-	private HashMap<String, String> indexStrings;
+	private HashMap<String, Integer> indexStrings;
 	private HashMap<String, MathExpression> indexMathExpressions;
 	private int type;
 	
@@ -84,7 +84,7 @@ public class TableScan extends Operator{
 		this.catalog = SimsqlCompiler.catalog;
         this.tableInfo = null;
 		this.type = type;
-		this.indexStrings = new HashMap<String, String>();
+		this.indexStrings = new HashMap<String, Integer>();
         this.indexMathExpressions = indexMathExpressions;
 	}
 	
@@ -94,7 +94,7 @@ public class TableScan extends Operator{
 			 String tableName, 
 			 ArrayList<String> attributeList,
 			 RelationStatistics relationStatistics,
-			 HashMap<String, String> indexStrings,
+			 HashMap<String, Integer> indexStrings,
 			 int type,
 			 HashMap<String, MathExpression> indexMathExpressions)
 	{
@@ -135,11 +135,11 @@ public class TableScan extends Operator{
 		this.type = type;
 	}
 
-    public HashMap<String, String> getIndexStrings() {
+    public HashMap<String, Integer> getIndexStrings() {
         return indexStrings;
     }
 
-    public void setIndexStrings(HashMap<String, String> indexStrings) {
+    public void setIndexStrings(HashMap<String, Integer> indexStrings) {
         this.indexStrings = indexStrings;
     }
 
@@ -565,14 +565,14 @@ public class TableScan extends Operator{
 		
 		RelationStatistics c_relationStatistics = this.relationStatistics;
 
-        HashMap<String, String> c_indexStrings;
+        HashMap<String, Integer> c_indexStrings;
 		if(this.indexStrings == null)
 		{
 			c_indexStrings = null;
 		}
 		else
 		{
-			c_indexStrings = new HashMap<String, String>(indexStrings);
+			c_indexStrings = new HashMap<String, Integer>(indexStrings);
 		}
 		
 		TableScan tablescan = new TableScan(commonContent.nodeName,

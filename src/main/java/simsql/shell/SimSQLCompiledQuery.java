@@ -24,9 +24,12 @@ package simsql.shell;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+
 import simsql.compiler.Projection;
 import simsql.compiler.FrameOutput;
 import simsql.compiler.Operator;
+import simsql.compiler.timetable.TimeTableNode;
 
 public class SimSQLCompiledQuery implements CompiledQuery{
 	// for MCMC query
@@ -35,6 +38,7 @@ public class SimSQLCompiledQuery implements CompiledQuery{
     public ArrayList<String> sqlList;
     public HashMap<Operator, String> definitionMap;
     public int maxLoop;
+    public LinkedList<TimeTableNode> requiredTables;
 
     // for MCDB2 query
     private String fName = null;
@@ -55,7 +59,8 @@ public class SimSQLCompiledQuery implements CompiledQuery{
 					           ArrayList<String> sqlList, 
 					           ArrayList<Operator> queryList,
 					           HashMap<Operator, String> definitionMap,
-					           int maxLoop) {
+					           int maxLoop,
+                               LinkedList<TimeTableNode> requiredTables) {
         super();
         
         this.sinkList = sinkList;
@@ -63,6 +68,7 @@ public class SimSQLCompiledQuery implements CompiledQuery{
         this.queryList = queryList;
         this.definitionMap = definitionMap;
         this.maxLoop = maxLoop;
+        this.requiredTables = requiredTables;
 	//for mcmc queries on the tree
         this.tableNameList = new ArrayList<String>();
         this.tableAttributeNameListMap = new HashMap<String, ArrayList<String>>();

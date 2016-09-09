@@ -24,13 +24,10 @@
  */
 package simsql.compiler;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
+import simsql.compiler.timetable.TableDependencyGraph;
+import simsql.compiler.timetable.TimeTableNode;
 
+import java.util.*;
 
 
 /**
@@ -54,17 +51,22 @@ public class ChainGeneration
 	
 	private int startTimeTick;
 	private int maxLoop;
+    private LinkedList<TimeTableNode> requiredTables;
 	
 	public ChainGeneration(Topologic topologic,
-			               int maxLoop)
+			               int maxLoop,
+                           LinkedList<TimeTableNode> requiredTables)
 	{
-		this.topologic = topologic;
-		ruleMap = new HashMap<String, HashSet<String>>();
-		simulateTableMap = new HashMap<Integer, TableByTime>();
-		startPointList = new ArrayList<String>();
-		maxVersionTableMap = new HashMap<String, Integer>();
+        this.topologic = topologic;
+        this.maxLoop = maxLoop;
+        this.requiredTables = requiredTables;
+
+		this.ruleMap = new HashMap<String, HashSet<String>>();
+        this.simulateTableMap = new HashMap<Integer, TableByTime>();
+        this.startPointList = new ArrayList<String>();
+        this.maxVersionTableMap = new HashMap<String, Integer>();
+
 		instantiateChain(0, maxLoop);
-		this.maxLoop = maxLoop;
 	}
 	
 	public  boolean checkCircle()
@@ -137,7 +139,9 @@ public class ChainGeneration
 	{
 		HashMap<String, HashSet<String>> forwardEdge = topologic.getForwardEdges();
 		HashMap<String, HashSet<String>> backwardEdge = topologic.getBackwardEdges();
-		
+
+        TableDependencyGraph dependencyGraph = new TableDependencyGraph(requiredTables, topologic.getBackwardEdges());
+
 		/*
 		 * 1. chain
 		 */
@@ -779,8 +783,11 @@ public class ChainGeneration
 		int start = table.indexOf("[");
 		int end = table.indexOf("]");
 		String indexString = table.substring(start+1, end);
-		
-		double result = new MPNGenerator().compute(indexString, index);
+
+        HashMap<String, Integer> indices = new HashMap<String, Integer>();
+        indices.put("i", index);
+
+		double result = new MPNGenerator().compute(indexString, indices);
 		return (int)result;
 	}
 	
@@ -794,10 +801,13 @@ public class ChainGeneration
 		
 		String prefix = indexString.substring(0, start);
 		String suffix = indexString.substring(start+1, indexString.length());
-		
+
+        HashMap<String, Integer> indices = new HashMap<String, Integer>();
+        indices.put("i", index);
+
 		int result[] = new int[2];
-		result[0] = (int)(new MPNGenerator().compute(prefix, index));
-		result[1] = (int)(new MPNGenerator().compute(suffix, index));
+		result[0] = (int)(new MPNGenerator().compute(prefix, indices));
+		result[1] = (int)(new MPNGenerator().compute(suffix, indices));
 		
 		return result;
 	}

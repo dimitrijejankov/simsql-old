@@ -50,7 +50,7 @@ public class Topologic
 	{
 		this.operatorList = operatorList;
 		this.randomTableMap = randomTableMap;
-		
+
 		this.forwardEdge = new HashMap<String, HashSet<String>>();
 		this.backwardEdge = new HashMap<String, HashSet<String>>();	
 		

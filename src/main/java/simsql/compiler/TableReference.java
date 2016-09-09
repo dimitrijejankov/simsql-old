@@ -50,7 +50,7 @@ public class TableReference extends SQLExpression{
 	 * --------------------For simulation-----------------------
 	 */
 
-	public HashMap<String, String> indexStrings;
+	public HashMap<String, Integer> indexStrings;
 	private int type;
 	public HashMap<String, MathExpression> expressions;
 	/*
@@ -74,14 +74,17 @@ public class TableReference extends SQLExpression{
 		this.setAlias(alias);
 		this.type = type;
 		this.expressions = new HashMap<String, MathExpression>();
-		this.indexStrings = new HashMap<String, String>();
+		this.indexStrings = new HashMap<String, Integer>();
 	}
 
     public TableReference(String table, String alias, String indexString, int type)
     {
         this(table, alias, type);
         this.expressions = new HashMap<String, MathExpression>();
-        this.indexStrings.put("i", indexString);
+
+        if(indexString != null) {
+            this.indexStrings.put("i", Integer.parseInt(indexString));
+        }
     }
 
     public TableReference(String table,
@@ -91,7 +94,10 @@ public class TableReference extends SQLExpression{
                           MathExpression expression)
     {
         this(table, alias, type);
-        this.indexStrings.put("i", indexString);
+
+        if(indexString != null) {
+            this.indexStrings.put("i", Integer.parseInt(indexString));
+        }
         this.expressions.put("i", expression);
     }
 	
@@ -122,7 +128,7 @@ public class TableReference extends SQLExpression{
 		return alias == null ? table : alias;
 	}
 
-    public HashMap<String, String> getIndexStrings() {
+    public HashMap<String, Integer> getIndexStrings() {
         return indexStrings;
     }
 
@@ -139,7 +145,7 @@ public class TableReference extends SQLExpression{
         return expressions.get(index);
     }
 
-    public String getIndexString(String index) {
+    public Integer getIndexString(String index) {
         return indexStrings.get(index);
     }
     public void setTable(String table) {
@@ -164,7 +170,7 @@ public class TableReference extends SQLExpression{
     }
 
     public void setIndexString(String index, String indexString) {
-        this.indexStrings.put(index, indexString);
+        this.indexStrings.put(index, Integer.parseInt(indexString));
     }
 
     public void addIndexString(String indexString) {

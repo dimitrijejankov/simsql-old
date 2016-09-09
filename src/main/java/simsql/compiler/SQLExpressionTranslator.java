@@ -716,7 +716,7 @@ public class SQLExpressionTranslator {
 	{
 		HashMap<String, Operator> viewPlanMap = translatorHelper.viewPlanMap;
 		String viewName = view.getName();
-		HashMap<String, String> indexStrings = tableReference.getIndexStrings();
+		HashMap<String, Integer> indexStrings = tableReference.getIndexStrings();
 		int type = tableReference.getTableInferenceType();
 		
 		ArrayList<String> outputAttributeList = null;

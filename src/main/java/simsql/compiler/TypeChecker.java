@@ -398,7 +398,7 @@ public class TypeChecker extends ASTVisitor {
         //String indexString = tableReference.getIndexString("i");
         //MathExpression indexMathExp = tableReference.getExpression("i");
 
-        HashMap<String, String> indexStrings = tableReference.getIndexStrings();
+        HashMap<String, Integer> indexStrings = tableReference.getIndexStrings();
         HashMap<String, MathExpression> expressions = tableReference.getExpressions();
 
         Relation relation = catalog.getRelation(table);
@@ -479,8 +479,7 @@ public class TypeChecker extends ASTVisitor {
 			 * indexString should be a natural integer
 			 */
             try {
-                for(String indexString : indexStrings.values()) {
-                    int index = Integer.parseInt(indexString);
+                for(Integer index : indexStrings.values()) {
                     if (index < 0) {
                         System.err.println("The constant index is not valid!");
                         return false;

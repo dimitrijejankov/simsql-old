@@ -21,8 +21,11 @@
 
 package simsql.compiler;
 
+import simsql.compiler.timetable.TimeTableNode;
+
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Stack;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -134,8 +137,7 @@ public class PlanHelper {
 				
 				if(tableScan.getType() != TableReference.COMMON_TABLE)
 				{
-					String indexStr = tableScan.getIndexStrings().get("i");
-					int timeTick = Integer.parseInt(indexStr);	
+					int timeTick = tableScan.getIndexStrings().get("i");
 					if(!resultList.contains(timeTick))
 					{
 						resultList.add(timeTick);
@@ -167,14 +169,24 @@ public class PlanHelper {
 		int timeTick = -1;
 		for(int i = 0; i < indexedTableList.size(); i++)
 		{
-			if(timeTick < Integer.parseInt(indexedTableList.get(i).getIndexStrings().get("i")))
+			if(timeTick < indexedTableList.get(i).getIndexStrings().get("i"))
 			{
-				timeTick = Integer.parseInt(indexedTableList.get(i).getIndexStrings().get("i"));
+				timeTick = indexedTableList.get(i).getIndexStrings().get("i");
 			}
 		}
 		
 		return timeTick;
 	}
+
+	public static LinkedList<TimeTableNode> getRequiredTables(ArrayList<TableScan> indexedTableList) {
+        LinkedList<TimeTableNode> requiredTableList = new LinkedList<TimeTableNode>();
+
+        for(TableScan ts : indexedTableList) {
+            requiredTableList.add(new TimeTableNode(ts.getTableName(),ts.getIndexStrings()));
+        }
+
+        return requiredTableList;
+    }
 	
 	/*
 	 * Example: select * from A[50]; Here indexedTableList [A_50], then we need to find

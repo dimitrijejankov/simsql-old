@@ -25,6 +25,7 @@
 package simsql.compiler; // package mcdb.compiler;
 
 import java.io.BufferedWriter;
+import java.util.LinkedList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.lang.StringBuffer;
@@ -33,6 +34,8 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.StringTokenizer;
+
+import simsql.compiler.timetable.TimeTableNode;
 import simsql.shell.Compiler;
 import simsql.shell.SimSQLCompiledQuery;
 import simsql.shell.PhysicalDatabase;
@@ -378,7 +381,8 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 	{
 		ArrayList<String> tableReferenceList = PlanHelper.findModelTableList(indexedTableList);
 		int iterationNum = PlanHelper.findMaxTimeTick(indexedTableList);
-		
+
+        LinkedList<TimeTableNode> requiredTables = PlanHelper.getRequiredTables(indexedTableList);
 		
 		try {
 			String query = "";
@@ -538,7 +542,7 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 		        	sqlList.add(sql);
 		        	DefinedTableSchema definedTableSchema = ((GeneralRandomTableStatement)expression).definedTableSchema;
 		        	String viewName = definedTableSchema.getViewName();
-		        	
+
 		        	definitionMap.put(element, viewName);
 		        	empty = false;
 		        }
@@ -557,7 +561,7 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 			        	
 			        	DefinedTableSchema definedTableSchema = ((UnionViewStatement)expression).getSchema();
 			        	String viewName = definedTableSchema.getViewName();
-			        	
+
 			        	definitionMap.put(element, viewName);
 			        	empty = false;
 		        	}
@@ -572,7 +576,7 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 	        	return tempQueryFile;
 	        }
 	        
-	        SimSQLCompiledQuery mcmcCompiledOutput = new SimSQLCompiledQuery(sinkList, sqlList, querySinkList, definitionMap, iterationNum);
+	        SimSQLCompiledQuery mcmcCompiledOutput = new SimSQLCompiledQuery(sinkList, sqlList, querySinkList, definitionMap, iterationNum, requiredTables);
 	        return mcmcCompiledOutput;
 		}
 		catch(Exception e)

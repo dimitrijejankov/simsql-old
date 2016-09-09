@@ -29,10 +29,13 @@ import simsql.runtime.IntType;
 
 public class GeneralTableIndex extends MathExpression{
 	public DataType type;
+	public String identifier;
 	
-	public GeneralTableIndex()
+	public GeneralTableIndex(String identifier)
 	{
-		type = new IntType();
+
+		this.type = new IntType();
+		this.identifier = identifier;
 	}
 
 	@Override
@@ -48,6 +51,6 @@ public class GeneralTableIndex extends MathExpression{
 	@Override
 	public String toString()
 	{
-		return "i";
+		return identifier;
 	}
 }
