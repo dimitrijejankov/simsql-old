@@ -1,6 +1,7 @@
 package simsql.compiler.timetable;
 
 import simsql.compiler.MultidimensionalSchemaExpressions;
+import simsql.compiler.MultidimensionalSchemaIndices;
 import simsql.compiler.MultidimensionalTableSchema;
 
 import java.util.HashMap;
@@ -60,7 +61,7 @@ public class TableDependencyGraph {
             String prefix = getTableNameFromBracketsName(edge);
             MultidimensionalSchemaExpressions expressions = new MultidimensionalSchemaExpressions(edge.substring(edge.indexOf("[")));
             HashMap<String, Integer> edgeIndex = expressions.evaluateExpressions(indexStrings);
-            TimeTableNode node = new TimeTableNode(getTableNameFromIndices(prefix, edgeIndex), edgeIndex);
+            TimeTableNode node = new TimeTableNode(MultidimensionalTableSchema.getBracketsTableNameFromIndices(prefix, edgeIndex), edgeIndex);
 
             retValue.add(node);
         }
@@ -69,16 +70,26 @@ public class TableDependencyGraph {
     }
 
     HashSet<String> findBackwardEdge(TimeTableNode node) {
-        String tableName = MultidimensionalTableSchema.getTableNameFromQualifiedName(node.tableName);
-        String bracketsTableName = tableName + "[" + node.indexStrings.get("i") + "]";
+        String tableName = node.tableName;
+        String tablePrefix = MultidimensionalTableSchema.getTableNameFromBracketsName(tableName);
 
         // If this is a general index table
         if(node.indexStrings.size() == 1) {
-            if(backwardEdges.containsKey(bracketsTableName)) {
-                return backwardEdges.get(bracketsTableName);
+            if(backwardEdges.containsKey(tableName)) {
+                return backwardEdges.get(tableName);
             }
             else {
-                return backwardEdges.get(tableName + "[i]");
+                return backwardEdges.get(tablePrefix + "[i]");
+            }
+        }
+        else {
+        // It's a multidimensional index table
+            for(String edge : backwardEdges.keySet()) {
+                MultidimensionalSchemaIndices indices = new MultidimensionalSchemaIndices(MultidimensionalTableSchema.bracketsToQualifiedTableName(edge));
+
+                if(indices.areIndicesForThisTable(node.indexStrings)){
+                    return backwardEdges.get(edge);
+                }
             }
         }
 

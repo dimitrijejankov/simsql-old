@@ -51,8 +51,8 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
     }
 
     /**
-     * This method extracts the table name from it's qualified name.
-     * For example, if the qualified name is "md[1][2][3] the table name would be md
+     * This method extracts the table name from it's brackets name.
+     * For example, if the brackets name is "md[1][2][3] the table name would be md
      **/
     public static String getTableNameFromBracketsName(String qualifiedName) {
         int offset = qualifiedName.indexOf('[');
@@ -129,6 +129,12 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
         }
 
         return prefix;
+    }
+
+    public static String bracketsToQualifiedTableName(String bracketsName) {
+        bracketsName = bracketsName.replace("][", "_");
+        bracketsName = bracketsName.replace("[", "_");
+        return bracketsName.replace("]", "_");
     }
 
     public static String getGeneralIndexTableNameFromIndices(String prefix, MultidimensionalSchemaIndices indices) {

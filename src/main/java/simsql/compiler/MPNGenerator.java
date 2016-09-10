@@ -93,7 +93,7 @@ public class MPNGenerator {
 		}
 		else if(exp instanceof GeneralTableIndex)
 		{
-			return "i";
+			return exp.toString();
 		}
 		else
 		{

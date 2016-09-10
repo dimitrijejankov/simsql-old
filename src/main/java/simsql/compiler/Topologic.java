@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import static simsql.compiler.MultidimensionalSchemaIndices.labelingOrder;
 
 
 /**
@@ -324,12 +325,15 @@ public class Topologic
 					{
 						String tableName = tableScan.getTableName();
 						
-						if(tableName.endsWith("_i"))
+						if(tableScan.getIndexMathExpressions().size() != 0)
 						{
-							MathExpression indexExpression = tableScan.getIndexMathExp();
-							MPNGenerator generator = new MPNGenerator(indexExpression);
-							tableName = tableName.substring(0, tableName.length()-2);
-							tableName += "[" + generator.convertToMPN() + "]";
+                            HashMap<String, MathExpression> indexExpressions = tableScan.getIndexMathExpressions();
+							tableName = MultidimensionalTableSchema.getTableNameFromGeneralName(tableScan.getTableName());
+
+                            for(int idx = 0; idx < indexExpressions.size(); ++idx) {
+                                MPNGenerator generator = new MPNGenerator(indexExpressions.get(labelingOrder[idx]));
+                                tableName += "[" + generator.convertToMPN() + "]";
+                            }
 						}
 						else
 						{
@@ -384,11 +388,18 @@ public class Topologic
 	
 	private String getTableName(String name)
 	{
-		int end = name.lastIndexOf("_");
+		int end = name.indexOf("_");
 		String prefix = name.substring(0, end);
-		String suffix = name.substring(end+1, name.length());
-		
-		name = prefix + "[" +suffix + "]"; 
+        String suffix;
+
+        if(name.matches("^[^_]+(_[0-9]+to[0-9]+|_[0-9]+to|_[0-9]+)+$")) {
+            MultidimensionalSchemaIndices indices = new MultidimensionalSchemaIndices(name);
+            suffix = indices.getBracketsSuffix();
+        }
+        else {
+            suffix =  "[" + name.substring(end+1, name.length()) + "]";
+        }
+		name = prefix + suffix;
 		return name;
 	}
 

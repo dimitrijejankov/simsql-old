@@ -16,11 +16,13 @@ public class MultidimensionalSchemaExpressions {
 
         Pattern pattern = Pattern.compile("\\[(.+?)\\]");
         Matcher matcher = pattern.matcher(parseString);
-        matcher.find();
 
-        for(int i = 0; i < matcher.groupCount(); i++) {
-            String exp = matcher.group(i);
+        // find all expressions and put them into the expressionList...
+        int i = 0;
+        while (matcher.find()) {
+            String exp = matcher.group();
             this.expressionList.put(labelingOrder[i], exp.substring(1, exp.length()-1));
+            i++;
         }
     }
 

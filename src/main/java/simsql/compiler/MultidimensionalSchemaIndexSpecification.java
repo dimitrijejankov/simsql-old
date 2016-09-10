@@ -30,11 +30,12 @@ public class MultidimensionalSchemaIndexSpecification {
 
         if(parts.length == 2)
         {
-            lowerLimit = Integer.parseInt(parts[0]);
-            upperLimit = Integer.parseInt(parts[1]);
+            this.lowerLimit = Integer.parseInt(parts[0]);
+            this.upperLimit = Integer.parseInt(parts[1]);
+            this.unconstrained = false;
         }
         else if(parts.length == 1){
-            lowerLimit = Integer.parseInt(parts[0]);
+            this.lowerLimit = Integer.parseInt(parts[0]);
             this.unconstrained = indexString.endsWith("to");
         }
         else {
@@ -44,14 +45,14 @@ public class MultidimensionalSchemaIndexSpecification {
 
     String getStringValue(){
         if(unconstrained){
-            return "_" + lowerLimit + "to";
+            return lowerLimit + "to";
         }
 
         if(upperLimit != null){
-            return "_" + lowerLimit + "to" + upperLimit;
+            return lowerLimit + "to" + upperLimit;
         }
 
-        return "_" + lowerLimit;
+        return lowerLimit.toString();
     }
 
     public boolean checkRange(Integer value) {

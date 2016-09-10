@@ -182,7 +182,10 @@ public class PlanHelper {
         LinkedList<TimeTableNode> requiredTableList = new LinkedList<TimeTableNode>();
 
         for(TableScan ts : indexedTableList) {
-            requiredTableList.add(new TimeTableNode(ts.getTableName(),ts.getIndexStrings()));
+
+        	String prefix = MultidimensionalTableSchema.getTableNameFromQualifiedName(ts.getTableName());
+            String tableName = MultidimensionalTableSchema.getBracketsTableNameFromIndices(prefix, ts.getIndexStrings());
+            requiredTableList.add(new TimeTableNode(tableName, ts.getIndexStrings()));
         }
 
         return requiredTableList;

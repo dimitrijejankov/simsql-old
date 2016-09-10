@@ -46,7 +46,17 @@ public class MultidimensionalSchemaIndices {
         String ret = "";
 
         for(String key : indices.keySet()) {
-            ret += indices.get(key).getStringValue();
+            ret += "_" + indices.get(key).getStringValue();
+        }
+
+        return ret;
+    }
+
+    public String getBracketsSuffix() {
+        String ret = "";
+
+        for(String key : indices.keySet()) {
+            ret += "[" + indices.get(key).getStringValue() + "]";
         }
 
         return ret;
@@ -67,7 +77,7 @@ public class MultidimensionalSchemaIndices {
         return true;
     }
 
-    Boolean areIndicesForThisTable(HashMap<String, Integer> ids) {
+    public Boolean areIndicesForThisTable(HashMap<String, Integer> ids) {
 
         if(ids.size() != indices.size())
             return false;
