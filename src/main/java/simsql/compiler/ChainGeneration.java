@@ -137,140 +137,28 @@ public class ChainGeneration
 	
 	private void instantiateChain(int start, int end)
 	{
-		HashMap<String, HashSet<String>> forwardEdge = topologic.getForwardEdges();
-		HashMap<String, HashSet<String>> backwardEdge = topologic.getBackwardEdges();
 
         TableDependencyGraph dependencyGraph = new TableDependencyGraph(requiredTables, topologic.getBackwardEdges());
 
 		/*
-		 * 1. chain
+		 * 1. starting point
 		 */
-		putBaseline(ruleMap, backwardEdge, simulateTableMap);
-		
-		int minimumVersion = minimumVersion(backwardEdge);
-		startTimeTick = minimumVersion;
-		HashSet<String> randomTableList = randomTableList(forwardEdge);
-		
-		if(start < minimumVersion)
-		{
-			start = minimumVersion;
-		}
-		
-		for(int index = start; index <= end; index++)
-		{
-			generateTimeTable(randomTableList, 
-							  forwardEdge, 
-							  backwardEdge, 
-							  simulateTableMap,
-							  ruleMap,
-							  index);
-		}
-		
-		/*
-		 * 2. starting point
+		startPointList = dependencyGraph.getStartingPoint();
+
+        /*
+		 * 2. ruleMap
 		 */
-		for(String s: backwardEdge.keySet())
-		{
-			if(!isGeneralTable(s))
-			{
-				if(backwardEdge.get(s).size() == 0)
-				{
-					startPointList.add(s);
-				}
-			}
-		}
-		
-		/*
-		 * 3. trune the simulateTableMap and the ruleMap.
+        ruleMap = dependencyGraph.generateRuleMap();
+
+        /*
+		 * 3. simulateTableMap
 		 */
-		boolean remove;
-		while(true)
-		{
-			remove = false;
-			
-			TableByTime tempTableByTime;
-			HashSet<String> tempTableSet;
-			HashMap<String, HashSet<String>> tempTimeMap;
-			HashMap<String, HashSet<String>> backEdgeMap = topologic.getBackwardEdges();
-			HashSet<String> removedTableSet = new HashSet<String>();
-			//clear the rulemap key.
-			for(int index = start; index <= end; index++)
-			{
-				tempTableByTime = simulateTableMap.get(index);
-				if(tempTableByTime != null)
-				{
-					tempTableSet = tempTableByTime.getTableSet();
-					tempTimeMap = tempTableByTime.getTimeMap();
-					
-					if(tempTableSet != null)
-					{
-						Iterator<String> iterator = tempTableSet.iterator();
-						while(iterator.hasNext())
-						{
-							String temptableName = iterator.next();
-							if(!tempTimeMap.containsKey(temptableName) &&
-									!backEdgeMap.containsKey(temptableName) && !hasVersionedTable(temptableName))
-							{
-								ruleMap.remove(temptableName);
-								iterator.remove();
-								removedTableSet.add(temptableName);
-								remove = true;
-							}
-						}
-						
-						//if we find all the tables in the time tick i are deleted, then we delete the TimeTable.
-						if(tempTableSet.size() == 0)
-						{
-							simulateTableMap.remove(index);
-						}
-					}
-				}
-			}
-			
-			//remove the rule map values.
-			for(int index = start; index <= end; index++)
-			{
-				tempTableByTime = simulateTableMap.get(index);
-				
-				if(tempTableByTime != null)
-				{
-					tempTimeMap = tempTableByTime.getTimeMap();
-					
-					if(tempTimeMap != null)
-					{
-						for(String key: tempTimeMap.keySet())
-						{
-							tempTableSet = tempTimeMap.get(key);
-							Iterator<String> iterator = tempTableSet.iterator();
-							String temptableName;
-							while(iterator.hasNext())
-							{
-								temptableName = iterator.next();
-								if(removedTableSet.contains(temptableName))
-								{
-									iterator.remove();
-									remove = true;
-								}
-							}
-						}
-						
-						 Iterator<Map.Entry<String, HashSet<String>>> it = tempTimeMap.entrySet().iterator(); 
-						 while(it.hasNext())
-						 {
-							 
-						      Map.Entry<String, HashSet<String>> entry = it.next();
-						      if(entry.getValue() == null ||entry.getValue().size() == 0)
-						      {
-						    	  it.remove();
-						      }
-						 }
-					}
-				}
-			}
-			
-			if(!remove)
-				break;
-		}
+        simulateTableMap = dependencyGraph.extractSimulateTableMap();
+
+        /*
+		 * 4. startTimeTick
+		 */
+        startTimeTick = 0;
 	}
 	
 	public void generateTimeTable(HashSet<String> randomTableList, 
