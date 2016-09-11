@@ -94,7 +94,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
                 without += parts[i] + "_";
             }
 
-            if (parts[parts.length - 1] == "0")
+            if (parts[parts.length - 1].equals("0"))
                 without += "0";
             else
                 without += "i";
@@ -207,11 +207,12 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
                 ArrayList<Operator> queryList = parseResult.queryList;
                 ArrayList<String> sqlList = parseResult.sqlList;
                 HashMap<Operator, String> planTableMap = parseResult.definitionMap;
-                maxLoop = parseResult.getMaxLoop();
 
                 Topologic topologic = new Topologic(sinkList, planTableMap);
 
                 ChainGeneration chain = new ChainGeneration(topologic, maxLoop, parseResult.requiredTables);
+                maxLoop = chain.getMaxLoop();
+
                 TranslatorHelper translatorHelper = myParser.getTranslatorHelper();
                 planInstantiation = new PlanInstantiation(planTableMap, chain,
                         translatorHelper, queryList);

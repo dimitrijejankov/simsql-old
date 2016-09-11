@@ -20,7 +20,7 @@
 
 
 /**
- * 
+ *
  */
 package simsql.compiler;
 
@@ -30,39 +30,6 @@ import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingDeque;
 import simsql.runtime.DataType;
 
-
-
-
-
-
-/*
-import mcdb.compiler.Process;
-import mcdb.compiler.logicPlan.logicOperator.CopyHelper;
-import mcdb.compiler.logicPlan.logicOperator.booleanOperator.AndOperator;
-import mcdb.compiler.logicPlan.logicOperator.booleanOperator.BooleanOperator;
-import mcdb.compiler.logicPlan.logicOperator.booleanOperator.CompOperator;
-import mcdb.compiler.logicPlan.logicOperator.booleanOperator.NotOperator;
-import mcdb.compiler.logicPlan.logicOperator.booleanOperator.OrOperator;
-import mcdb.compiler.logicPlan.logicOperator.mathOperator.AggregateOperator;
-import mcdb.compiler.logicPlan.logicOperator.mathOperator.ArithmeticOperator;
-import mcdb.compiler.logicPlan.logicOperator.mathOperator.EFunction;
-import mcdb.compiler.logicPlan.logicOperator.mathOperator.FunctionOperator;
-import mcdb.compiler.logicPlan.logicOperator.mathOperator.MathOperator;
-import mcdb.compiler.logicPlan.logicOperator.mathOperator.PredicateToMathWrapper;
-import mcdb.compiler.logicPlan.logicOperator.mathOperator.SetOperator;
-import mcdb.compiler.logicPlan.logicOperator.relationOperator.Aggregate;
-import mcdb.compiler.logicPlan.logicOperator.relationOperator.Join;
-import mcdb.compiler.logicPlan.logicOperator.relationOperator.Operator;
-import mcdb.compiler.logicPlan.logicOperator.relationOperator.Projection;
-import mcdb.compiler.logicPlan.logicOperator.relationOperator.ScalarFunction;
-import mcdb.compiler.logicPlan.logicOperator.relationOperator.Selection;
-import mcdb.compiler.logicPlan.logicOperator.relationOperator.TableScan;
-import mcdb.compiler.logicPlan.logicOperator.relationOperator.VGWrapper;
-import mcdb.compiler.logicPlan.logicOperator.statisticsOperator.RelationStatistics;
-import mcdb.compiler.logicPlan.postProcessor.PostProcessor;
-import mcdb.compiler.logicPlan.postProcessor.PostProcessorHelper;
-import mcdb.compiler.logicPlan.translator.TranslatorHelper;
-*/
 /**
  * @author Bamboo
  *
@@ -77,7 +44,7 @@ public class PlanInstantiation {
 	 * query plans simutenously. The other plans that may span multiple time ticks is left to future extension.
 	 */
 	private HashMap<Integer, ArrayList<Operator>> mcmcDagBundledPlan;
-	
+
 	/**
 	 * @param randomPlanTableMap
 	 * @param chain
@@ -85,10 +52,10 @@ public class PlanInstantiation {
 	public PlanInstantiation(HashMap<Operator, String> randomPlanTableMap,
 							 ChainGeneration chain,
 							 TranslatorHelper translatorHelper,
-							 ArrayList<Operator> queryList) 
+							 ArrayList<Operator> queryList)
 	{
 		super();
-		
+
 		randomTablePlanMap = new HashMap<String, Operator>();
 		for (Operator o : randomPlanTableMap.keySet()) {
 			randomTablePlanMap.put(transferTableFormat(randomPlanTableMap.get(o)), o);
@@ -99,7 +66,7 @@ public class PlanInstantiation {
 	}
 
 	/*
-	 * Here, dataFromCatalog denotes whether we should get the statistics from the local file. So if 
+	 * Here, dataFromCatalog denotes whether we should get the statistics from the local file. So if
 	 * dataFromCatalog = true, then we should use the temporary file from the hdfs (previous result).
 	 * In addition, we should explicitly output the random attributes, statistics. The following function
 	 * generates the plan from start_index (inclusive) to end_index (exclusive).
@@ -107,20 +74,20 @@ public class PlanInstantiation {
 	public ArrayList<Operator> generatePlan(int start_index, int end_index) throws Exception
 	{
 		ArrayList<String> tpList = chain.getTopologicalList(start_index, end_index);
-		
+
 		if(tpList.size() == 0)
 		{
 			throw new RuntimeException("The generated plan should not be null");
 		}
-		
+
 		/* Each random table (string) corresponds to an operator. */
 		HashMap<String, Operator> generatedPlanMap = new HashMap<String, Operator>();
 		/* Each random table (string) has a list of tableScan which should be replaced. */
 		HashMap<String, ArrayList<TableScan>> replacedPlanMap = new HashMap<String, ArrayList<TableScan>>();
-		
+
 		ArrayList<Operator> hostOperatorList = new ArrayList<Operator>();
 		ArrayList<Operator> linkedOperatorList = new ArrayList<Operator>();
-		
+
 		//1. create the partial plan.
 		for(int index = tpList.size()-1; index >= 0 ; index --)
 		{
@@ -137,42 +104,38 @@ public class PlanInstantiation {
 				prefix = prefix + "[i]";
 				operator = randomTablePlanMap.get(prefix);
 			}
-			
+
 			CopyHelper copyHelper = new CopyHelper();
 			operator = operator.copy(copyHelper);
 			int currentTime = this.getVersion(table);
 			operator = instantiateOperator(table, operator, currentTime, generatedPlanMap, replacedPlanMap);
 		}
-		
+
 		//2.link the partial plan.
 		for(int index = tpList.size() -1; index >= 0; index --)
 		{
 			String table = tpList.get(index);
 			/* here operator is the host operator */
-			
+
 			Operator hostOperator = generatedPlanMap.get(table);
 			if(!hostOperatorList.contains(hostOperator))
 			{
 				hostOperatorList.add(hostOperator);
 			}
-			
+
 			ArrayList<TableScan> replacedTableList = replacedPlanMap.get(table);
-			
+
 			if(replacedTableList != null)
 			{
-				for(int i = 0; i < replacedTableList.size(); i++)
-				{
-					TableScan tableScan = replacedTableList.get(i);
-					
-					String tablename = tableScan.getTableName();
-					
-					if(tableScan.getIndexStrings().get("i") >= start_index)
-					{
-						Operator linkedOperator = generatedPlanMap.get(transferTableName(tablename));
+				for (TableScan tableScan : replacedTableList) {
+					String tableName = tableScan.getTableName();
+					String bracketsName = MultidimensionalTableSchema.getBracketsTableNameFromTableName(tableName);
+
+					if (chain.getTickForTable(bracketsName) >= start_index) {
+						Operator linkedOperator = generatedPlanMap.get(transferTableName(tableName));
 						integratePlan(tableScan, linkedOperator);
-						
-						if(!linkedOperatorList.contains(linkedOperator))
-						{
+
+						if (!linkedOperatorList.contains(linkedOperator)) {
 							linkedOperatorList.add(linkedOperator);
 						}
 					}
@@ -185,7 +148,7 @@ public class PlanInstantiation {
 		 */
 		HashSet<String> tpMap = new HashSet<String>();
 		tpMap.addAll(tpList);
-		
+
 		HashMap<Integer, TableByTime> simulateTableMap = chain.getSimulateTableMap();
 		HashMap<String, HashSet<String>> generatedListMap = new HashMap<String, HashSet<String>>();
 		for(int i = start_index; i < end_index; i++)
@@ -197,14 +160,14 @@ public class PlanInstantiation {
 				generatedListMap.putAll(timeMap);
 			}
 		}
-		
+
 		ArrayList<String> sinkTableList = getFutureUsedTable(tpMap, generatedListMap);
 		if(sinkTableList == null || sinkTableList.size() == 0)
 		{
 			sinkTableList = new ArrayList<String>();
 			sinkTableList.addAll(tpMap);
 		}
-		
+
 		ArrayList<Operator> sinkOperatorList = getSinkOperatorList(generatedPlanMap, sinkTableList);
 		sinkTableList = changeFormatToUnderScore(sinkTableList);
 		
@@ -223,42 +186,35 @@ public class PlanInstantiation {
 					CopyHelper copyHelper = new CopyHelper();
 					tempSink = tempSink.copy(copyHelper);
 					ArrayList<TableScan> replacedTableList = PlanHelper.findReferencedRandomTable(tempSink);
-					
-					for(int k = 0; k < replacedTableList.size(); k++)
-					{
-						TableScan tableScan = replacedTableList.get(k);
-						String tablename = tableScan.getTableName();
-						
-						if(tableScan.getIndexStrings().get("i") >= start_index)
-						{
-							Operator linkedOperator = generatedPlanMap.get(transferTableName(tablename));
-							if(linkedOperator == null)
-							{
-								throw new RuntimeException("The SQL contains " + transferTableFormat(tablename) + " is not supported");
-							}
-							else
-							{
+
+					for (TableScan tableScan : replacedTableList) {
+						String tableName = tableScan.getTableName();
+                        String bracketsName = MultidimensionalTableSchema.getBracketsTableNameFromTableName(tableName);
+
+						if (chain.getTickForTable(bracketsName) >= start_index) {
+							Operator linkedOperator = generatedPlanMap.get(transferTableName(tableName));
+							if (linkedOperator == null) {
+								throw new RuntimeException("The SQL contains " + transferTableFormat(tableName) + " is not supported");
+							} else {
 								integratePlan(tableScan, linkedOperator);
-								if(!linkedOperatorList.contains(linkedOperator))
-								{
+								if (!linkedOperatorList.contains(linkedOperator)) {
 									linkedOperatorList.add(linkedOperator);
 								}
 							}
 						}
 					}
-					
+
 					//check if the query is select_from_where query or the materilized view.
 					if(tempSink instanceof FrameOutput)
 					{
 						ArrayList<Operator> childrenList = tempSink.getChildren();
 						sinkOperatorList.addAll(childrenList);
 						sinkTableList.addAll(((FrameOutput)tempSink).getTableList());
-						
-						for(int k = 0; k < childrenList.size(); k++)
-						{
-							childrenList.get(k).removeParent(tempSink);
+
+						for (Operator aChildrenList : childrenList) {
+							aChildrenList.removeParent(tempSink);
 						}
-						
+
 						tempSink.clearLinks();
 					}
 					else
@@ -278,11 +234,10 @@ public class PlanInstantiation {
 		ArrayList<Operator> children = sinkOperatorList;
 		ArrayList<Operator> parents = new ArrayList<Operator>();
 		Operator frameOutput = new FrameOutput(nodeName, children, parents, sinkTableList);
-		for(int i = 0; i < children.size(); i++)
-		{
-			children.get(i).addParent(frameOutput);
+		for (Operator aChildren : children) {
+			aChildren.addParent(frameOutput);
 		}
-		
+
 		ArrayList<Operator> sinkList = new ArrayList<Operator>();
 		sinkList.add(frameOutput);
 		
@@ -291,22 +246,20 @@ public class PlanInstantiation {
 		 * 6. Renaming
 		 */
 		ArrayList<Operator> allNodeList = PostProcessorHelper.findAllNode(sinkList);
-		for(int i = 0; i < allNodeList.size(); i++)
-		{
-			Operator operator = allNodeList.get(i);
+		for (Operator operator : allNodeList) {
 			operator.clearRenamingInfo();
 		}
-		
+
 		//System.out.println(Process.BFS(sinkList));
-		
+
 		PostProcessor processor = new PostProcessor(sinkList, translatorHelper);
-		
+
 		processor.removeRedundant(allNodeList);
     	processor.renaming();
-    	
+
 		//batch here
 		children = frameOutput.getChildren();
-		
+
 		for(int i = 0; i < children.size(); i++)
 		{
 			Operator temp = children.get(i);
@@ -314,40 +267,40 @@ public class PlanInstantiation {
 			if(temp.getParents().size() > 1 && temp instanceof Projection)
 			{
 				temp.removeParent(frameOutput);
-				
+
 				Projection projection = new Projection(temp.getNodeName()+"_temp",
 						copyOperatorList(temp.getChildren()), new ArrayList<Operator>(), copyStringList(((Projection)temp).getProjectedNameList()));
-				
+
 				children.remove(i);
 				children.add(i, projection);
 				projection.addParent(frameOutput);
 				temp.getChildren().get(0).addParent(projection);
 			}
 		}
-		
-		
+
+
     	return sinkList;
 	}
-	
+
 	private HashMap<Integer, ArrayList<Operator>> processQueryList(ArrayList<Operator> queryList)
 	{
 		HashMap<Integer, ArrayList<Operator>> resultMap = new HashMap<Integer, ArrayList<Operator>>();
 		Operator tempSinkOperator;
 		ArrayList<Integer> timeTick;
-		
+
 		for(int i = 0; i < queryList.size(); i++)
 		{
 			tempSinkOperator = queryList.get(i);
-			timeTick = PlanHelper.findReferencedRandomTableTimeTicks(tempSinkOperator);
+			timeTick = PlanHelper.findReferencedRandomTableTimeTicks(tempSinkOperator, chain);
 			if(timeTick.size() == 1)
 			{
 				putToMap(resultMap, timeTick.get(0), tempSinkOperator);
 			}
 		}
-		
+
 		return resultMap;
 	}
-	
+
 	private void putToMap(HashMap<Integer, ArrayList<Operator>> resultMap, int timeTick, Operator sink)
 	{
 		if(resultMap.containsKey(timeTick))
@@ -361,8 +314,8 @@ public class PlanInstantiation {
 			resultMap.put(timeTick, temp);
 		}
 	}
-	
-	
+
+
 	private void integratePlan(TableScan tableScan, Operator linkedOperator) throws Exception
 	{
 		ArrayList<String> new_attributeList = tableScan.getAttributeList();
@@ -371,15 +324,15 @@ public class PlanInstantiation {
 		{
 			ArrayList<String> old_attributeList = ((Projection) linkedOperator).getProjectedNameList();
 			newOperator = changeAttributeName(linkedOperator, old_attributeList, new_attributeList);
-			
+
 			ArrayList<Operator> parentList = tableScan.getParents();
 			for(int i = 0; i < parentList.size(); i++)
 			{
 				newOperator.addParent(parentList.get(i));
-				
+
 				parentList.get(i).replaceChild(tableScan, newOperator);
 			}
-			
+
 			tableScan.clearLinks();
 		}
 		else
@@ -387,11 +340,11 @@ public class PlanInstantiation {
 			throw new Exception("The root of an random table plan is not projection!");
 		}
 	}
-	
-	
+
+
 	private Operator changeAttributeName(Operator originalElement,
 			  ArrayList<String> old_attributeNameList,
-			  ArrayList<String> new_attributeNameList) throws Exception 
+			  ArrayList<String> new_attributeNameList) throws Exception
 	{
 		if(old_attributeNameList == null ||
 				new_attributeNameList == null ||
@@ -520,8 +473,8 @@ public class PlanInstantiation {
 	 * Here, rootTable means the table, to which this result should be written.
 	 */
 	private Operator instantiateOperator(String rootTable,
-										Operator operator, 
-										int currentTime, 
+										Operator operator,
+										int currentTime,
 										HashMap<String, Operator> generatedPlanMap,
 										HashMap<String, ArrayList<TableScan>> replacedPlanMap)
 	{
@@ -529,12 +482,12 @@ public class PlanInstantiation {
 		sinkList.add(operator);
 		ArrayList<Operator> allOperators = Topologic.findAllNode(sinkList);
 		UnionView unionView = Topologic.findUnionVIew(allOperators);
-		
+
 		if(unionView != null) //if it is not a union view.
 		{
 			HashMap<String, HashSet<String>> ruleMap = chain.getRuleMap();
 			HashSet<String> referencedTables = ruleMap.get(rootTable);
-			
+
 			//get the tables that have been already in the plan.
 			HashSet<String> alreadyInPlanTables = new HashSet<String>();
 			for(int i = 0; i < allOperators.size(); i++)
@@ -565,7 +518,7 @@ public class PlanInstantiation {
 					}
 				}
 			}
-			
+
 			//create the plan for the remaining tables.
 			if(referencedTables != null)
 			{
@@ -585,13 +538,13 @@ public class PlanInstantiation {
 						{
 							throw new RuntimeException("exception in generaing the plans for a union view");
 						}
-						
+
 						TableReference tempReference = new TableReference(reverseName,
 																		 reverseName,
 																		 getVersion(tableName)+"",
 																		 TableReference.CONSTANT_INDEX_TABLE);
 						Operator translatorElement = translator.sqlExpressionTranslator.indexTableScan(view, reverseName, tempReference);
-						
+
 						if(translatorElement instanceof Projection)
 						{
 							unionView.getInputAttributeNameList().addAll(((Projection) translatorElement).getProjectedNameList());
@@ -600,14 +553,14 @@ public class PlanInstantiation {
 						{
 							throw new RuntimeException("The children of UnionView operator should be Projection");
 						}
-						
+
 						ArrayList<DataType> outputAttributeTypeList = new ArrayList<DataType>();
 						ArrayList<Attribute> realAttributes = view.getAttributes();
 						for(int j = 0; j < realAttributes.size(); j++)
 						{
 							outputAttributeTypeList.add(realAttributes.get(j).getType());
 						}
-						
+
 						unionView.addChild(translatorElement);
 						unionView.getInputAttributeTypeList().addAll(outputAttributeTypeList);
 						translatorElement.addParent(unionView);
@@ -622,13 +575,13 @@ public class PlanInstantiation {
 		 */
 		HashSet<Operator> finishedQueue = new HashSet<Operator>();
 		LinkedBlockingDeque<Operator> availableQueue = new LinkedBlockingDeque<Operator>();
-		
+
 		availableQueue.add(operator);
-		
+
 		while(!availableQueue.isEmpty())
 		{
 			Operator currentElement = availableQueue.poll();
-			
+
 			if(finishedQueue.contains(currentElement))
 			{
 				continue;
@@ -654,7 +607,7 @@ public class PlanInstantiation {
 							indices.put("i", currentTime);
 
 							Integer version = generator.initializeTime(indices);
-							
+
 							((TableScan) currentElement).setTableName(getTablePrefixUnderscore(tableName) + "_" + version);
 							((TableScan) currentElement).getIndexStrings().put("i", version);
 							
@@ -669,14 +622,14 @@ public class PlanInstantiation {
 						}
 					}
 				}
-				
+
 				ArrayList<Operator> children = currentElement.getChildren();
 				if(children != null)
 				{
 					for(int i = 0; i < children.size(); i++)
 					{
 						Operator temp = children.get(i);
-						
+
 						if(!finishedQueue.contains(temp))
 						{
 							availableQueue.add(temp);
@@ -685,11 +638,11 @@ public class PlanInstantiation {
 				}
 			}
 		}
-		
+
 		generatedPlanMap.put(rootTable, operator);
 		return operator;
 	}
-	
+
 	private void changeNodeProperty(Operator operator, int timeTick)
 	{
 		operator.setNodeName("node_" + translatorHelper.getInstantiateNodeIndex());
@@ -743,12 +696,12 @@ public class PlanInstantiation {
 				indices.put("i", timeTick);
 
 				int version = generator.initializeTime(indices);
-				
+
 				relationStatistics.setRelation(getTablePrefixUnderscore(tableName) + "_" + (version));
 			}
 		}
 	}
-	
+
 	private void changeMathOperatorProperty(MathOperator operator, int timeTick)
 	{
 		if(operator instanceof AggregateOperator)
@@ -762,7 +715,7 @@ public class PlanInstantiation {
 		{
 			String name = "arithExp" + translatorHelper.getArithExpIndex();
 			((ArithmeticOperator) operator).setName(name);
-			
+
 			MathOperator left = ((ArithmeticOperator) operator).getLeft();
 			MathOperator right = ((ArithmeticOperator) operator).getRight();
 			changeMathOperatorProperty(left, timeTick);
@@ -772,7 +725,7 @@ public class PlanInstantiation {
 		{
 			String name = "arithExp" + translatorHelper.getArithExpIndex();
 			((FunctionOperator) operator).setName(name);
-			
+
 			ArrayList<MathOperator> parameterList = ((FunctionOperator) operator).getParameterList();
 			for(int i = 0; i < parameterList.size(); i++)
 			{
@@ -789,7 +742,7 @@ public class PlanInstantiation {
 		{
 			String name = "arithExp" + translatorHelper.getArithExpIndex();
 			((SetOperator) operator).setName(name);
-			
+
 			ArrayList<MathOperator> elementList = ((SetOperator) operator).getElmentList();
 			for(int i = 0; i < elementList.size(); i++)
 			{
@@ -802,15 +755,15 @@ public class PlanInstantiation {
 			((GeneralTableIndexOperator)operator).setValue(timeTick);
 		}
 	}
-	
+
 	private void changePredicateProperty(BooleanOperator predicate, int timeTick)
 	{
 		if(predicate == null)
 			return ;
-		
+
 		String name = "predicate" + translatorHelper.getPredicateIndex();
 		predicate.setName(name);
-		
+
 		if(predicate instanceof AndOperator)
 		{
 			ArrayList<BooleanOperator> operatorList = ((AndOperator) predicate).getOperatorList();
@@ -842,7 +795,7 @@ public class PlanInstantiation {
 			}
 		}
 	}
-	
+
 	private void putIntoMap(HashMap<String, ArrayList<TableScan>> replacedPlanMap, String key, TableScan value)
 	{
 		if(replacedPlanMap.containsKey(key))
@@ -860,7 +813,7 @@ public class PlanInstantiation {
 			replacedPlanMap.put(key, tempList);
 		}
 	}
-	
+
 	/*
 	 * If it is the baseline table, then it returns the version of this table;
 	 * if it is the general table, then it returns the minus version of this table.
@@ -870,11 +823,11 @@ public class PlanInstantiation {
 		int start = table.indexOf("[");
 		int end = table.indexOf("]");
 		String index = table.substring(start+1, end);
-		
+
 		if(isGeneralTable(table))
 		{
 			start = index.indexOf("-");
-			
+
 			if(start < 0)
 				return 0;
 			else
@@ -887,17 +840,17 @@ public class PlanInstantiation {
 			return Integer.parseInt(index);
 		}
 	}
-	
+
 	public int getVersionUnderScore(String table)
 	{
 		int start = table.indexOf("[");
 		int end = table.indexOf("]");
 		String index = table.substring(start+1, end);
-		
+
 		if(isGeneralTable(table))
 		{
 			start = index.indexOf("-");
-			
+
 			if(start < 0)
 				return 0;
 			else
@@ -910,27 +863,27 @@ public class PlanInstantiation {
 			return Integer.parseInt(index);
 		}
 	}
-	
+
 	private String getTablePrefix(String table)
 	{
 		int start = table.indexOf("[");
-		
+
 		if(start < 0)
 			return table;
 		else
 			return table.substring(0, start);
 	}
-	
+
 	private String getTablePrefixUnderscore(String table)
 	{
 		int start = table.lastIndexOf("_");
-		
+
 		if(start < 0)
 			return table;
 		else
 			return table.substring(0, start);
 	}
-	
+
 	private boolean isGeneralTable(String table)
 	{
 		if(table.endsWith("[i]") ||
@@ -939,7 +892,7 @@ public class PlanInstantiation {
 		else
 			return false;
 	}
-	
+
 	private String transferTableName(String name)
 	{
 		/*&
@@ -950,7 +903,7 @@ public class PlanInstantiation {
 		String suffix = name.substring(start + 1, name.length());
 		return prefix + "[" + suffix + "]";
 	}
-	
+
 	private String reverseTableName(String name)
 	{
 		/*&
@@ -958,16 +911,16 @@ public class PlanInstantiation {
 		 */
 		int start = name.lastIndexOf("[");
 		String prefix = name.substring(0, start);
-		
+
 		String suffix = name.substring(start + 1, name.length()-1);
 		return prefix + "_" + suffix;
 	}
-	
-	
+
+
 	private ArrayList<String> getFutureUsedTable(HashSet<String> tpMap, HashMap<String, HashSet<String>> generatedListMap)
 	{
 		ArrayList<String> resultList = new ArrayList<String>();
-		
+
 		for(String table: tpMap)
 		{
 			HashSet<String> generatedlist = generatedListMap.get(table);
@@ -983,11 +936,11 @@ public class PlanInstantiation {
 				}
 			}
 		}
-		
+
 		return resultList;
 	}
-	
-	private ArrayList<Operator> getSinkOperatorList(HashMap<String, Operator> generatedPlanMap, 
+
+	private ArrayList<Operator> getSinkOperatorList(HashMap<String, Operator> generatedPlanMap,
 												   ArrayList<String> sinkTableList)
     {
 		ArrayList<Operator> resultList = new ArrayList<Operator>();
@@ -999,10 +952,10 @@ public class PlanInstantiation {
 				resultList.add(operator);
 			}
 		}
-		
+
 		return resultList;
     }
-	
+
 	private ArrayList<String> changeFormatToUnderScore(ArrayList<String> sinkOperatorSet)
 	{
 		ArrayList<String> resultList = new ArrayList<String>();
@@ -1010,10 +963,10 @@ public class PlanInstantiation {
 		{
 			resultList.add(reverseTableName(table));
 		}
-		
+
 		return resultList;
 	}
-	
+
 	private static String transferTableFormat(String table)
 	{
 		int start = table.lastIndexOf("_");
@@ -1022,7 +975,7 @@ public class PlanInstantiation {
 		table = prefix + "[" + suffix + "]";
 		return table;
 	}
-	
+
 
 	public static ArrayList<Operator> copyOperatorList(ArrayList<Operator> list)
 	{
@@ -1033,7 +986,7 @@ public class PlanInstantiation {
 		}
 		return c_list;
 	}
-	
+
 	public static ArrayList<String> copyStringList(ArrayList<String> list)
 	{
 		ArrayList<String> c_list= new ArrayList<String>(list.size());

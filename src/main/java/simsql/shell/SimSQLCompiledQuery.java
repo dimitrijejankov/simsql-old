@@ -37,7 +37,6 @@ public class SimSQLCompiledQuery implements CompiledQuery{
 	public ArrayList<Operator> queryList;
     public ArrayList<String> sqlList;
     public HashMap<Operator, String> definitionMap;
-    public int maxLoop;
     public LinkedList<TimeTableNode> requiredTables;
 
     // for MCDB2 query
@@ -59,7 +58,6 @@ public class SimSQLCompiledQuery implements CompiledQuery{
 					           ArrayList<String> sqlList, 
 					           ArrayList<Operator> queryList,
 					           HashMap<Operator, String> definitionMap,
-					           int maxLoop,
                                LinkedList<TimeTableNode> requiredTables) {
         super();
         
@@ -67,7 +65,6 @@ public class SimSQLCompiledQuery implements CompiledQuery{
         this.sqlList = sqlList;
         this.queryList = queryList;
         this.definitionMap = definitionMap;
-        this.maxLoop = maxLoop;
         this.requiredTables = requiredTables;
 	//for mcmc queries on the tree
         this.tableNameList = new ArrayList<String>();
@@ -179,21 +176,6 @@ public class SimSQLCompiledQuery implements CompiledQuery{
      */
     public void setDefinitionMap(HashMap<Operator, String> definitionMap) {
         this.definitionMap = definitionMap;
-    }
-
-    /**
-     * @return the maxLoop
-     */
-    public int getMaxLoop() {
-        return maxLoop;
-    }
-    
-    /**
-     * @param maxLoop
-     *            the maxLoop to set
-     */
-    public void setMaxLoop(int maxLoop) {
-        this.maxLoop = maxLoop;
     }
 
     public void cleanUp() {

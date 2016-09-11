@@ -456,10 +456,10 @@ public class MyPhysicalDatabase implements PhysicalDatabase <DataFlowQuery> {
       /* ----------------------------modified by Bamboo ----------------------------------*/
       int num = 0;
       for (Record rec: getIteratorFactoryForRelation(rel)) {
-	for (int i=0;i<rec.getNumAttributes();i++) {
-	  if (i > 0) {
-	    System.out.print("| ");
-	  }
+	    for (int i=0;i<rec.getNumAttributes();i++) {
+          if (i > 0) {
+            System.out.print("| ");
+        }
 
 	  System.out.format("%-" + nx + "s", rec.getIthAttribute(i).print(nx));
 	}

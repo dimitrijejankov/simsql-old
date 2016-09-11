@@ -328,7 +328,7 @@ public class Topologic
 						if(tableScan.getIndexMathExpressions().size() != 0)
 						{
                             HashMap<String, MathExpression> indexExpressions = tableScan.getIndexMathExpressions();
-							tableName = MultidimensionalTableSchema.getTableNameFromGeneralName(tableScan.getTableName());
+							tableName = MultidimensionalTableSchema.getTablePrefixFromGeneralName(tableScan.getTableName());
 
                             for(int idx = 0; idx < indexExpressions.size(); ++idx) {
                                 MPNGenerator generator = new MPNGenerator(indexExpressions.get(labelingOrder[idx]));

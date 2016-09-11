@@ -576,7 +576,7 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 	        	return tempQueryFile;
 	        }
 	        
-	        SimSQLCompiledQuery mcmcCompiledOutput = new SimSQLCompiledQuery(sinkList, sqlList, querySinkList, definitionMap, iterationNum, requiredTables);
+	        SimSQLCompiledQuery mcmcCompiledOutput = new SimSQLCompiledQuery(sinkList, sqlList, querySinkList, definitionMap, requiredTables);
 	        return mcmcCompiledOutput;
 		}
 		catch(Exception e)

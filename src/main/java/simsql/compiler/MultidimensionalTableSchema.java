@@ -34,20 +34,20 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
     }
 
     /**
-     * This method extracts the table name from it's qualified name.
-     * For example, if the qualified name is "md_1_2_3 the table name would be md
+     * This method extracts the table prefix from it's qualified name.
+     * For example, if the qualified name is "md_1_2_3 the table prefix would be md
      **/
-    public static String getTableNameFromQualifiedName(String qualifiedName) {
+    public static String getTablePrefixFromQualifiedName(String qualifiedName) {
         int offset = qualifiedName.indexOf('_');
         return qualifiedName.substring(0, offset);
     }
 
     /**
-     * This method extracts the table name from it's general name name.
-     * For example, if the general name name is "md_1to_2to5_3 the table name would be md
+     * This method extracts the table prefix from it's general name name.
+     * For example, if the general table name is "md_1to_2to5_3 the table prefix would be md
      **/
-    public static String getTableNameFromGeneralName(String generalName) {
-        return getTableNameFromQualifiedName(generalName);
+    public static String getTablePrefixFromGeneralName(String generalName) {
+        return getTablePrefixFromQualifiedName(generalName);
     }
 
     /**
@@ -57,6 +57,19 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
     public static String getTableNameFromBracketsName(String qualifiedName) {
         int offset = qualifiedName.indexOf('[');
         return qualifiedName.substring(0, offset);
+    }
+
+    public static String getBracketsTableNameFromTableName(String tableName) {
+
+        int offset = tableName.indexOf('_');
+        String prefix = tableName.substring(0, offset);
+        String[] parts = tableName.split("_");
+
+        for(int i = 1; i < parts.length; ++i) {
+            prefix += "[" + parts[i] + "]";
+        }
+
+        return prefix;
     }
 
     /**

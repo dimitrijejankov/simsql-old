@@ -29,7 +29,7 @@ import java.util.LinkedList;
 import java.util.Stack;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import static simsql.compiler.MultidimensionalTableSchema.getTableNameFromGeneralName;
+import static simsql.compiler.MultidimensionalTableSchema.getTablePrefixFromGeneralName;
 
 
 public class PlanHelper {
@@ -104,7 +104,7 @@ public class PlanHelper {
 		return findReferencedRandomTable(nodeList);
 	}
 	
-	public static ArrayList<Integer> findReferencedRandomTableTimeTicks(Operator sink)
+	public static ArrayList<Integer> findReferencedRandomTableTimeTicks(Operator sink, ChainGeneration chain)
 	{
 		ArrayList<Integer> resultList = new ArrayList<Integer>();
 		/*
@@ -137,7 +137,8 @@ public class PlanHelper {
 				
 				if(tableScan.getType() != TableReference.COMMON_TABLE)
 				{
-					int timeTick = tableScan.getIndexStrings().get("i");
+				    String bracketsTableName = MultidimensionalTableSchema.getBracketsTableNameFromTableName(tableScan.getTableName());
+					int timeTick = chain.getTickForTable(bracketsTableName);
 					if(!resultList.contains(timeTick))
 					{
 						resultList.add(timeTick);
@@ -183,7 +184,7 @@ public class PlanHelper {
 
         for(TableScan ts : indexedTableList) {
 
-        	String prefix = MultidimensionalTableSchema.getTableNameFromQualifiedName(ts.getTableName());
+        	String prefix = MultidimensionalTableSchema.getTablePrefixFromQualifiedName(ts.getTableName());
             String tableName = MultidimensionalTableSchema.getBracketsTableNameFromIndices(prefix, ts.getIndexStrings());
             requiredTableList.add(new TimeTableNode(tableName, ts.getIndexStrings()));
         }
@@ -228,7 +229,7 @@ public class PlanHelper {
 					}
 				}
 				else if (viewName.matches("^[^_]+(_[0-9]+to[0-9]+|_[0-9]+to|_[0-9]+)+$")) {
-				    String tablePrefix = getTableNameFromGeneralName(viewName);
+				    String tablePrefix = getTablePrefixFromGeneralName(viewName);
 
                     ArrayList<String> tempList = catalog.getIndexTableList(tablePrefix);
 

@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import static simsql.compiler.MultidimensionalTableSchema.getIndicesFromQualifiedName;
-import static simsql.compiler.MultidimensionalTableSchema.getTableNameFromQualifiedName;
+import static simsql.compiler.MultidimensionalTableSchema.getTablePrefixFromQualifiedName;
 
 /**
  * Encapsulates a single attribute, as a (name,type) pair. Also contains the
@@ -370,7 +370,7 @@ public class Catalog implements simsql.shell.Catalog {
 
                 HashMap<String, Integer> indices = getIndicesFromQualifiedName(viewName);
 
-                String tempName = getTableNameFromQualifiedName(viewName);
+                String tempName = getTablePrefixFromQualifiedName(viewName);
                 ArrayList<String> indexTableNameList = ds.getIndexTable(tempName);
 
                 if(indices.size() == 1 && indexTableNameList.size() != 0 && indexTableNameList.contains(tempName + "_i")){
