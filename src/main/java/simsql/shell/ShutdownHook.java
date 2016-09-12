@@ -47,7 +47,7 @@ public class ShutdownHook <MyCompiledQuery extends CompiledQuery, MyOptimizedQue
 					System.out.println ("Killed on iteration " + (myQueryProcessor.getIteration () - 1) + ".");
 					if (myQueryProcessor.getIteration () >= 2) {
 						System.out.println ("Saving results of iteration " + (myQueryProcessor.getIteration () - 2) + ".");
-						myQueryProcessor.saveOutputsFromLastIter ();
+						myQueryProcessor.saveRequiredRelations();
 					}
 				} 
 			

@@ -36,12 +36,12 @@ import java.io.File;
  * 2) call myObj.reset () to wipe any state from the QueryProcessor
  * 3) use the parser you got to get a CompiledQuery object
  * 4) give that CompiledQuery object back to myObj for post-processing by calling myObj.doneParsing ()
- * 5) start the next iteration: call myObj.nextIter () to get the next plan to process
- * 6) give the CompiledQuery that you get from myObj.nextIter () to the optimizer
+ * 5) start the next iteration: call myObj.nextIteration () to get the next plan to process
+ * 6) give the CompiledQuery that you get from myObj.nextIteration () to the optimizer
  * 7) give the OptimizedQuery that you get from the optimizer to the translator
  * 8) give the ExecutbleQuery that you get from the translator to the runtime
  * 9) give the RuntimeOutput that you get from the runtime back to myObj via myObj.doneExecuting ();
- * 10) repeat from step 5 as long as myObj.nextIter () gives you another plan to process
+ * 10) repeat from step 5 as long as myObj.nextIteration () gives you another plan to process
  * 11) call myObj.close () to get it to write any unsaved info to disk
  *
  */
@@ -73,10 +73,10 @@ public interface QueryProcessor <MyCompiledQuery extends CompiledQuery,
   Runtime <MyExecutableQuery, MyRuntimeOutput> getRuntime ();
 
   // this tells it to save its last output 
-  void saveOutputsFromLastIter ();
+  void saveRequiredRelations();
 
   // this tells it to delete its last output 
-  void deleteOutputsFromLastIter ();
+  void deleteNotRequiredRelationsFromLastIteration();
 
   // this wipes any state out of the QueryProcessor, so it forgets about any query
   // that it is currently being used to process
@@ -88,7 +88,7 @@ public interface QueryProcessor <MyCompiledQuery extends CompiledQuery,
   
   // this is called to obtain the query that should be processed in this iteration;
   // a null result means that we are totally done processing the query
-  MyCompiledQuery nextIter ();
+  MyCompiledQuery nextIteration();
   
   // this is called when the query has been optimized, translated, and executed
   void doneExecuting (MyRuntimeOutput result, String outputFile);

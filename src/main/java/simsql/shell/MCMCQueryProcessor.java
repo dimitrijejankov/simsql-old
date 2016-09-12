@@ -21,7 +21,6 @@
 
 package simsql.shell;
 
-import simsql.optimizer.FoulaOptimizer;
 import simsql.optimizer.CompiledOptimizer;
 import simsql.optimizer.SimSQLOptimizedQuery;
 import simsql.compiler.Relation;
@@ -32,9 +31,6 @@ import simsql.code_generator.WrappedTranslator;
 import simsql.code_generator.DataFlowQuery;
 import simsql.runtime.HadoopRuntime;
 import simsql.runtime.HadoopResult;
-import simsql.shell.SimSQLCompiledQuery;
-import simsql.compiler.CompilerProcessor;
-import simsql.compiler.FileOperation;
 import simsql.compiler.Operator;
 import simsql.compiler.PlanStatistics;
 import simsql.compiler.PostProcessorHelper;
@@ -42,21 +38,16 @@ import simsql.compiler.PreviousTable;
 import simsql.compiler.TableScan;
 import simsql.compiler.Topologic;
 import simsql.compiler.ChainGeneration;
-import simsql.compiler.TableByTime;
 import simsql.compiler.TranslatorHelper;
 import simsql.compiler.PlanInstantiation;
-import simsql.compiler.TempScanHelper;
 import simsql.compiler.FrameOutput;
 import simsql.compiler.PlanHelper;
 
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.StringTokenizer;
+import java.util.HashSet;
 
 // This is a simple query processor skeleton that supports a Parser->Optimizer->Translator->Runtime data flow
 public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, SimSQLOptimizedQuery, DataFlowQuery, HadoopResult> {
@@ -79,10 +70,10 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
     private boolean isFirstIteration;
 
     // remembers the output from the last iteration... used to save/delete this output
-    private ArrayList<Relation> lastTime = new ArrayList<Relation>();
+    private ArrayList<Relation> requiredRelations = new ArrayList<Relation>();
 
-    public void saveOutputsFromLastIter() {
-        for (Relation relation : lastTime) {
+    public void saveRequiredRelations() {
+        for (Relation relation : requiredRelations) {
 
             // first, we see if this is one of the MCMC tables
             String oldName = relation.getName();
@@ -120,13 +111,23 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             getCatalog().addRelation(relation);
             myTranslator.getPhysicalDatabase().rename(oldName, newName);
         }
-        lastTime = new ArrayList<Relation>();
+        requiredRelations = new ArrayList<Relation>();
     }
 
-    public void deleteOutputsFromLastIter() {
-        for (Relation relation : lastTime) {
-            getPhysicalDatabase().deleteTable(relation.getName());
+    public void deleteNotRequiredRelationsFromLastIteration() {
+        ChainGeneration chainGeneration = this.planInstantiation.getChain();
+        HashSet<String> finalTables = this.planInstantiation.getFinalTables();
+        HashSet<Relation> removedTables = new HashSet<Relation>();
+
+        for (Relation relation : requiredRelations) {
+            if(!chainGeneration.isTableRequiredAfterIteration(relation.getName(), getIteration()) &&
+                    !finalTables.contains(relation.getName())) {
+                getPhysicalDatabase().deleteTable(relation.getName());
+                removedTables.add(relation);
+            }
         }
+
+        requiredRelations.removeAll(removedTables);
     }
 
     public MCMCQueryProcessor() {
@@ -210,7 +211,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
                 Topologic topologic = new Topologic(sinkList, planTableMap);
 
-                ChainGeneration chain = new ChainGeneration(topologic, maxLoop, parseResult.requiredTables);
+                ChainGeneration chain = new ChainGeneration(topologic, parseResult.requiredTables);
                 maxLoop = chain.getMaxLoop();
 
                 TranslatorHelper translatorHelper = myParser.getTranslatorHelper();
@@ -224,7 +225,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
         }
     }
 
-    public SimSQLCompiledQuery nextIter() {
+    public SimSQLCompiledQuery nextIteration() {
         if (!isMCMC) {
             SimSQLCompiledQuery oneToReturn = parsedQuery;
             parsedQuery = null;
@@ -233,9 +234,9 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
         if (timeTick <= maxLoop) {
             SimSQLCompiledQuery compiledQuery = generatePlan(planInstantiation,
-                    timeTick,
-                    previousResult,
-                    isFirstIteration);
+                                                             timeTick,
+                                                             previousResult,
+                                                             isFirstIteration);
 
             if (isFirstIteration)// from now on, it is not the first iteration
             {
@@ -271,12 +272,10 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
             // where are we printing?
             if (outputFile == null) {
-
                 // only print out if we are at the end
                 if (timeTick == -1 || timeTick == maxLoop + 1)
                     getPhysicalDatabase().printRelation(rel);
             } else {
-
                 // a file
                 getPhysicalDatabase().saveRelation(rel, outputFile);
             }
@@ -286,18 +285,21 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
             previousResult = queryResult;
 
+            // Relations that are the final result of the current iteration.
             ArrayList<Relation> finalRelations = previousResult.getFinalRelations();
 
-            // kill the outputs from the last iteration...
-            deleteOutputsFromLastIter();
+            // Delete the relation that are not required anymore...
+            deleteNotRequiredRelationsFromLastIteration();
 
-            lastTime = previousResult.getFinalRelations();
-            for (int i = 0; i < finalRelations.size(); i++) {
-                Relation relation = finalRelations.get(i);
-                Relation relation2 = getCatalog().getRelation(relation.getName());
+            // Add all the relations from the current iteration to the required relations
+            requiredRelations.addAll(previousResult.getFinalRelations());
 
-                if (relation2 != null) {
-                    getCatalog().updateTableStatistics(relation2, relation);
+            // If there are relations with the same name already in the catalog update their statistics.
+            for (Relation relation : finalRelations) {
+                Relation catalogRelation = getCatalog().getRelation(relation.getName());
+
+                if (catalogRelation != null) {
+                    getCatalog().updateTableStatistics(catalogRelation, relation);
                 }
             }
         }
@@ -366,9 +368,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 		/*
 		 * 1. Get the directory and attributeList.
 		 */
-        for (int i = 0; i < previousResult.getFinalRelations().size(); i++) {
-            Relation outRelation = previousResult.getFinalRelations().get(i);
-
+        for (Relation outRelation : requiredRelations) {
             String file = outRelation.getFileName();
             String relName = outRelation.getName();
 
@@ -378,12 +378,12 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
             ArrayList<Attribute> attributeList = outRelation.getAttributes();
             Attribute attribute;
-            String attrbuteType;
-            for (int j = 0; j < attributeList.size(); j++) {
-                attribute = attributeList.get(j);
+            String attributeType;
+            for (Attribute anAttributeList : attributeList) {
+                attribute = anAttributeList;
                 attributeNameList.add(attribute.getName());
-                attrbuteType = attribute.getType().writeOut();                // TO-DO
-                attributeTypeMap.put(attribute.getName(), attrbuteType);
+                attributeType = attribute.getType().writeOut();                // TO-DO
+                attributeTypeMap.put(attribute.getName(), attributeType);
                 if (attribute.getIsRandom()) {
                     randamAttributeList.add(attribute.getName());
                 }
@@ -394,8 +394,8 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
             resultTable.setTupleNum(outRelation.getTupleNum());
 
-            for (int j = 0; j < attributeList.size(); j++) {
-                attribute = attributeList.get(j);
+            for (Attribute anAttributeList : attributeList) {
+                attribute = anAttributeList;
                 resultTable.addStat(attribute.getName(), attribute.getUniqueValue());
 
             }
@@ -406,9 +406,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 		 * 3. Update the plan.
 		 */
         ArrayList<Operator> allNodeList = PostProcessorHelper.findAllNode(generatedSinkList);
-        for (int i = 0; i < allNodeList.size(); i++) {
-            Operator operator = allNodeList.get(i);
-
+        for (Operator operator : allNodeList) {
             if (operator instanceof TableScan) {
                 String tableName = ((TableScan) operator).getTableName();
                 if (tableMap.containsKey(tableName)) {

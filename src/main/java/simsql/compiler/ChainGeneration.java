@@ -51,9 +51,7 @@ public class ChainGeneration
 	private int startTimeTick;
     private LinkedList<TimeTableNode> requiredTables;
 	
-	public ChainGeneration(Topologic topologic,
-			               int maxLoop,
-                           LinkedList<TimeTableNode> requiredTables)
+	public ChainGeneration(Topologic topologic, LinkedList<TimeTableNode> requiredTables)
 	{
         this.topologic = topologic;
         this.requiredTables = requiredTables;
@@ -62,52 +60,15 @@ public class ChainGeneration
         this.simulateTableMap = new HashMap<Integer, TableByTime>();
         this.startPointList = new ArrayList<String>();
 
-		instantiateChain(0, maxLoop);
+		instantiateChain();
 	}
 
 	public ArrayList<String> getTopologicalList(int start, int end)
 	{
-	    /*
-		HashMap<Integer, TableByTime> chain = getChainByTime(-1, end);
-		ArrayList<String> startPoint = this.getStartPoint();
-		ArrayList<String> sortList = topologicalSort(chain, startPoint);
-		ArrayList<String> resultList = new ArrayList<String>();
-
-
-        for (String table : sortList) {
-            if (this.simulateTableMap.get(start).getTableSet().contains(table)) {
-                resultList.add(table);
-            }
-        }
-        */
-
 		return new ArrayList<String>(this.simulateTableMap.get(start).getTableSet());
 	}
-	
-	/*
-	 * Such random tables which are generated without referring to other random tables
-	 */
-	public ArrayList<String> getStartPoint()
-	{
-		return startPointList;
-	}
-	
-	public HashMap<Integer, TableByTime> getChainByTime(int start, int end)
-	{
-		HashMap<Integer, TableByTime> resultChain = new HashMap<Integer, TableByTime>();
-		for(int i = start; i <= end; i++)
-		{
-			if(simulateTableMap.containsKey(i))
-			{
-				TableByTime tempTable = simulateTableMap.get(i);
-				resultChain.put(i, tempTable.copy());
-			}
-		}
-		
-		return resultChain;
-	}
-	
-	private void instantiateChain(int start, int end)
+
+	private void instantiateChain()
 	{
 
         TableDependencyGraph dependencyGraph = new TableDependencyGraph(requiredTables, topologic.getBackwardEdges());
@@ -133,159 +94,8 @@ public class ChainGeneration
         startTimeTick = 0;
 	}
 
-	
-	/*
-	 * If it is the baseline table, then it returns the version of this table;
-	 */
-	public int getVersionFromConstantTable(String table)
-	{
-		int start = table.indexOf("[");
-		int end = table.indexOf("]");
-		String index = table.substring(start+1, end);
-		
-		return Integer.parseInt(index);
-	}
-
-	
 	public HashMap<Integer, TableByTime> getSimulateTableMap() {
 		return simulateTableMap;
-	}
-	
-	private ArrayList<String> topologicalSort(HashMap<Integer, TableByTime> chain, ArrayList<String> startPoint)
-	{
-		ArrayList<String> resultList = new ArrayList<String>();
-		
-		ArrayList<String> nodeList = new ArrayList<String>();
-		HashMap<String, Integer> childrenNumMap = new HashMap<String, Integer>();
-		
-		Integer []index = new Integer[chain.size()];
-		chain.keySet().toArray(index);
-		Arrays.sort(index);
-		
-		/*
-		 * 1. start point
-		 */
-		for(int i = 0; i < startPoint.size(); i++)
-		{
-			String starttable = startPoint.get(i);
-			childrenNumMap.put(starttable, 0);
-		}
-		
-		/*
-		 * 2. Get all the table and its parents number in topological order.
-		 */
-		for(int i = 0; i < index.length; i++)
-		{
-			TableByTime tableByTime = chain.get(index[i]);
-			
-			HashSet<String> tableList = tableByTime.getTableSet();
-			HashMap<String, HashSet<String>> timeMap = tableByTime.getTimeMap();
-			
-			for(String tempTable: tableList)
-			{
-				if(!nodeList.contains(tempTable))
-				{
-					nodeList.add(tempTable);
-				}
-			}
-			
-			for(String s: timeMap.keySet())
-			{
-				HashSet<String> tempList = timeMap.get(s);
-				
-				for(String value: tempList)
-				{
-					addOne(childrenNumMap, value);
-				}
-			}
-		}
-		
-		boolean accessed[] = new boolean[nodeList.size()];
-		for(int i = 0; i < nodeList.size(); i++)
-		{
-			accessed[i] = false;
-		}
-		
-		for(int i = 0; i < nodeList.size(); i++)
-		{
-			//find the node with no parents
-			HashMap<String, Integer> potentialStringMap = new HashMap<String, Integer>();
-			
-			for(int j = 0; j < nodeList.size(); j++)
-			{
-				String temp = nodeList.get(j);
-				
-				if(childrenNumMap.containsKey(temp)&& childrenNumMap.get(temp) == 0 && !accessed[j])
-				{
-					potentialStringMap.put(temp, j);
-				}
-			}
-			
-			//get j
-			if(potentialStringMap.isEmpty())
-			{
-				resultList.clear();
-				System.err.println("Circles in the graph");
-				break;
-			}
-			else
-			{
-				int min = Integer.MAX_VALUE;
-				String minTable = null;
-				
-				for(String s: potentialStringMap.keySet())
-				{
-					if(min > this.getVersionFromConstantTable(s))
-					{
-						min = this.getVersionFromConstantTable(s);
-						minTable = s;
-					}
-				}
-				
-				resultList.add(minTable);
-				accessed[potentialStringMap.get(minTable)] = true;
-				
-				int time = min;
-				
-				TableByTime tableByTime = chain.get(time);
-				if(tableByTime != null)
-				{
-					HashMap<String, HashSet<String>> timeMap = tableByTime.getTimeMap();
-					if(timeMap.containsKey(minTable))
-					{
-						HashSet<String> targetList = timeMap.get(minTable);
-						for(String element: targetList)
-						{
-							reduceOne(childrenNumMap, element);
-						}
-					}
-				}
-			}
-		}
-		
-		return resultList;
-	}
-	
-	public void addOne(HashMap<String, Integer> childrenNumMap, String key)
-	{
-		if(childrenNumMap.containsKey(key))
-		{
-			int value = childrenNumMap.get(key);
-			childrenNumMap.put(key, value + 1);
-		}
-		else
-		{
-			childrenNumMap.put(key, 1);
-		}
-	}
-	
-	public void reduceOne(HashMap<String, Integer> childrenNumMap, String key)
-	{
-		if(childrenNumMap.containsKey(key))
-		{
-			int value = childrenNumMap.get(key);
-			childrenNumMap.put(key, value - 1);
-		}
 	}
 	
 	public int getMinimumTimeTick()
@@ -304,13 +114,37 @@ public class ChainGeneration
 		throw new RuntimeException("Tick not found for table " + tableName + "!");
 	}
 
+	public boolean isTableRequiredAfterIteration(String tableName, int iteration) {
+
+        HashSet<String> dependentTables = getDependentTables(tableName);
+
+        for(String dependentTable : dependentTables) {
+            if(getTickForTable(dependentTable) > iteration) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public HashSet<String> getDependentTables(String tableName) {
+        for(int i : simulateTableMap.keySet()) {
+            TableByTime tt = simulateTableMap.get(i);
+
+            if(tt.getTableSet().contains(tableName)){
+                return tt.getTimeMap().get(tableName);
+            }
+        }
+
+        return new HashSet<String>();
+    }
+
 	/**
 	 * @return the ruleMap
 	 */
 	public HashMap<String, HashSet<String>> getRuleMap() {
 		return ruleMap;
 	}
-
 
 	public int getMaxLoop() {
 	    return simulateTableMap.size() - 1;

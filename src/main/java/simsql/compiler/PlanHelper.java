@@ -106,64 +106,73 @@ public class PlanHelper {
 	
 	public static ArrayList<Integer> findReferencedRandomTableTimeTicks(Operator sink, ChainGeneration chain)
 	{
-		ArrayList<Integer> resultList = new ArrayList<Integer>();
+	    ArrayList<Integer> resultList = new ArrayList<Integer>();
+        HashSet<String> referencedTables = findReferencedRandomTables(sink, chain);
+
+        for(String referencedTable : referencedTables) {
+            String bracketsTableName = MultidimensionalTableSchema.getBracketsTableNameFromTableName(referencedTable);
+            int timeTick = chain.getTickForTable(bracketsTableName);
+            if(!resultList.contains(timeTick))
+            {
+                resultList.add(timeTick);
+            }
+        }
+
+        return resultList;
+	}
+
+    public static HashSet<String> findReferencedRandomTables(Operator sink, ChainGeneration chain) {
+        HashSet<String> resultList = new HashSet<String>();
 		/*
-		 * Here, I use a BFS algorithms to traverse all the nodes in the graph, and save them in 
+		 * Here, I use a BFS algorithms to traverse all the nodes in the graph, and save them in
 		 * the result list.
 		 */
-		HashSet<Operator> finishedQueue = new HashSet<Operator>();
-		LinkedBlockingDeque<Operator> availableQueue = new LinkedBlockingDeque<Operator>();
-		
-		availableQueue.add(sink);
-		
-		while(!availableQueue.isEmpty())
-		{
-			Operator currentElement = availableQueue.poll();
-			
-			if(finishedQueue.contains(currentElement))
-			{
-				continue;
-			}
-			else
-			{
-				finishedQueue.add(currentElement);
-			}
+        HashSet<Operator> finishedQueue = new HashSet<Operator>();
+        LinkedBlockingDeque<Operator> availableQueue = new LinkedBlockingDeque<Operator>();
+
+        availableQueue.add(sink);
+
+        while(!availableQueue.isEmpty())
+        {
+            Operator currentElement = availableQueue.poll();
+
+            if(finishedQueue.contains(currentElement))
+            {
+                continue;
+            }
+            else
+            {
+                finishedQueue.add(currentElement);
+            }
 			/*
 			 * deal with the current elment
 			 */
-			if(currentElement instanceof TableScan)
-			{
-				TableScan tableScan = (TableScan)currentElement;
-				
-				if(tableScan.getType() != TableReference.COMMON_TABLE)
-				{
-				    String bracketsTableName = MultidimensionalTableSchema.getBracketsTableNameFromTableName(tableScan.getTableName());
-					int timeTick = chain.getTickForTable(bracketsTableName);
-					if(!resultList.contains(timeTick))
-					{
-						resultList.add(timeTick);
-					}
-				}
-			}
-			
-			ArrayList<Operator> children = currentElement.getChildren();
-			
-			if(children != null)
-			{
-				for(int i = 0; i < children.size(); i++)
-				{
-					Operator temp = children.get(i);
-					
-					if(!finishedQueue.contains(temp))
-					{
-						availableQueue.add(temp);
-					}
-				}
-			}
-		}
-		
-		return resultList;
-	}
+            if(currentElement instanceof TableScan)
+            {
+                TableScan tableScan = (TableScan)currentElement;
+
+                if(tableScan.getType() != TableReference.COMMON_TABLE)
+                {
+                    if(!resultList.contains(tableScan.getTableName())) {
+                        resultList.add(tableScan.getTableName());
+                    }
+                }
+            }
+
+            ArrayList<Operator> children = currentElement.getChildren();
+
+            if(children != null)
+            {
+                for (Operator temp : children) {
+                    if (!finishedQueue.contains(temp)) {
+                        availableQueue.add(temp);
+                    }
+                }
+            }
+        }
+
+        return resultList;
+    }
 	
 	public static int findMaxTimeTick(ArrayList<TableScan> indexedTableList)
 	{

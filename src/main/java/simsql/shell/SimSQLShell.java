@@ -21,9 +21,6 @@
 
 package simsql.shell;
 
-import simsql.code_generator.GraphvizTranslator;
-import simsql.code_generator.PrologQuery;
-import simsql.compiler.FileOperation;
 import simsql.compiler.IndexReplacer;
 import simsql.compiler.Relation;
 import simsql.runtime.Record;
@@ -31,7 +28,6 @@ import simsql.runtime.Record;
 import java.io.*;
 import java.util.zip.*;
 import java.util.Enumeration;
-import java.lang.reflect.*;
 
 import jline.*;
 
@@ -944,7 +940,7 @@ class SimSQLShell<MyCompiledQuery extends CompiledQuery, MyOptimizedQuery extend
         myQueryProcessor.doneParsing(myCompiledQuery);
 
         // this repeatedly optimizes, translates, and runs the query
-        while ((myCompiledQuery = myQueryProcessor.nextIter()) != null) {
+        while ((myCompiledQuery = myQueryProcessor.nextIteration()) != null) {
 
             // optimize the query
             MyOptimizedQuery myOptimizedQuery = myOptimizer.optimize(myCompiledQuery, myQueryProcessor.getRuntimeParameter());
@@ -979,10 +975,11 @@ class SimSQLShell<MyCompiledQuery extends CompiledQuery, MyOptimizedQuery extend
             // and give it back to the query processor for post-processing
             myQueryProcessor.doneExecuting(myRuntimeOutput, outputFile);
 
+            //myQueryProcessor.saveRequiredRelations();
         }
 
         // save the outputs so they can be queried
-        myQueryProcessor.saveOutputsFromLastIter();
+        myQueryProcessor.saveRequiredRelations();
 
     }
 }

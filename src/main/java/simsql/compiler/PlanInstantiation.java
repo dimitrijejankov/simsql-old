@@ -25,6 +25,7 @@
 package simsql.compiler;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -44,6 +45,7 @@ public class PlanInstantiation {
 	 * query plans simutenously. The other plans that may span multiple time ticks is left to future extension.
 	 */
 	private HashMap<Integer, ArrayList<Operator>> mcmcDagBundledPlan;
+    private HashSet<String> finalTables;
 
 	/**
 	 * @param randomPlanTableMap
@@ -62,15 +64,24 @@ public class PlanInstantiation {
 		}
 		this.chain = chain;
 		this.translatorHelper = translatorHelper;
+        this.finalTables = gerReferencedTableInQueryList(queryList);
 		this.mcmcDagBundledPlan = processQueryList(queryList);
 	}
 
-	/*
-	 * Here, dataFromCatalog denotes whether we should get the statistics from the local file. So if
-	 * dataFromCatalog = true, then we should use the temporary file from the hdfs (previous result).
-	 * In addition, we should explicitly output the random attributes, statistics. The following function
-	 * generates the plan from start_index (inclusive) to end_index (exclusive).
-	 */
+    public ChainGeneration getChain() {
+        return chain;
+    }
+
+    public HashSet<String> getFinalTables() {
+        return finalTables;
+    }
+
+    /*
+             * Here, dataFromCatalog denotes whether we should get the statistics from the local file. So if
+             * dataFromCatalog = true, then we should use the temporary file from the hdfs (previous result).
+             * In addition, we should explicitly output the random attributes, statistics. The following function
+             * generates the plan from start_index (inclusive) to end_index (exclusive).
+             */
 	public ArrayList<Operator> generatePlan(int start_index, int end_index) throws Exception
 	{
 		ArrayList<String> tpList = chain.getTopologicalList(start_index, end_index);
@@ -285,21 +296,25 @@ public class PlanInstantiation {
 	private HashMap<Integer, ArrayList<Operator>> processQueryList(ArrayList<Operator> queryList)
 	{
 		HashMap<Integer, ArrayList<Operator>> resultMap = new HashMap<Integer, ArrayList<Operator>>();
-		Operator tempSinkOperator;
-		ArrayList<Integer> timeTick;
 
-		for(int i = 0; i < queryList.size(); i++)
-		{
-			tempSinkOperator = queryList.get(i);
-			timeTick = PlanHelper.findReferencedRandomTableTimeTicks(tempSinkOperator, chain);
-			if(timeTick.size() == 1)
-			{
-				putToMap(resultMap, timeTick.get(0), tempSinkOperator);
-			}
-		}
+        for (Operator tempSinkOperator : queryList) {
+            ArrayList<Integer> timeTick = PlanHelper.findReferencedRandomTableTimeTicks(tempSinkOperator, chain);
+            putToMap(resultMap, Collections.max(timeTick), tempSinkOperator);
+        }
 
 		return resultMap;
 	}
+
+    private HashSet<String> gerReferencedTableInQueryList(ArrayList<Operator> queryList)
+    {
+        HashSet<String> resultSet = new HashSet<String>();
+
+        for (Operator tempSinkOperator : queryList) {
+            resultSet.addAll(PlanHelper.findReferencedRandomTables(tempSinkOperator, chain));
+        }
+
+        return resultSet;
+    }
 
 	private void putToMap(HashMap<Integer, ArrayList<Operator>> resultMap, int timeTick, Operator sink)
 	{
@@ -653,11 +668,9 @@ public class PlanInstantiation {
 			String aggregateName = "agg" + translatorHelper.getAggregateIndex();
 			((Aggregate) operator).setAggregateName(aggregateName);
 			ArrayList<MathOperator> aggregateExpressionList = ((Aggregate) operator).getAggregateExpressionList();
-			for(int i = 0; i < aggregateExpressionList.size(); i++)
-			{
-				MathOperator tempOperator = aggregateExpressionList.get(i);
-				changeMathOperatorProperty(tempOperator, timeTick);
-			}
+            for (MathOperator tempOperator : aggregateExpressionList) {
+                changeMathOperatorProperty(tempOperator, timeTick);
+            }
 		}
 		else if(operator instanceof Join)
 		{
@@ -667,11 +680,9 @@ public class PlanInstantiation {
 		else if(operator instanceof ScalarFunction)
 		{
 			ArrayList<MathOperator> scalarExpressionList = ((ScalarFunction) operator).getScalarExpressionList();
-			for(int i = 0; i < scalarExpressionList.size(); i++)
-			{
-				MathOperator tempOperator = scalarExpressionList.get(i);
-				changeMathOperatorProperty(tempOperator, timeTick);
-			}
+            for (MathOperator tempOperator : scalarExpressionList) {
+                changeMathOperatorProperty(tempOperator, timeTick);
+            }
 		}
 		else if(operator instanceof Selection)
 		{
