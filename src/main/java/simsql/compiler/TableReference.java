@@ -22,7 +22,7 @@
 package simsql.compiler; // package mcdb.compiler.parser.expression.sqlExpression;
 
 import static simsql.compiler.MultidimensionalSchemaIndices.labelingOrder;
-import static simsql.compiler.MultidimensionalTableSchema.getTableNameFromIndices;
+import static simsql.compiler.MultidimensionalTableSchema.getQualifiedTableNameFromIndices;
 import static simsql.compiler.MultidimensionalTableSchema.getGeneralIndexTableNameFromExpressions;
 
 
@@ -87,6 +87,13 @@ public class TableReference extends SQLExpression{
         }
     }
 
+    public TableReference(String table, String alias, HashMap<String, Integer> indices, int type)
+    {
+        this(table, alias, type);
+        this.expressions = new HashMap<String, MathExpression>();
+        this.indexStrings = indices;
+    }
+
     public TableReference(String table,
                           String alias,
                           String indexString,
@@ -114,7 +121,7 @@ public class TableReference extends SQLExpression{
 	public String getTable() {
 
 	    if(type == MULTIDIMENSIONAL_CONSTANT_INDEX_TABLE || type == CONSTANT_INDEX_TABLE) {
-	        return getTableNameFromIndices(table, indexStrings);
+	        return getQualifiedTableNameFromIndices(table, indexStrings);
         }
 
         if(type == MULTIDIMENSIONAL_GENERAL_INDEX_TABLE || type == GENERAL_INDEX_TABLE) {

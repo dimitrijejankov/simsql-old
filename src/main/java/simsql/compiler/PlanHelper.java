@@ -110,7 +110,7 @@ public class PlanHelper {
         HashSet<String> referencedTables = findReferencedRandomTables(sink, chain);
 
         for(String referencedTable : referencedTables) {
-            String bracketsTableName = MultidimensionalTableSchema.getBracketsTableNameFromTableName(referencedTable);
+            String bracketsTableName = MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(referencedTable);
             int timeTick = chain.getTickForTable(bracketsTableName);
             if(!resultList.contains(timeTick))
             {

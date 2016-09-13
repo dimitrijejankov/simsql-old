@@ -20,19 +20,25 @@
 
 
 package simsql.compiler;
+import com.sun.org.apache.bcel.internal.generic.RETURN;
 import simsql.runtime.DataType;
 
 
 public class GeneralTableIndexOperator implements MathOperator{
 	private DataType type;
 	private boolean initialized;
-	private int value;
-	
-	public GeneralTableIndexOperator(DataType type)
-	{
-		this.type = type;
-		this.initialized = false;
+	private Integer value;
+	private String identifier;
+
+	public GeneralTableIndexOperator(DataType type, String identifier) {
+        this.type = type;
+        this.identifier = identifier;
+        this.initialized = false;
 	}
+
+	public String getIdentifier() {
+        return identifier;
+    }
 
 	public DataType getType() {
 		return type;
@@ -47,7 +53,6 @@ public class GeneralTableIndexOperator implements MathOperator{
 		initialized = true;
 	}
 
-
 	/* (non-Javadoc)
 	 * @see logicOperator.mathOperator.MathOperator#visitNode()
 	 */
@@ -56,17 +61,16 @@ public class GeneralTableIndexOperator implements MathOperator{
 		return "";
 	}
 
-	
-	
+
 	/* (non-Javadoc)
 	 * @see logicOperator.mathOperator.MathOperator#getNodeName()
 	 */
 	@Override
 	public String getNodeName() {
 		if(!initialized)
-			return "i";
+			return identifier;
 		else
-			return value+"";
+			return value.toString();
 	}
 
 	/* (non-Javadoc)
@@ -74,6 +78,6 @@ public class GeneralTableIndexOperator implements MathOperator{
 	 */
 	@Override
 	public MathOperator copy(CopyHelper copyHelper) {
-		return new GeneralTableIndexOperator(type);
+		return new GeneralTableIndexOperator(type, identifier);
 	}
 }

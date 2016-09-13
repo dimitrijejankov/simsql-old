@@ -54,12 +54,12 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
      * This method extracts the table name from it's brackets name.
      * For example, if the brackets name is "md[1][2][3] the table name would be md
      **/
-    public static String getTableNameFromBracketsName(String qualifiedName) {
+    public static String getPrefixFromBracketsTableName(String qualifiedName) {
         int offset = qualifiedName.indexOf('[');
         return qualifiedName.substring(0, offset);
     }
 
-    public static String getBracketsTableNameFromTableName(String tableName) {
+    public static String getBracketsTableNameFromQualifiedTableName(String tableName) {
 
         int offset = tableName.indexOf('_');
         String prefix = tableName.substring(0, offset);
@@ -90,14 +90,29 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
         return ret;
     }
 
+    public static HashMap<String, Integer> getIndicesFromBracketsName(String bracketsName) {
+
+        String qualifiedName = getQualifiedTableNameFromBracketsTableName(bracketsName);
+        HashMap<String, Integer> ret = new HashMap<String, Integer>();
+
+        int offset = qualifiedName.indexOf('_');
+        String[] parts = qualifiedName.substring(offset + 1).split("_");
+
+        for (int i = 0; i < parts.length; ++i) {
+            ret.put(labelingOrder[i], Integer.parseInt(parts[i]));
+        }
+
+        return ret;
+    }
+
 
     /**
-     * Generate qualified table name from prefix an indices.
+     * Generate qualified table name from prefix indices.
      * @param prefix the table prefix
      * @param indices a HashMap with key value pairs, for example {i : 1, j : 2, k : 4}
      * @return qualified table name for example tablePrefix_1_2_4
      */
-    public static String getTableNameFromIndices(String prefix, HashMap<String, Integer> indices) {
+    public static String getQualifiedTableNameFromIndices(String prefix, HashMap<String, Integer> indices) {
 
         for (int i = 0; i < indices.size(); ++i) {
             if (!indices.containsKey(labelingOrder[i]))
@@ -110,7 +125,7 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
     }
 
     /**
-     * Generate brackets table name from prefix an indices.
+     * Generate brackets table name from prefix indices.
      * @param prefix the table prefix
      * @param indices a HashMap with key value pairs, for example {i : 1, j : 2, k : 4}
      * @return brackets table name for example tablePrefix[1][2][4]
@@ -144,10 +159,37 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
         return prefix;
     }
 
-    public static String bracketsToQualifiedTableName(String bracketsName) {
+    public static String getBracketsTableNameFromEvaluatedExpressions(String prefix,
+                                                                      HashMap<String, MathExpression> indexMathExpressions,
+                                                                      HashMap<String, Integer> indices) {
+        HashMap<String, Integer> newIndices = evaluateExpressions(indexMathExpressions, indices);
+        return getBracketsTableNameFromIndices(prefix, newIndices);
+    }
+
+    public static String getQualifiedTableNameFromEvaluatedExpressions(String prefix,
+                                                                       HashMap<String, MathExpression> indexMathExpressions,
+                                                                       HashMap<String, Integer> indices) {
+        HashMap<String, Integer> newIndices = evaluateExpressions(indexMathExpressions, indices);
+        return getQualifiedTableNameFromIndices(prefix, newIndices);
+    }
+
+    public static HashMap<String, Integer> evaluateExpressions(HashMap<String, MathExpression> expressions,
+                                                               HashMap<String, Integer> indices) {
+        HashMap<String, Integer> newIndices = new HashMap<String, Integer>();
+
+        for(String key : indices.keySet()) {
+            MathExpression e = expressions.get(key);
+            MPNGenerator generator = new MPNGenerator(e);
+            newIndices.put(key, generator.initializeTime(indices));
+        }
+
+        return newIndices;
+    }
+
+    public static String getQualifiedTableNameFromBracketsTableName(String bracketsName) {
         bracketsName = bracketsName.replace("][", "_");
         bracketsName = bracketsName.replace("[", "_");
-        return bracketsName.replace("]", "_");
+        return bracketsName.replace("]", "");
     }
 
     public static String getGeneralIndexTableNameFromIndices(String prefix, MultidimensionalSchemaIndices indices) {

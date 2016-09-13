@@ -318,7 +318,7 @@ public class MathExpressionTranslator {
 			ArrayList<String> resultList,
 			ArrayList<MathOperator> mathOperatorList)
 	{
-		mathOperatorList.add(new GeneralTableIndexOperator(generalIndexExpression.type));
+		mathOperatorList.add(new GeneralTableIndexOperator(generalIndexExpression.type, generalIndexExpression.identifier));
 		return "GeneralIndex";
 	}
 	

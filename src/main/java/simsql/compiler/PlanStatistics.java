@@ -62,10 +62,8 @@ public class PlanStatistics {
 	{
 		String result = "";
 		ArrayList<StatisticsOperator> list = getStatisticsOperatorList();
-		
-		for(int i = 0; i < list.size(); i++)
-		{
-			StatisticsOperator operator = list.get(i);
+
+		for (StatisticsOperator operator : list) {
 			result += operator.visitNode();
 		}
 		

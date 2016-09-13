@@ -2643,17 +2643,17 @@ public class TypeChecker extends ASTVisitor {
                 if (type == DropElement.TABLEORCOMMON_RANDOM_TABLE) {
                     tableReference = new TableReference(objectName,
                             objectName,
-                            null,
+                            new HashMap<String, Integer>(),
                             TableReference.COMMON_TABLE);
                 } else if (type == DropElement.CONSTANT_INDEX_TABLE) {
                     tableReference = new TableReference(objectName,
                             objectName,
-                            null,
+                            new HashMap<String, Integer>(),
                             TableReference.CONSTANT_INDEX_TABLE);
                 } else {
                     tableReference = new TableReference(objectName,
                             objectName,
-                            null,
+                            new HashMap<String, Integer>(),
                             TableReference.GENERAL_INDEX_TABLE);
                 }
 
@@ -2786,11 +2786,11 @@ public class TypeChecker extends ASTVisitor {
 
                         for (int i = low; i <= up; i++) {
                             //check the real constant random table iteratively.
-                            String tempOjbectName = realTableName + "_" + i;
+                            String tempObjectName = realTableName + "_" + i;
 
-                            tableReference = new TableReference(tempOjbectName,
-                                    tempOjbectName,
-                                    null,
+                            tableReference = new TableReference(tempObjectName,
+                                    tempObjectName,
+                                    new HashMap<String, Integer>(),
                                     TableReference.CONSTANT_INDEX_TABLE);
 
                             if (!this.checkValidTableIdentifier(tableReference)) {
@@ -2799,11 +2799,11 @@ public class TypeChecker extends ASTVisitor {
 
 
                             //check the catlog
-                            relation = catalog.getRelation(tempOjbectName);
-                            view = catalog.getView(tempOjbectName);
-                            start = tempOjbectName.lastIndexOf("_");
-                            String outputObjectName = tempOjbectName.substring(0, start) + "[" +
-                                    tempOjbectName.substring(start + 1, tempOjbectName.length()) + "]";
+                            relation = catalog.getRelation(tempObjectName);
+                            view = catalog.getView(tempObjectName);
+                            start = tempObjectName.lastIndexOf("_");
+                            String outputObjectName = tempObjectName.substring(0, start) + "[" +
+                                    tempObjectName.substring(start + 1, tempObjectName.length()) + "]";
 
                             if (relation == null && view == null) {
                                 subCheck = false;
@@ -2817,7 +2817,7 @@ public class TypeChecker extends ASTVisitor {
                                 subCheck = false;
                                 System.err.println("Table [" + outputObjectName + "] is a Simulation random table, but we find that it is a relation!");
                             } else {
-                                int objectType = catalog.getObjectType(tempOjbectName);
+                                int objectType = catalog.getObjectType(tempObjectName);
                                 if (objectType == DataAccess.OBJ_VIEW) {
                                     subCheck = false;
                                     System.err.println("Wrong type of table [" + outputObjectName + "]: it is a view!");

@@ -10,8 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-import static simsql.compiler.MultidimensionalTableSchema.getTableNameFromIndices;
-import static simsql.compiler.MultidimensionalTableSchema.getTableNameFromBracketsName;
+import static simsql.compiler.MultidimensionalTableSchema.getPrefixFromBracketsTableName;
 
 public class TableDependencyGraph {
 
@@ -64,7 +63,7 @@ public class TableDependencyGraph {
 
         for (String edge : edges) {
 
-            String prefix = getTableNameFromBracketsName(edge);
+            String prefix = getPrefixFromBracketsTableName(edge);
             MultidimensionalSchemaExpressions expressions = new MultidimensionalSchemaExpressions(edge.substring(edge.indexOf("[")));
             HashMap<String, Integer> edgeIndex = expressions.evaluateExpressions(indexStrings);
             TimeTableNode node = new TimeTableNode(MultidimensionalTableSchema.getBracketsTableNameFromIndices(prefix, edgeIndex), edgeIndex);
@@ -77,7 +76,7 @@ public class TableDependencyGraph {
 
     private HashSet<String> findBackwardEdge(TimeTableNode node) {
         String tableName = node.tableName;
-        String tablePrefix = MultidimensionalTableSchema.getTableNameFromBracketsName(tableName);
+        String tablePrefix = MultidimensionalTableSchema.getPrefixFromBracketsTableName(tableName);
 
         // If this is a general index table
         if(node.indexStrings.size() == 1) {
@@ -91,7 +90,7 @@ public class TableDependencyGraph {
         else {
         // It's a multidimensional index table
             for(String edge : backwardEdges.keySet()) {
-                MultidimensionalSchemaIndices indices = new MultidimensionalSchemaIndices(MultidimensionalTableSchema.bracketsToQualifiedTableName(edge));
+                MultidimensionalSchemaIndices indices = new MultidimensionalSchemaIndices(MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(edge));
 
                 if(indices.areIndicesForThisTable(node.indexStrings)){
                     return backwardEdges.get(edge);
