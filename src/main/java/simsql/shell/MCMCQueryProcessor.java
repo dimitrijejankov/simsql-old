@@ -115,19 +115,29 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
     }
 
     public void deleteNotRequiredRelationsFromLastIteration() {
-        ChainGeneration chainGeneration = this.planInstantiation.getChain();
-        HashSet<String> finalTables = this.planInstantiation.getFinalTables();
-        HashSet<Relation> removedTables = new HashSet<Relation>();
+        // if it's a recursive query, some relations are necessary and some are not.
+        if(isMCMC) {
+            ChainGeneration chainGeneration = this.planInstantiation.getChain();
+            HashSet<String> finalTables = this.planInstantiation.getFinalTables();
+            HashSet<Relation> removedTables = new HashSet<Relation>();
 
-        for (Relation relation : requiredRelations) {
-            if(!chainGeneration.isTableRequiredAfterIteration(relation.getName(), getIteration()) &&
-                    !finalTables.contains(relation.getName())) {
-                getPhysicalDatabase().deleteTable(relation.getName());
-                removedTables.add(relation);
+            for (Relation relation : requiredRelations) {
+                if (!chainGeneration.isTableRequiredAfterIteration(relation.getName(), getIteration()) &&
+                        !finalTables.contains(relation.getName())) {
+                    getPhysicalDatabase().deleteTable(relation.getName());
+                    removedTables.add(relation);
+                }
             }
-        }
 
-        requiredRelations.removeAll(removedTables);
+            requiredRelations.removeAll(removedTables);
+        }
+        else {
+        // if it's a normal query remove them all.
+            for (Relation relation : requiredRelations) {
+                getPhysicalDatabase().deleteTable(relation.getName());
+            }
+            requiredRelations.clear();
+        }
     }
 
     public MCMCQueryProcessor() {

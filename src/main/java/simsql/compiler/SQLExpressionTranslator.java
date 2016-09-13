@@ -817,9 +817,7 @@ public class SQLExpressionTranslator {
 		 * 2. Fill the translatedStatement
 		 */
 		String attributeString;
-		for(int i = 0; i < outputAttributeList.size(); i++)
-		{
-			String attributeName = outputAttributeList.get(i);
+		for (String attributeName : outputAttributeList) {
 			attributeString = attributeName;
 			/*
 			 * 3. Fill the attributes of the TableScan 
@@ -831,9 +829,8 @@ public class SQLExpressionTranslator {
 		 * 
 		 */
 		ArrayList<String> attributeList2 = new ArrayList<String>();
-		for(int i = 0; i < outputAttributeList.size(); i++)
-		{
-			attributeList2.add(outputAttributeList.get(i));
+		for (String anOutputAttributeList : outputAttributeList) {
+			attributeList2.add(anOutputAttributeList);
 		}
 		
 		

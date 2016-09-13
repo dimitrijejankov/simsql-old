@@ -173,20 +173,6 @@ public class PlanHelper {
 
         return resultList;
     }
-	
-	public static int findMaxTimeTick(ArrayList<TableScan> indexedTableList)
-	{
-		int timeTick = -1;
-		for(int i = 0; i < indexedTableList.size(); i++)
-		{
-			if(timeTick < indexedTableList.get(i).getIndexStrings().get("i"))
-			{
-				timeTick = indexedTableList.get(i).getIndexStrings().get("i");
-			}
-		}
-		
-		return timeTick;
-	}
 
 	public static LinkedList<TimeTableNode> getRequiredTables(ArrayList<TableScan> indexedTableList) {
         LinkedList<TimeTableNode> requiredTableList = new LinkedList<TimeTableNode>();

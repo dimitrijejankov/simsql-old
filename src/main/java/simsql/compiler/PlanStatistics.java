@@ -291,7 +291,7 @@ public class PlanStatistics {
 		ArrayList<String> tableScanList = element.getAttributeList();
 		
 		ArrayList<Attribute> attributeList;
-		if(element.getIndexStrings().get("i") == null && element.getType() == TableReference.COMMON_TABLE)
+		if(element.getIndexStrings().isEmpty() && element.getType() == TableReference.COMMON_TABLE)
 		{
 			Relation relation = catalog.getRelation(tableName);
 			attributeList = relation.getAttributes();

@@ -380,8 +380,6 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 													ArrayList<Operator> querySinkList)
 	{
 		ArrayList<String> tableReferenceList = PlanHelper.findModelTableList(indexedTableList);
-		int iterationNum = PlanHelper.findMaxTimeTick(indexedTableList);
-
         LinkedList<TimeTableNode> requiredTables = PlanHelper.getRequiredTables(indexedTableList);
 		
 		try {

@@ -47,7 +47,7 @@ class SimSQLShell<MyCompiledQuery extends CompiledQuery, MyOptimizedQuery extend
                 new ShutdownHook<MyCompiledQuery, MyOptimizedQuery, MyExecutableQuery, MyRuntimeOutput, MyQueryProcessor>();
         myHook.attachShutDownHook(myQueryProcessorIn);
 
-        System.out.print("Welcome to SimSQL v0.4!\n\n");
+        System.out.print("Welcome to SimSQL v0.5!\n\n");
         // has simsql been run from this location?
         if (new File(".simsql").exists()) {
             if (new File(".simsql").isFile()) {

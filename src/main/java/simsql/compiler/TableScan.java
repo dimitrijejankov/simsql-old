@@ -63,7 +63,7 @@ public class TableScan extends Operator{
 		super(nodeName, children, parents);
 		this.type = TableReference.COMMON_TABLE;
 		this.tableInfo = null;
-		this.indexMathExpressions = new HashMap<String, MathExpression>();
+		this.indexStrings = new HashMap<String, Integer>();
         this.indexMathExpressions = new HashMap<String, MathExpression>();
 	}
 	
@@ -157,7 +157,7 @@ public class TableScan extends Operator{
 	@Override
 	public String visitNode()throws Exception{
 		String result = "";
-		if(indexStrings.size() == 0 && type == TableReference.COMMON_TABLE)
+		if(indexStrings.isEmpty() && type == TableReference.COMMON_TABLE)
 		{
 			
 			result += this.getNodeStructureString();
@@ -263,256 +263,254 @@ public class TableScan extends Operator{
 				result += "]).\r\n";
 			}
 		}
-		else
-		{
-			if(tableName.endsWith("_i"))
-			{
-				result += this.getNodeStructureString();
-				
-				String indexString = new MPNGenerator(this.indexMathExpressions.get("i")).convertToMPN();
-				result += "tablescan(" + this.getNodeName() + ", '" +
-						tableName.substring(0, tableName.length()-2) + 
-						"_" + indexString;
-				
-				
-				result += "', [";
-				
-				if(attributeList != null)
-				{
-					for(int i = 0; i < attributeList.size(); i++)
-					{
-						result += attributeList.get(i);
-						
-						if(i != attributeList.size() - 1)
-						{
-							result += ", ";
-						}
-					}
-				}
-				
-				result += "]).\r\n";
-				
-				/* add the statistics of this table and its attributes */
-				result += "stats(" + this.getNodeName() + ", [";
-				
-				View view = catalog.getView(tableName);
-				ArrayList<Attribute> realAttributeList = view.getAttributes();
-				String attributeAlias;
-				Attribute attribute;
-				int attributeSize;
-				long uniqueValue;
-				
-				if(attributeList != null)
-				{
-					for(int i = 0; i < attributeList.size(); i++)
-					{
-						attributeAlias = attributeList.get(i);
-						attribute = realAttributeList.get(i);
-						
-						uniqueValue = attribute.getUniqueValue();
-						result += "uniqueValues(" + attributeAlias + ", " + uniqueValue +")";
-						
-						if(i != attributeList.size() - 1)
-						{
-							result += ", ";
-						}
-					}
-				}
-				
-				result += "], [], \r\n\t\t[";
-				
-				if(attributeList != null)
-				{
-					for(int i = 0; i < attributeList.size(); i++)
-					{
-						attributeAlias = attributeList.get(i);
-						attribute = realAttributeList.get(i);
-						
-						attributeSize = attribute.getAttributeSize();
-						result += "attributeSize(" + attributeAlias + ", " + attributeSize +")";
-						
-						if(i != attributeList.size() - 1)
-						{
-							result += ", ";
-						}
-					}
-				}
-				
-				result += "], " + "_" + ", _).\r\n";
-			}
-			else
-			{
-				result += this.getNodeStructureString();
-				
-				result += "tablescan(" + this.getNodeName() + ", '" + tableName;
-				result += "', [";
-				
-				if(attributeList != null)
-				{
-					for(int i = 0; i < attributeList.size(); i++)
-					{
-						result += attributeList.get(i);
-						
-						if(i != attributeList.size() - 1)
-						{
-							result += ", ";
-						}
-					}
-				}
-				
-				result += "]).\r\n";
-				
-				/* add the statistics of this table and its attributes */
-				result += "stats(" + this.getNodeName() + ", [";
-				
-				if(tableInfo == null)
-				{
-					View view = catalog.getView(tableName);
-					ArrayList<Attribute> realAttributeList = view.getAttributes();
-					String attributeAlias;
-					Attribute attribute;
-					int attributeSize;
-					long uniqueValue;
-					
-					if(attributeList != null)
-					{
-						for(int i = 0; i < attributeList.size(); i++)
-						{
-							attributeAlias = attributeList.get(i);
-							attribute = realAttributeList.get(i);
-							
-							uniqueValue = attribute.getUniqueValue();
-							result += "uniqueValues(" + attributeAlias + ", " + uniqueValue +")";
-							
-							if(i != attributeList.size() - 1)
-							{
-								result += ", ";
-							}
-						}
-					}
-					
-					result += "], [], \r\n\t\t[";
-					
-					if(attributeList != null)
-					{
-						for(int i = 0; i < attributeList.size(); i++)
-						{
-							attributeAlias = attributeList.get(i);
-							attribute = realAttributeList.get(i);
-							
-							attributeSize = attribute.getAttributeSize();
-							result += "attributeSize(" + attributeAlias + ", " + attributeSize +")";
-							
-							if(i != attributeList.size() - 1)
-							{
-								result += ", ";
-							}
-						}
-					}
-					
-					result += "], " + "_" + ", _).\r\n";
-				}
-				else //tableInfo != null
-				{
-					String attributeAlias;
-					String attribute;
-					int attributeSize;
-					long uniqueValue;
-					
-					View view = catalog.getView(tableName);
-					ArrayList<Attribute> realAttributeList = view.getAttributes();
-					
-					String fileDirectory = tableInfo.getFileDirectory();
-					ArrayList<String> hdfsAttributeList = tableInfo.getAttributeList();
-					HashMap<String, String> hdfsAttributeTypeMap = tableInfo.getAttributeMap();
-					ArrayList<String> hdfsRandamAttributeList = tableInfo.getRandamAttributeList();
-					HashMap<String, Long> hdfsUniqueValueNumMap = tableInfo.getUniqueValueNumMap();
-					long tupleNum = tableInfo.getTupleNum();
-					
-					if(attributeList != null)
-					{
-						for(int i = 0; i < attributeList.size(); i++)
-						{
-							attributeAlias = attributeList.get(i);
-							attribute = hdfsAttributeList.get(i);
-							
-							uniqueValue = hdfsUniqueValueNumMap.get(attribute);
-							result += "uniqueValues(" + attributeAlias + ", " + uniqueValue +")";
-							
-							if(i != attributeList.size() - 1)
-							{
-								result += ", ";
-							}
-						}
-					}
-					
-					result += "], [";
-					
-					if(hdfsRandamAttributeList != null && hdfsRandamAttributeList.size() > 0)
-					{
-						for(int i = 0; i < hdfsRandamAttributeList.size(); i++)
-						{
-							String randomAttributeName = hdfsRandamAttributeList.get(i);
-							int indexForAttribute = hdfsAttributeList.indexOf(randomAttributeName);
-							result += "uniqueValuesPerTupleBundle(";
-							result += attributeList.get(indexForAttribute);
-							result += ", ";
-							long monteCarloIteration = Long.parseLong(catalog.getMonteCarloIterations());
-							result += min(hdfsUniqueValueNumMap.get(hdfsAttributeList.get(indexForAttribute)), monteCarloIteration);
-							result += ")";
-							
-							if(i != hdfsRandamAttributeList.size() - 1)
-							{
-								result += ",";
-							}
-						}
-					}
-					
-					result += "], \r\n\t\t[";
-					
-					if(attributeList != null)
-					{
-						for(int i = 0; i < attributeList.size(); i++)
-						{
-							attributeAlias = attributeList.get(i);
-							attribute = hdfsAttributeList.get(i);
-							Attribute viewAttribute = realAttributeList.get(i);
-							
-							attributeSize = viewAttribute.getAttributeSize();
-							result += "attributeSize(" + attributeAlias + ", " + attributeSize +")";
-							
-							if(i != attributeList.size() - 1)
-							{
-								result += ", ";
-							}
-						}
-					}
-					
-					result += "], " + tupleNum + ", _).\r\n";
-					
-					/*
-					 * random Attribute;
-					 */
-					result += "randomAttrsRelation(";
-					result += this.getNodeName() + ", [";
-					for(int i = 0; i < hdfsRandamAttributeList.size(); i++)
-					{
-						String randomAttributeName = hdfsRandamAttributeList.get(i);
-						int indexForAttribute = hdfsAttributeList.indexOf(randomAttributeName);
-						result += attributeList.get(indexForAttribute);
-						
-						if(i != hdfsRandamAttributeList.size() - 1)
-						{
-							result += ",";
-						}
-					}
-					
-					result += "]).\r\n";
-					
-					relationStatistics.setTableInfo(tableInfo);
-				}
-			}
-		}
+		else if(tableName.matches("^[^_]+(_[a-z])+$"))
+        {
+            result += this.getNodeStructureString();
+
+            String indexString = "";
+            for(int i = 0; i < this.getIndexMathExpressions().size(); ++i) {
+                indexString += "_" + new MPNGenerator(this.indexMathExpressions.get(MultidimensionalSchemaIndices.labelingOrder[i])).convertToMPN();
+            }
+
+            result += "tablescan(" + this.getNodeName() + ", '" + MultidimensionalTableSchema.getTablePrefixFromGeneralName(tableName) + "_" + indexString;
+
+            result += "', [";
+
+            if(attributeList != null)
+            {
+                for(int i = 0; i < attributeList.size(); i++)
+                {
+                    result += attributeList.get(i);
+
+                    if(i != attributeList.size() - 1)
+                    {
+                        result += ", ";
+                    }
+                }
+            }
+
+            result += "]).\r\n";
+
+            /* add the statistics of this table and its attributes */
+            result += "stats(" + this.getNodeName() + ", [";
+
+            View view = catalog.getView(tableName);
+            ArrayList<Attribute> realAttributeList = view.getAttributes();
+            String attributeAlias;
+            Attribute attribute;
+            int attributeSize;
+            long uniqueValue;
+
+            if(attributeList != null)
+            {
+                for(int i = 0; i < attributeList.size(); i++)
+                {
+                    attributeAlias = attributeList.get(i);
+                    attribute = realAttributeList.get(i);
+
+                    uniqueValue = attribute.getUniqueValue();
+                    result += "uniqueValues(" + attributeAlias + ", " + uniqueValue +")";
+
+                    if(i != attributeList.size() - 1)
+                    {
+                        result += ", ";
+                    }
+                }
+            }
+
+            result += "], [], \r\n\t\t[";
+
+            if(attributeList != null)
+            {
+                for(int i = 0; i < attributeList.size(); i++)
+                {
+                    attributeAlias = attributeList.get(i);
+                    attribute = realAttributeList.get(i);
+
+                    attributeSize = attribute.getAttributeSize();
+                    result += "attributeSize(" + attributeAlias + ", " + attributeSize +")";
+
+                    if(i != attributeList.size() - 1)
+                    {
+                        result += ", ";
+                    }
+                }
+            }
+
+            result += "], " + "_" + ", _).\r\n";
+        }
+        else
+        {
+            result += this.getNodeStructureString();
+
+            result += "tablescan(" + this.getNodeName() + ", '" + tableName;
+            result += "', [";
+
+            if(attributeList != null)
+            {
+                for(int i = 0; i < attributeList.size(); i++)
+                {
+                    result += attributeList.get(i);
+
+                    if(i != attributeList.size() - 1)
+                    {
+                        result += ", ";
+                    }
+                }
+            }
+
+            result += "]).\r\n";
+
+            /* add the statistics of this table and its attributes */
+            result += "stats(" + this.getNodeName() + ", [";
+
+            if(tableInfo == null)
+            {
+                View view = catalog.getView(tableName);
+                ArrayList<Attribute> realAttributeList = view.getAttributes();
+                String attributeAlias;
+                Attribute attribute;
+                int attributeSize;
+                long uniqueValue;
+
+                if(attributeList != null)
+                {
+                    for(int i = 0; i < attributeList.size(); i++)
+                    {
+                        attributeAlias = attributeList.get(i);
+                        attribute = realAttributeList.get(i);
+
+                        uniqueValue = attribute.getUniqueValue();
+                        result += "uniqueValues(" + attributeAlias + ", " + uniqueValue +")";
+
+                        if(i != attributeList.size() - 1)
+                        {
+                            result += ", ";
+                        }
+                    }
+                }
+
+                result += "], [], \r\n\t\t[";
+
+                if(attributeList != null)
+                {
+                    for(int i = 0; i < attributeList.size(); i++)
+                    {
+                        attributeAlias = attributeList.get(i);
+                        attribute = realAttributeList.get(i);
+
+                        attributeSize = attribute.getAttributeSize();
+                        result += "attributeSize(" + attributeAlias + ", " + attributeSize +")";
+
+                        if(i != attributeList.size() - 1)
+                        {
+                            result += ", ";
+                        }
+                    }
+                }
+
+                result += "], " + "_" + ", _).\r\n";
+            }
+            else //tableInfo != null
+            {
+                String attributeAlias;
+                String attribute;
+                int attributeSize;
+                long uniqueValue;
+
+                View view = catalog.getView(tableName);
+                ArrayList<Attribute> realAttributeList = view.getAttributes();
+
+                String fileDirectory = tableInfo.getFileDirectory();
+                ArrayList<String> hdfsAttributeList = tableInfo.getAttributeList();
+                HashMap<String, String> hdfsAttributeTypeMap = tableInfo.getAttributeMap();
+                ArrayList<String> hdfsRandamAttributeList = tableInfo.getRandamAttributeList();
+                HashMap<String, Long> hdfsUniqueValueNumMap = tableInfo.getUniqueValueNumMap();
+                long tupleNum = tableInfo.getTupleNum();
+
+                if(attributeList != null)
+                {
+                    for(int i = 0; i < attributeList.size(); i++)
+                    {
+                        attributeAlias = attributeList.get(i);
+                        attribute = hdfsAttributeList.get(i);
+
+                        uniqueValue = hdfsUniqueValueNumMap.get(attribute);
+                        result += "uniqueValues(" + attributeAlias + ", " + uniqueValue +")";
+
+                        if(i != attributeList.size() - 1)
+                        {
+                            result += ", ";
+                        }
+                    }
+                }
+
+                result += "], [";
+
+                if(hdfsRandamAttributeList != null && hdfsRandamAttributeList.size() > 0)
+                {
+                    for(int i = 0; i < hdfsRandamAttributeList.size(); i++)
+                    {
+                        String randomAttributeName = hdfsRandamAttributeList.get(i);
+                        int indexForAttribute = hdfsAttributeList.indexOf(randomAttributeName);
+                        result += "uniqueValuesPerTupleBundle(";
+                        result += attributeList.get(indexForAttribute);
+                        result += ", ";
+                        long monteCarloIteration = Long.parseLong(catalog.getMonteCarloIterations());
+                        result += min(hdfsUniqueValueNumMap.get(hdfsAttributeList.get(indexForAttribute)), monteCarloIteration);
+                        result += ")";
+
+                        if(i != hdfsRandamAttributeList.size() - 1)
+                        {
+                            result += ",";
+                        }
+                    }
+                }
+
+                result += "], \r\n\t\t[";
+
+                if(attributeList != null)
+                {
+                    for(int i = 0; i < attributeList.size(); i++)
+                    {
+                        attributeAlias = attributeList.get(i);
+                        attribute = hdfsAttributeList.get(i);
+                        Attribute viewAttribute = realAttributeList.get(i);
+
+                        attributeSize = viewAttribute.getAttributeSize();
+                        result += "attributeSize(" + attributeAlias + ", " + attributeSize +")";
+
+                        if(i != attributeList.size() - 1)
+                        {
+                            result += ", ";
+                        }
+                    }
+                }
+
+                result += "], " + tupleNum + ", _).\r\n";
+
+                /*
+                 * random Attribute;
+                 */
+                result += "randomAttrsRelation(";
+                result += this.getNodeName() + ", [";
+                for(int i = 0; i < hdfsRandamAttributeList.size(); i++)
+                {
+                    String randomAttributeName = hdfsRandamAttributeList.get(i);
+                    int indexForAttribute = hdfsAttributeList.indexOf(randomAttributeName);
+                    result += attributeList.get(indexForAttribute);
+
+                    if(i != hdfsRandamAttributeList.size() - 1)
+                    {
+                        result += ",";
+                    }
+                }
+
+                result += "]).\r\n";
+
+                relationStatistics.setTableInfo(tableInfo);
+            }
+        }
 		
 		return result;
 	}
@@ -560,30 +558,21 @@ public class TableScan extends Operator{
 		
 		CommonContent commonContent = copyHelper.copyBasicOperator(this);
 		
-		String c_tableName = new String(this.tableName);
+		String c_tableName = this.tableName;
 		ArrayList<String> c_attributeList = copyHelper.copyStringList(attributeList);
-		
 		RelationStatistics c_relationStatistics = this.relationStatistics;
 
-        HashMap<String, Integer> c_indexStrings;
-		if(this.indexStrings == null)
-		{
-			c_indexStrings = null;
-		}
-		else
-		{
-			c_indexStrings = new HashMap<String, Integer>(indexStrings);
-		}
+        HashMap<String, Integer> c_indexStrings = new HashMap<String, Integer>(indexStrings);
 		
 		TableScan tablescan = new TableScan(commonContent.nodeName,
-				commonContent.children, 
-				commonContent.parents,
-				c_tableName, 
-				c_attributeList,
-				c_relationStatistics,
-				c_indexStrings,
-				this.type,
-				this.indexMathExpressions);
+                                            commonContent.children,
+                                            commonContent.parents,
+                                            c_tableName,
+                                            c_attributeList,
+                                            c_relationStatistics,
+                                            c_indexStrings,
+                                            this.type,
+                                            this.indexMathExpressions);
 		
 		tablescan.setNameMap(commonContent.nameMap);
 		tablescan.setMapSpaceNameSet(commonContent.mapSpaceNameSet);
@@ -593,16 +582,12 @@ public class TableScan extends Operator{
 		ArrayList<Operator> children = tablescan.getChildren();
 		if(children != null)
 		{
-			for(int i = 0; i < children.size(); i++)
-			{
-				children.get(i).addParent(tablescan);
-			}
+            for (Operator aChildren : children) {
+                aChildren.addParent(tablescan);
+            }
 		}
 		return tablescan;
 	}
-
-	
-
 
 	public MathExpression getIndexMathExp() {
 		return indexMathExpressions.get("i");
