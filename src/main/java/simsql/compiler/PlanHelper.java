@@ -200,48 +200,38 @@ public class PlanHelper {
 		String tableName;
 		View view;
 		String viewName;
-		for(int i = 0; i < indexedTableList.size(); i++)
-		{
-			tempTableScan = indexedTableList.get(i);
-			tableName = tempTableScan.getTableName();
-			try
-			{
-				view = catalog.getView(tableName);
-				//view.view_name can be general template or the same with tableName.
-				viewName = view.getName();
-				resultSet.add(viewName);
-				
-				if(viewName.endsWith("_i"))
-				{
-					String tablePrefix = getTablePrefixUnderscore(viewName);
-					ArrayList<String> tempList = catalog.getIndexTableList(tablePrefix);
-					if(tempList != null)
-					{
-						for(String s: tempList)
-						{
-							resultSet.add(s);
-						}
-					}
-				}
-				else if (viewName.matches("^[^_]+(_[0-9]+to[0-9]+|_[0-9]+to|_[0-9]+)+$")) {
-				    String tablePrefix = getTablePrefixFromGeneralName(viewName);
+        for (TableScan anIndexedTableList : indexedTableList) {
+            tempTableScan = anIndexedTableList;
+            tableName = tempTableScan.getTableName();
+            try {
+                view = catalog.getView(tableName);
+                //view.view_name can be general template or the same with tableName.
+                viewName = view.getName();
+                resultSet.add(viewName);
+
+                if (viewName.endsWith("_i")) {
+                    String tablePrefix = getTablePrefixUnderscore(viewName);
+                    ArrayList<String> tempList = catalog.getIndexTableList(tablePrefix);
+                    if (tempList != null) {
+                        for (String s : tempList) {
+                            resultSet.add(s);
+                        }
+                    }
+                } else if (viewName.matches("^[^_]+(_[0-9]+to[0-9]+|_[0-9]+to|_[0-9]+)+$")) {
+                    String tablePrefix = getTablePrefixFromGeneralName(viewName);
 
                     ArrayList<String> tempList = catalog.getIndexTableList(tablePrefix);
 
-                    if(tempList != null)
-                    {
-                        for(String s: tempList)
-                        {
+                    if (tempList != null) {
+                        for (String s : tempList) {
                             resultSet.add(s);
                         }
                     }
                 }
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-		}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 		
 		/*
 		 * 2. Use the BFS to search all the template tables.
@@ -257,49 +247,39 @@ public class PlanHelper {
 			try
 			{
 				dependedList = catalog.getMCDependedTables(currentTable);
-				for(int i = 0; i < dependedList.size(); i++)
-				{
-					tempTable = dependedList.get(i);
-					if(!resultSet.contains(tempTable))
-					{
-						resultSet.add(tempTable);
-						availableQueue.add(tempTable);
-					}
-					
-					try
-					{
-						view = catalog.getView(tempTable);
-						//view.view_name can be general template or the same with tableName.
-						viewName = view.getName();
-						
-						if(!resultSet.contains(viewName))
-						{
-							resultSet.add(viewName);
-							availableQueue.add(viewName);
-						}
-						
-						if(viewName.endsWith("_i"))
-						{
-							String tablePrefix = getTablePrefixUnderscore(viewName);
-							ArrayList<String> tempList = catalog.getIndexTableList(tablePrefix);
-							if(tempList != null)
-							{
-								for(String s: tempList)
-								{
-									if(!resultSet.contains(s))
-									{
-										resultSet.add(s);
-										availableQueue.add(s);
-									}
-								}
-							}
-						}
-					}
-					catch(Exception e)
-					{
-						e.printStackTrace();
-					}
-				}
+                for (String aDependedList : dependedList) {
+                    tempTable = aDependedList;
+                    if (!resultSet.contains(tempTable)) {
+                        resultSet.add(tempTable);
+                        availableQueue.add(tempTable);
+                    }
+
+                    try {
+                        view = catalog.getView(tempTable);
+                        //view.view_name can be general template or the same with tableName.
+                        viewName = view.getName();
+
+                        if (!resultSet.contains(viewName)) {
+                            resultSet.add(viewName);
+                            availableQueue.add(viewName);
+                        }
+
+                        if (viewName.endsWith("_i")) {
+                            String tablePrefix = getTablePrefixUnderscore(viewName);
+                            ArrayList<String> tempList = catalog.getIndexTableList(tablePrefix);
+                            if (tempList != null) {
+                                for (String s : tempList) {
+                                    if (!resultSet.contains(s)) {
+                                        resultSet.add(s);
+                                        availableQueue.add(s);
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
 			}
 			catch(Exception e)
 			{

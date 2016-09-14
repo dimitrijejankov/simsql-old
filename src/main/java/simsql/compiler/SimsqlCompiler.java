@@ -422,96 +422,82 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 
 	        TranslatorHelper tHelper = new TranslatorHelper();
 	        Translator translator = new Translator (tHelper);
-	        
-	        for(int i = 0; i < expressionList.size(); i++)
-	        {
-	        	sql = (String)token.nextElement();
-	        	Expression expression = expressionList.get(i);
-	        	
-	        	TypeChecker tempChecker = CompilerProcessor.typeCheck(expression, sql, false);
-	        	
-	        	if(tempChecker == null)
-	        	{
-	        		errMessage = "Nothing came back from the type checker!";
-	        		break;
-	        	}
-	        	else if(tempChecker instanceof RandomTableTypeChecker)
-	        	{
-	            	unnester = new RandomTableUnnester((RandomTableTypeChecker)tempChecker);
-	        	}
-	        	else
-	        	{
-	        		unnester = new Unnester(tempChecker);
-	        	}
-	        	
+
+			for (Expression anExpressionList : expressionList) {
+				sql = (String) token.nextElement();
+				Expression expression = anExpressionList;
+
+				TypeChecker tempChecker = CompilerProcessor.typeCheck(expression, sql, false);
+
+				if (tempChecker == null) {
+					errMessage = "Nothing came back from the type checker!";
+					break;
+				} else if (tempChecker instanceof RandomTableTypeChecker) {
+					unnester = new RandomTableUnnester((RandomTableTypeChecker) tempChecker);
+				} else {
+					unnester = new Unnester(tempChecker);
+				}
+
 	        	/*
 	        	 * 4. Translate the unnestedElement
 	        	 */
-		        if(expression instanceof BaseLineArrayRandomTableStatement)
-		        {
-		        	String baseLineArrayQueryElmentHyphenate = ((BaselineArrayRandomTypeChecker)tempChecker).getInitializedQueryList();
-		        	ArrayList<String> baseLineQueryList = ((BaselineArrayRandomTypeChecker)tempChecker).getQueryList();
-		        	ArrayList<Expression> baseLineArrayQueryElmentHypList = CompilerProcessor.parse(baseLineArrayQueryElmentHyphenate);
-		        	Expression baseLineArrayElement;
-		        	
-		        	if(baseLineArrayQueryElmentHypList != null)
-		        	{
-			        	CompilerProcessor.simplify(baseLineArrayQueryElmentHypList);
-			        	
-			        	for(int j = 0; j < baseLineArrayQueryElmentHypList.size(); j++)
-			        	{
-			        		baseLineArrayElement = baseLineArrayQueryElmentHypList.get(j);
-			        		((BaseLineRandomTableStatement) baseLineArrayElement).setSqlString(sql);
-			        		BaseLineRandomTableTypeChecker baselineElmentChecker = new BaseLineRandomTableTypeChecker(false);
-			        		baselineElmentChecker.setSaved(false);
-			        		boolean subcheck = baselineElmentChecker.visitBaseLineRandomTableStatement((BaseLineRandomTableStatement)baseLineArrayElement);
-							if(!subcheck)
-							{
+				if (expression instanceof BaseLineArrayRandomTableStatement) {
+					String baseLineArrayQueryElmentHyphenate = ((BaselineArrayRandomTypeChecker) tempChecker).getInitializedQueryList();
+					ArrayList<String> baseLineQueryList = ((BaselineArrayRandomTypeChecker) tempChecker).getQueryList();
+					ArrayList<Expression> baseLineArrayQueryElmentHypList = CompilerProcessor.parse(baseLineArrayQueryElmentHyphenate);
+					Expression baseLineArrayElement;
+
+					if (baseLineArrayQueryElmentHypList != null) {
+						CompilerProcessor.simplify(baseLineArrayQueryElmentHypList);
+
+						for (int j = 0; j < baseLineArrayQueryElmentHypList.size(); j++) {
+							baseLineArrayElement = baseLineArrayQueryElmentHypList.get(j);
+							((BaseLineRandomTableStatement) baseLineArrayElement).setSqlString(sql);
+							BaseLineRandomTableTypeChecker baselineElmentChecker = new BaseLineRandomTableTypeChecker(false);
+							baselineElmentChecker.setSaved(false);
+							boolean subcheck = baselineElmentChecker.visitBaseLineRandomTableStatement((BaseLineRandomTableStatement) baseLineArrayElement);
+							if (!subcheck) {
 								throw new RuntimeException("BaseLineArrayRandomTableStatement typecher wrong");
 							}
-							unnester = new RandomTableUnnester((RandomTableTypeChecker)baselineElmentChecker);
-							UnnestedRandomTableStatement result = ((RandomTableUnnester)unnester).unnestRandomTableStatement((RandomTableStatement)baseLineArrayElement);
+							unnester = new RandomTableUnnester((RandomTableTypeChecker) baselineElmentChecker);
+							UnnestedRandomTableStatement result = ((RandomTableUnnester) unnester).unnestRandomTableStatement((RandomTableStatement) baseLineArrayElement);
 							//System.out.println(result);
-				        	Operator element = translator.translate(result);
-				        	//System.out.println(Process.toString(element));
+							Operator element = translator.translate(result);
+							//System.out.println(Process.toString(element));
 				        	
 				        	/*
 				        	 * 5. PostProcessing
 				        	 */
-				        	sinkList.add(element);
-				        	sqlList.add(baseLineQueryList.get(j));
-				        	
-				        	DefinedTableSchema definedTableSchema = ((BaseLineRandomTableStatement)baseLineArrayElement).definedTableSchema;
-				        	String viewName = definedTableSchema.getViewName();
-				        	
-				        	definitionMap.put(element, viewName);
-			        	}
-		        	}
-			        	
-		        	empty = false;
-		        }
-		        else if(expression instanceof BaseLineRandomTableStatement)
-		        {
-		        	UnnestedRandomTableStatement result = ((RandomTableUnnester)unnester).unnestRandomTableStatement((RandomTableStatement)expression);
-		        	//System.out.println(result);
-		        	Operator element = translator.translate(result);
-		        	//System.out.println(Process.toString(element));
+							sinkList.add(element);
+							sqlList.add(baseLineQueryList.get(j));
+
+							DefinedTableSchema definedTableSchema = ((BaseLineRandomTableStatement) baseLineArrayElement).definedTableSchema;
+							String viewName = definedTableSchema.getViewName();
+
+							definitionMap.put(element, viewName);
+						}
+					}
+
+					empty = false;
+				} else if (expression instanceof BaseLineRandomTableStatement) {
+					UnnestedRandomTableStatement result = ((RandomTableUnnester) unnester).unnestRandomTableStatement((RandomTableStatement) expression);
+					//System.out.println(result);
+					Operator element = translator.translate(result);
+					//System.out.println(Process.toString(element));
 		        	
 		        	/*
 		        	 * 5. PostProcessing
 		        	 */
-		        	sinkList.add(element);
-		        	sqlList.add(sql);
-		        	
-		        	DefinedTableSchema definedTableSchema = ((BaseLineRandomTableStatement)expression).definedTableSchema;
-		        	String viewName = definedTableSchema.getViewName();
-		        	
-		        	definitionMap.put(element, viewName);
-		        	empty = false;
-		        }
-				else if(expression instanceof MultidimensionalTableStatement)
-				{
-					UnnestedRandomTableStatement result = ((RandomTableUnnester)unnester).unnestRandomTableStatement((RandomTableStatement)expression);
+					sinkList.add(element);
+					sqlList.add(sql);
+
+					DefinedTableSchema definedTableSchema = ((BaseLineRandomTableStatement) expression).definedTableSchema;
+					String viewName = definedTableSchema.getViewName();
+
+					definitionMap.put(element, viewName);
+					empty = false;
+				} else if (expression instanceof MultidimensionalTableStatement) {
+					UnnestedRandomTableStatement result = ((RandomTableUnnester) unnester).unnestRandomTableStatement((RandomTableStatement) expression);
 					//System.out.println(result);
 					Operator element = translator.translate(result);
 					//System.out.println(Process.toString(element));
@@ -521,50 +507,45 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 		        	 */
 					sinkList.add(element);
 					sqlList.add(sql);
-					DefinedTableSchema definedTableSchema = ((MultidimensionalTableStatement)expression).definedTableSchema;
+					DefinedTableSchema definedTableSchema = ((MultidimensionalTableStatement) expression).definedTableSchema;
 					String viewName = definedTableSchema.getViewName();
 
 					definitionMap.put(element, viewName);
-				}
-		        else if(expression instanceof GeneralRandomTableStatement)
-		        {
-		        	UnnestedRandomTableStatement result = ((RandomTableUnnester)unnester).unnestRandomTableStatement((RandomTableStatement)expression);
-		        	//System.out.println(result);
-		        	Operator element = translator.translate(result);
-		        	//System.out.println(Process.toString(element));
+				} else if (expression instanceof GeneralRandomTableStatement) {
+					UnnestedRandomTableStatement result = ((RandomTableUnnester) unnester).unnestRandomTableStatement((RandomTableStatement) expression);
+					//System.out.println(result);
+					Operator element = translator.translate(result);
+					//System.out.println(Process.toString(element));
 		        	
 		        	/*
 		        	 * 5. PostProcessing
 		        	 */
-		        	sinkList.add(element);
-		        	sqlList.add(sql);
-		        	DefinedTableSchema definedTableSchema = ((GeneralRandomTableStatement)expression).definedTableSchema;
-		        	String viewName = definedTableSchema.getViewName();
+					sinkList.add(element);
+					sqlList.add(sql);
+					DefinedTableSchema definedTableSchema = ((GeneralRandomTableStatement) expression).definedTableSchema;
+					String viewName = definedTableSchema.getViewName();
 
-		        	definitionMap.put(element, viewName);
-		        	empty = false;
-		        }
-		        else if(expression instanceof UnionViewStatement)
-		        {
-		        	if(expression instanceof BaselineUnionViewStatement ||
-		        			expression instanceof GeneralUnionViewStatement)
-		        	{
-			        	Operator element = translator.translateUnionViewStatement((UnionViewStatement)expression);
+					definitionMap.put(element, viewName);
+					empty = false;
+				} else if (expression instanceof UnionViewStatement) {
+					if (expression instanceof BaselineUnionViewStatement ||
+							expression instanceof GeneralUnionViewStatement) {
+						Operator element = translator.translateUnionViewStatement((UnionViewStatement) expression);
 			        	
 			        	/*
 			        	 * 5. PostProcessing
 			        	 */
-			        	sinkList.add(element);
-			        	sqlList.add(sql);
-			        	
-			        	DefinedTableSchema definedTableSchema = ((UnionViewStatement)expression).getSchema();
-			        	String viewName = definedTableSchema.getViewName();
+						sinkList.add(element);
+						sqlList.add(sql);
 
-			        	definitionMap.put(element, viewName);
-			        	empty = false;
-		        	}
-		        }
-	        }
+						DefinedTableSchema definedTableSchema = ((UnionViewStatement) expression).getSchema();
+						String viewName = definedTableSchema.getViewName();
+
+						definitionMap.put(element, viewName);
+						empty = false;
+					}
+				}
+			}
 	        
 	        // handle different kinds of errors.
 	        if(errMessage != null)

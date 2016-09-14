@@ -55,6 +55,18 @@ public class MultidimensionalSchemaIndexSpecification {
         return lowerLimit.toString();
     }
 
+    public String getPresentationStringValue() {
+        if(unconstrained){
+            return lowerLimit + "...";
+        }
+
+        if(upperLimit != null){
+            return lowerLimit + "..." + upperLimit;
+        }
+
+        return lowerLimit.toString();
+    }
+
     public boolean checkRange(Integer value) {
         if(upperLimit != null) {
             return value <= upperLimit && value >= lowerLimit;

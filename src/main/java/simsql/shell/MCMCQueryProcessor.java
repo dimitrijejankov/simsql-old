@@ -77,18 +77,22 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
             // first, we see if this is one of the MCMC tables
             String oldName = relation.getName();
-
-            // strip off the MC iteration
-            String[] parts = oldName.split("_");
             String without = "";
-            for (int i = 0; i < parts.length - 1; i++) {
-                without += parts[i] + "_";
-            }
 
-            if (parts[parts.length - 1].equals("0"))
-                without += "0";
-            else
-                without += "i";
+            if(oldName.matches("^[^_]+(_[0-9]+)+$")) {
+                without = oldName;
+            } else {
+                // strip off the MC iteration
+                String[] parts = oldName.split("_");
+                for (int i = 0; i < parts.length - 1; i++) {
+                    without += parts[i] + "_";
+                }
+
+                if (parts[parts.length - 1].equals("0"))
+                    without += "0";
+                else
+                    without += "i";
+            }
 
             // see if this is a view
             View res = getCatalog().getView(without);

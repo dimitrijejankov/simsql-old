@@ -62,6 +62,16 @@ public class MultidimensionalSchemaIndices {
         return ret;
     }
 
+    public String getPresentationSuffix() {
+        String ret = "";
+
+        for(String key : indices.keySet()) {
+            ret += "[" + indices.get(key).getPresentationStringValue() + "]";
+        }
+
+        return ret;
+    }
+
 
     Boolean checkLabelingOrder() {
 
