@@ -244,11 +244,11 @@
                         </goals>
                         <configuration>
                             <executable>/usr/bin/make</executable>
-                            <workingDirectory>${basedir}/src/main/java/simsql/optimizer/</workingDirectory>
+                            <workingDirectory>${basedir}/src/main/java/simsql/optimizer/prolog</workingDirectory>
                             <arguments>
                                 <argument>-f</argument>
                                 <argument>prolog.Makefile</argument>
-                                <argument>OUTDIR=${basedir}/src/generated/resources/simsql/optimizer</argument>
+                                <argument>OUTDIR=${basedir}/src/generated/resources/simsql/optimizer/prolog</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -278,12 +278,20 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>simsql.shell.MainClass</mainClass>
+                            <mainClass>simsql.shell.kernel.MainClass</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
                 </configuration>
             </plugin>
         </plugins>

@@ -62,7 +62,7 @@ public class CompiledOptimizer implements Optimizer <SimSQLCompiledQuery, SimSQL
 	    eFile = new File(fDir, "optimizer");
 
 	    // open the jar                                                                                                                                                    
- 	    InputStream fis = CompiledOptimizer.class.getResourceAsStream("optimizer.pro");
+ 	    InputStream fis = CompiledOptimizer.class.getResourceAsStream("prolog/optimizer.pro");
 
 	    // open the output stream                                                                                                                                          
  	    FileOutputStream fos = new FileOutputStream(eFile);

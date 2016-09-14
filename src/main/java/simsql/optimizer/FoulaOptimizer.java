@@ -128,7 +128,7 @@ public class FoulaOptimizer implements Optimizer <SimSQLCompiledQuery, SimSQLOpt
     
 	/*
 	// now, we extract all of the Prolog source for the preoptimizer 
-	extractFromJar (jarPath, "simsql/optimizer/preoptimizer.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/preoptimizer.pl");
     
 	// this is the return file
     
@@ -139,7 +139,7 @@ public class FoulaOptimizer implements Optimizer <SimSQLCompiledQuery, SimSQLOpt
 	gobbleStream(p.getErrorStream());
       
 	DataOutputStream wri = new DataOutputStream(p.getOutputStream());
-	wri.writeBytes("consult(['preoptimizer.pl', '" + planToOptimize.getFName () + "']).\n");
+	wri.writeBytes("consult(['prolog/preoptimizer.pl', '" + planToOptimize.getFName () + "']).\n");
 	wri.writeBytes("preoptimize(optimize, 'Q_preopt.pl').\n");
 	wri.writeBytes("halt.\n");
 	wri.flush();
@@ -158,16 +158,16 @@ public class FoulaOptimizer implements Optimizer <SimSQLCompiledQuery, SimSQLOpt
 	return tempQueryFile; 
 	}
 	// delete the pre-optimizer code
-	new File ("preoptimizer.pl").delete ();
+	new File ("prolog/preoptimizer.pl").delete ();
 	*/
     
 	// extract the source code for the optimizer
-	extractFromJar (jarPath, "simsql/optimizer/control_transformations.pl");
-	extractFromJar (jarPath, "simsql/optimizer/graphoperations.pl");
-	extractFromJar (jarPath, "simsql/optimizer/lib.pl");
-	extractFromJar (jarPath, "simsql/optimizer/transformations.pl");
-	extractFromJar (jarPath, "simsql/optimizer/plancost.pl");
-	extractFromJar (jarPath, "simsql/optimizer/optimizer.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/control_transformations.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/graphoperations.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/lib.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/transformations.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/plancost.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/optimizer.pl");
         
 	// now, call the optimizer and send the script.
 	try {
@@ -179,7 +179,7 @@ public class FoulaOptimizer implements Optimizer <SimSQLCompiledQuery, SimSQLOpt
       
 	    DataOutputStream wro = new DataOutputStream(p2.getOutputStream());
       
-	    wro.writeBytes("consult(['control_transformations', 'graphoperations', 'lib', 'transformations', 'plancost', 'optimizer']).\n");
+	    wro.writeBytes("consult(['prolog/control_transformations', 'prolog/graphoperations', 'prolog/lib', 'prolog/transformations', 'prolog/plancost', 'prolog/optimizer']).\n");
 	    wro.writeBytes("consult('" + planToOptimize.getFName () + "').\n");
 	    wro.writeBytes("optimize(optimize, " + OPT_MAX_ITERATIONS + ", " + OPT_MAX_PLANS + ", A,B,C,D, '" + tempQueryFile.getFName() + "').\n");
 	    wro.writeBytes("halt.\n");
@@ -206,12 +206,12 @@ public class FoulaOptimizer implements Optimizer <SimSQLCompiledQuery, SimSQLOpt
 	new File("Q_preopt.pl").delete();
     
 	// delete all of the optimizer source code
-	new File("control_transformations.pl").delete ();
-	new File("graphoperations.pl").delete ();
-	new File("lib.pl").delete ();
-	new File("transformations.pl").delete ();
-	new File("plancost.pl").delete ();
-	new File("optimizer.pl").delete ();
+	new File("prolog/control_transformations.pl").delete ();
+	new File("prolog/graphoperations.pl").delete ();
+	new File("prolog/lib.pl").delete ();
+	new File("prolog/transformations.pl").delete ();
+	new File("prolog/plancost.pl").delete ();
+	new File("prolog/optimizer.pl").delete ();
     
 	if (DEBUG) {
 	    System.out.println("It outputs the optimized result: " + tempQueryFile.getFName());
@@ -252,13 +252,13 @@ public class FoulaOptimizer implements Optimizer <SimSQLCompiledQuery, SimSQLOpt
 		
 	String queryFile = fileToEstimateStats.getFName();
 
-	extractFromJar (jarPath, "simsql/optimizer/preoptimizer.pl");
-	extractFromJar (jarPath, "simsql/optimizer/control_transformations.pl");
-	extractFromJar (jarPath, "simsql/optimizer/graphoperations.pl");
-	extractFromJar (jarPath, "simsql/optimizer/lib.pl");
-	extractFromJar (jarPath, "simsql/optimizer/transformations.pl");
-	extractFromJar (jarPath, "simsql/optimizer/plancost.pl");
-	extractFromJar (jarPath, "simsql/optimizer/optimizer.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/preoptimizer.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/control_transformations.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/graphoperations.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/lib.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/transformations.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/plancost.pl");
+	extractFromJar (jarPath, "simsql/optimizer/prolog/optimizer.pl");
 	    
 	/*
 	 * 1. call the optimizer to estimate the statistics.
@@ -271,7 +271,7 @@ public class FoulaOptimizer implements Optimizer <SimSQLCompiledQuery, SimSQLOpt
 		gobbleStream(p2.getErrorStream());
 	
 		DataOutputStream wro = new DataOutputStream(p2.getOutputStream());
-		wro.writeBytes("consult(['control_transformations', 'graphoperations', 'lib', 'transformations', 'plancost', 'optimizer']).\n");
+		wro.writeBytes("consult(['prolog/control_transformations', 'prolog/graphoperations', 'prolog/lib', 'prolog/transformations', 'prolog/plancost', 'prolog/optimizer']).\n");
 		wro.writeBytes("consult('" + queryFile + "').\n");
 		wro.writeBytes("optimize(cut, " + OPT_MAX_ITERATIONS + ", " + OPT_MAX_PLANS + ",A,B,C,D, 'Q_cut.pl').\n");
 		wro.flush();
@@ -321,14 +321,14 @@ public class FoulaOptimizer implements Optimizer <SimSQLCompiledQuery, SimSQLOpt
 	    }
 	}
 		
-	new File("preoptimizer.pl").delete();
+	new File("prolog/preoptimizer.pl").delete();
 	new File("Q_cut_info.pl").delete();
-	new File("control_transformations.pl").delete ();
-	new File("graphoperations.pl").delete ();
-	new File("lib.pl").delete ();
-	new File("transformations.pl").delete ();
-	new File("plancost.pl").delete ();
-	new File("optimizer.pl").delete ();
+	new File("prolog/control_transformations.pl").delete ();
+	new File("prolog/graphoperations.pl").delete ();
+	new File("prolog/lib.pl").delete ();
+	new File("prolog/transformations.pl").delete ();
+	new File("prolog/plancost.pl").delete ();
+	new File("prolog/optimizer.pl").delete ();
 	    
 	if (DEBUG) {
 	    System.out.println("It ends to estimiates the statistics of table: " + currentRandomTable);
