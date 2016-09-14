@@ -20,7 +20,9 @@
 
 
 
-package simsql.shell;
+package simsql.shell.query_processor;
+import simsql.shell.RuntimeOutput;
+
 import java.io.PrintStream;
 
 // this class encapsulates a result that never holds anything 

@@ -21,8 +21,8 @@
 
 package simsql.optimizer;
 
-import simsql.shell.SimSQLCompiledQuery;
-import simsql.shell.FileOutput;
+import simsql.shell.query_processor.SimSQLCompiledQuery;
+import simsql.shell.query_processor.FileOutput;
 import java.util.HashMap;
 import java.util.ArrayList;
 

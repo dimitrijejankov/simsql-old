@@ -24,19 +24,9 @@
  */
 package simsql.compiler; // package mcdb.compiler;
 
-import java.io.BufferedWriter;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.lang.StringBuffer;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.StringTokenizer;
-import simsql.shell.Compiler;
-import simsql.shell.SimSQLCompiledQuery;
-import simsql.shell.PhysicalDatabase;
-import simsql.shell.RuntimeParameter;
 
 public class IndexReplacer {
 

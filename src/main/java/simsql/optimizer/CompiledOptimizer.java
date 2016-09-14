@@ -21,8 +21,8 @@
 
 package simsql.optimizer;
 import simsql.shell.Optimizer;
-import simsql.shell.FileOutput;
-import simsql.shell.SimSQLCompiledQuery;
+import simsql.shell.query_processor.FileOutput;
+import simsql.shell.query_processor.SimSQLCompiledQuery;
 import simsql.shell.RuntimeParameter;
 import simsql.runtime.ExampleRuntimeParameter;
 

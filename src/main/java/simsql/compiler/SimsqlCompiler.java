@@ -26,9 +26,6 @@ package simsql.compiler; // package mcdb.compiler;
 
 import java.io.BufferedWriter;
 import java.util.LinkedList;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.lang.StringBuffer;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -37,7 +34,7 @@ import java.util.StringTokenizer;
 
 import simsql.compiler.timetable.TimeTableNode;
 import simsql.shell.Compiler;
-import simsql.shell.SimSQLCompiledQuery;
+import simsql.shell.query_processor.SimSQLCompiledQuery;
 import simsql.shell.PhysicalDatabase;
 import simsql.shell.RuntimeParameter;
 

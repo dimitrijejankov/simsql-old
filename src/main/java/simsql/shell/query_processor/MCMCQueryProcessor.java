@@ -19,29 +19,19 @@
  *****************************************************************************/
 
 
-package simsql.shell;
+package simsql.shell.query_processor;
 
+import simsql.compiler.*;
 import simsql.optimizer.CompiledOptimizer;
 import simsql.optimizer.SimSQLOptimizedQuery;
-import simsql.compiler.Relation;
-import simsql.compiler.View;
-import simsql.compiler.Attribute;
-import simsql.compiler.SimsqlCompiler;
 import simsql.code_generator.WrappedTranslator;
 import simsql.code_generator.DataFlowQuery;
 import simsql.runtime.HadoopRuntime;
 import simsql.runtime.HadoopResult;
-import simsql.compiler.Operator;
-import simsql.compiler.PlanStatistics;
-import simsql.compiler.PostProcessorHelper;
-import simsql.compiler.PreviousTable;
-import simsql.compiler.TableScan;
-import simsql.compiler.Topologic;
-import simsql.compiler.ChainGeneration;
-import simsql.compiler.TranslatorHelper;
-import simsql.compiler.PlanInstantiation;
-import simsql.compiler.FrameOutput;
-import simsql.compiler.PlanHelper;
+import simsql.shell.*;
+import simsql.shell.Catalog;
+import simsql.shell.Compiler;
+import simsql.shell.Runtime;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -79,7 +69,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             String oldName = relation.getName();
             String without = "";
 
-            if(oldName.matches("^[^_]+(_[0-9]+)+$")) {
+            if(oldName.matches("^[^_]+(_[0-9]+){2,}$")) {
                 without = oldName;
             } else {
                 // strip off the MC iteration

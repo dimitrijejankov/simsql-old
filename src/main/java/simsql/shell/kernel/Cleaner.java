@@ -20,7 +20,7 @@
 
 
 
-package simsql.shell;
+package simsql.shell.kernel;
 
 import java.io.File;
 import java.text.DateFormat;

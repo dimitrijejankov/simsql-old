@@ -19,7 +19,7 @@
  *****************************************************************************/
 
 
-package simsql.shell;
+package simsql.shell.query_processor;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,8 +30,9 @@ import simsql.compiler.Projection;
 import simsql.compiler.FrameOutput;
 import simsql.compiler.Operator;
 import simsql.compiler.timetable.TimeTableNode;
+import simsql.shell.CompiledQuery;
 
-public class SimSQLCompiledQuery implements CompiledQuery{
+public class SimSQLCompiledQuery implements CompiledQuery {
 	// for MCMC query
     public ArrayList<Operator> sinkList;
 	public ArrayList<Operator> queryList;

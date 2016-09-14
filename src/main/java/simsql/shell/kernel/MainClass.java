@@ -19,11 +19,13 @@
  *****************************************************************************/
 
 
-package simsql.shell;
+package simsql.shell.kernel;
 
 import simsql.runtime.HadoopResult;
 import simsql.code_generator.DataFlowQuery;
 import simsql.optimizer.SimSQLOptimizedQuery;
+import simsql.shell.query_processor.MCMCQueryProcessor;
+import simsql.shell.query_processor.SimSQLCompiledQuery;
 
 
 // this is where it all happens!
@@ -32,7 +34,7 @@ public class MainClass {
   public static void main (String [] args) {
     MCMCQueryProcessor myQueryProcessor = new MCMCQueryProcessor ();
     
-    SimSQLShell <SimSQLCompiledQuery, SimSQLOptimizedQuery, DataFlowQuery, HadoopResult, MCMCQueryProcessor> myShell = 
+    SimSQLShell<SimSQLCompiledQuery, SimSQLOptimizedQuery, DataFlowQuery, HadoopResult, MCMCQueryProcessor> myShell =
       new SimSQLShell <SimSQLCompiledQuery, SimSQLOptimizedQuery, DataFlowQuery, HadoopResult, MCMCQueryProcessor> (myQueryProcessor);
     
     myShell.promptLoop ();

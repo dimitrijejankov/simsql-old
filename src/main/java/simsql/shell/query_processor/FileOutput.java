@@ -20,7 +20,11 @@
 
 
 
-package simsql.shell;
+package simsql.shell.query_processor;
+
+import simsql.shell.CompiledQuery;
+import simsql.shell.ExecutableQuery;
+import simsql.shell.OptimizedQuery;
 
 import java.io.File;
 public class FileOutput implements CompiledQuery, OptimizedQuery, ExecutableQuery {

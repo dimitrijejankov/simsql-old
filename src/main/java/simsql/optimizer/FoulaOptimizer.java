@@ -22,16 +22,11 @@
 
 package simsql.optimizer;
 import simsql.compiler.FileOperation;
-import simsql.compiler.FrameOutput;
 import simsql.compiler.Operator;
-import simsql.compiler.PlanHelper;
-import simsql.compiler.PlanStatistics;
 import simsql.compiler.PreviousTable;
-import simsql.compiler.CompilerProcessor;
 import simsql.compiler.Projection;
 import simsql.shell.Optimizer;
-import simsql.shell.FileOutput;
-import simsql.shell.SimSQLCompiledQuery;
+import simsql.shell.query_processor.SimSQLCompiledQuery;
 import simsql.shell.RuntimeParameter;
 import simsql.runtime.ExampleRuntimeParameter;
 

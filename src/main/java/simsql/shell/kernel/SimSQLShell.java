@@ -19,7 +19,7 @@
  *****************************************************************************/
 
 
-package simsql.shell;
+package simsql.shell.kernel;
 
 import simsql.compiler.IndexReplacer;
 import simsql.compiler.Relation;
@@ -30,8 +30,13 @@ import java.util.zip.*;
 import java.util.Enumeration;
 
 import jline.*;
+import simsql.shell.*;
+import simsql.shell.Compiler;
+import simsql.shell.Runtime;
+import simsql.shell.kernel.Cleaner;
+import simsql.shell.kernel.ShutdownHook;
 
-class SimSQLShell<MyCompiledQuery extends CompiledQuery, MyOptimizedQuery extends OptimizedQuery, MyExecutableQuery extends ExecutableQuery, MyRuntimeOutput extends RuntimeOutput, MyQueryProcessor extends QueryProcessor<MyCompiledQuery, MyOptimizedQuery, MyExecutableQuery, MyRuntimeOutput>> {
+public class SimSQLShell<MyCompiledQuery extends CompiledQuery, MyOptimizedQuery extends OptimizedQuery, MyExecutableQuery extends ExecutableQuery, MyRuntimeOutput extends RuntimeOutput, MyQueryProcessor extends QueryProcessor<MyCompiledQuery, MyOptimizedQuery, MyExecutableQuery, MyRuntimeOutput>> {
 
     // this is all of the machinery used to parse, compile, and execute queries
     private MyQueryProcessor myQueryProcessor;

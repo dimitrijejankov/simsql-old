@@ -23,12 +23,10 @@
 package simsql.code_generator;
 
 import simsql.shell.RuntimeParameter;
-import simsql.runtime.ExampleRuntimeParameter;
-import simsql.shell.FileOutput;
+import simsql.shell.query_processor.FileOutput;
 import simsql.optimizer.SimSQLOptimizedQuery;
 import simsql.shell.CodeGenerator;
 import java.io.*;
-import simsql.compiler.Catalog;
 
 /* 
  * Wraps the Prolog query parser and GraphViz/DataFlow translators.

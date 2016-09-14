@@ -22,7 +22,7 @@ public class MultidimensionalSchemaIndexSpecification {
 
     /**
      * Parses a MultidimensionalSchemaIndexSpecification from string.
-     * @param indexString the string format should look like the following examples : 1 1to 1to2
+     * @param indexString the string format should look like the following examples : 1, 1to, 1to2
      */
     public MultidimensionalSchemaIndexSpecification(String indexString) {
 

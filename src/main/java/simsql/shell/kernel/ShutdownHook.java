@@ -20,13 +20,15 @@
 
 
 
-package simsql.shell;
+package simsql.shell.kernel;
 
 // this class is used to deal with an unexpected shutdown... there are a lot of race
 // condintions in here, so it can potentially fail, but it is better than nothing...
 
-public class ShutdownHook <MyCompiledQuery extends CompiledQuery, MyOptimizedQuery extends OptimizedQuery, 
-	MyExecutableQuery extends ExecutableQuery, MyRuntimeOutput extends RuntimeOutput, 
+import simsql.shell.*;
+
+public class ShutdownHook <MyCompiledQuery extends CompiledQuery, MyOptimizedQuery extends OptimizedQuery,
+	MyExecutableQuery extends ExecutableQuery, MyRuntimeOutput extends RuntimeOutput,
 	MyQueryProcessor extends QueryProcessor<MyCompiledQuery, MyOptimizedQuery, MyExecutableQuery, MyRuntimeOutput>> {
 
 	// this is the query processor
