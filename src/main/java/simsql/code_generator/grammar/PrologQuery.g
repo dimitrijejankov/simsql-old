@@ -27,10 +27,20 @@ options {
 
 @header {
     package simsql.code_generator;
+
+    import simsql.code_generator.translator.*;
+    import simsql.code_generator.translator.expressions.*;
+    import simsql.code_generator.translator.operators.*;
+    import simsql.code_generator.translator.terms.*;
 }
 
 @lexer::header {
     package simsql.code_generator;
+
+    import simsql.code_generator.translator.*;
+    import simsql.code_generator.translator.expressions.*;
+    import simsql.code_generator.translator.operators.*;
+    import simsql.code_generator.translator.terms.*;
 }
 
 /** The query is a sequence of tuples. */

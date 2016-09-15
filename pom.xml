@@ -177,7 +177,7 @@
                                 <argument>-make</argument>
                                 <argument>-o</argument>
                                 <argument>${basedir}/src/generated/java/simsql/code_generator</argument>
-                                <argument>${basedir}/src/main/java/simsql/code_generator/PrologQuery.g</argument>
+                                <argument>${basedir}/src/main/java/simsql/code_generator/grammar/PrologQuery.g</argument>
                             </arguments>
                         </configuration>
                     </execution>

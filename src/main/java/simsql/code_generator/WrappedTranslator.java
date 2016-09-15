@@ -22,6 +22,9 @@
 
 package simsql.code_generator;
 
+import simsql.code_generator.translator.*;
+import simsql.code_generator.translator.operators.PrologFrameOutputOp;
+import simsql.code_generator.translator.operators.PrologProjectionOp;
 import simsql.shell.RuntimeParameter;
 import simsql.shell.query_processor.FileOutput;
 import simsql.optimizer.SimSQLOptimizedQuery;

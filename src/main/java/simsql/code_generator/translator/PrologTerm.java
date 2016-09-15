@@ -19,59 +19,13 @@
  *****************************************************************************/
 
 
-
-package simsql.code_generator;
-
-/** 
- * Encapsulates the statistics for an operator that are provided by
- * the optimizer.
- *
- * @author Luis
+package simsql.code_generator.translator;
+/**
+ * The general term interface.
  */
+public interface PrologTerm {
+    TermType getType();
 
-class PrologQueryEstimate {
-
-    // input or output?
-    enum Mode {
-	INPUT, OUTPUT
-    }
-
-    // operator type.
-    private PrologQueryOperator.Type operator;
-    
-    // mode
-    private PrologQueryEstimate.Mode mode;
-
-    // value
-    private double value;
-
-    // constructor from a tuple
-    PrologQueryEstimate(TupleTerm tup) {
-
-	// check the arity
-	tup.checkArity(2);
-
-	// check the atom type to get the mode
-	mode = PrologQueryEstimate.Mode.INPUT;
-	if (tup.getAtom().equals("operatorOutputEstimate"))
-	    mode = PrologQueryEstimate.Mode.OUTPUT;
-
-	// get the operator type
-	operator = PrologQueryOperator.Type.valueOf(((AtomTerm)tup.getTerm(0)).getValue().toUpperCase());
-
-	// get the number
-	value = Double.parseDouble(((AtomTerm)tup.getTerm(1)).getValue());
-    }
-
-    public PrologQueryOperator.Type getOperator() {
-	return operator;
-    }
-
-    public PrologQueryEstimate.Mode getMode() {
-	return mode;
-    }
-
-    public double getValue() {
-	return value;
-    }
+    String toString();
 }
+

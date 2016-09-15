@@ -19,13 +19,19 @@
  *****************************************************************************/
 
 
+package simsql.code_generator.translator;
 
-package simsql.code_generator;
+import simsql.code_generator.translator.expressions.PrologAttributeExp;
+import simsql.code_generator.translator.terms.AtomTerm;
+import simsql.code_generator.translator.terms.ListTerm;
+import simsql.code_generator.translator.terms.TupleTerm;
 
 import java.util.*;
 
-/** a VG function with its name, location and sets of input and output attributes. */
-class PrologQueryVGFunction {
+/**
+ * a VG function with its name, location and sets of input and output attributes.
+ */
+public class PrologQueryVGFunction {
 
     private String name;
     private String file;
@@ -34,43 +40,43 @@ class PrologQueryVGFunction {
 
     public PrologQueryVGFunction(TupleTerm tup, HashMap<AtomTerm, TupleTerm> allAttributes) {
 
-	// check the arity
-	tup.checkArity(4);
+        // check the arity
+        tup.checkArity(4);
 
-	// get the name
-	name = ((AtomTerm)tup.getTerm(0)).getValue();
+        // get the name
+        name = ((AtomTerm) tup.getTerm(0)).getValue();
 
-	// get the file
-	file = ((AtomTerm)tup.getTerm(1)).getValue();
+        // get the file
+        file = ((AtomTerm) tup.getTerm(1)).getValue();
 
-	// get the set of input attributes.
-	for (PrologTerm t: ((ListTerm)tup.getTerm(2))) {
-	    inputAttributes.add(new PrologAttributeExp(allAttributes.get(t)));
-	}
+        // get the set of input attributes.
+        for (PrologTerm t : ((ListTerm) tup.getTerm(2))) {
+            inputAttributes.add(new PrologAttributeExp(allAttributes.get(t)));
+        }
 
-	// get the set of output attributes.
-	for (PrologTerm t: ((ListTerm)tup.getTerm(3))) {
-	    outputAttributes.add(new PrologAttributeExp(allAttributes.get(t)));
-	}
+        // get the set of output attributes.
+        for (PrologTerm t : ((ListTerm) tup.getTerm(3))) {
+            outputAttributes.add(new PrologAttributeExp(allAttributes.get(t)));
+        }
     }
 
     public String getName() {
-	return name;
+        return name;
     }
 
     public String getFile() {
-	return file;
+        return file;
     }
 
     public ArrayList<PrologAttributeExp> getInputAtts() {
-	return inputAttributes;
+        return inputAttributes;
     }
 
     public ArrayList<PrologAttributeExp> getOutputAtts() {
-	return outputAttributes;
+        return outputAttributes;
     }
 
     public String toString() {
-	return name;
+        return name;
     }
 }
