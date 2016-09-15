@@ -19,18 +19,32 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
+import java.util.*;
 import simsql.runtime.*;
+import java.net.*;
+import java.lang.*;
+import java.lang.management.*;
 
-/** A reflected function obtained from a java method.
+/**
+ * A function for simulating string equality.
  *
  * @author Luis
  */
+public class eq extends ReflectedFunction {
 
-public class pow extends ReflectedFunction { 
+  public static int eqfn(String val1, String val2) {
 
-    public pow() {
-	super("java.lang.Math", "pow", double.class, double.class);
-    }
+    return val1.equals(val2) ? 1 : 0;
+  }
+
+  public eq() {
+    super("simsql.functions.scalar.eq", "eqfn", String.class, String.class);
+  }
+
+  @Override
+  public String getName() {
+    return "eq";
+  }
 }

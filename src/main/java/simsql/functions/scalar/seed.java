@@ -20,7 +20,7 @@
 
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import java.util.*;
 import simsql.runtime.*;

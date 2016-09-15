@@ -19,43 +19,38 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
-import java.util.*;
 import simsql.runtime.*;
-import java.net.*;
-import java.lang.*;
-import java.lang.management.*;
+import java.text.*;
+import java.util.*;
 
-/**
- * A function that returns a positive integer if an input attribute is
- * NULL, zero otherwise.
+/** 
+ * A date function reflected from its own method.
  *
  * @author Luis.
  */
-public class nullfn extends Function {
 
-	// simple constructor
-	public nullfn() {
-		super(new AttributeType(new DoubleType()));
-	}
+public class day extends ReflectedFunction {
 
-	public Attribute apply(Attribute... atts) {
-		if (atts.length == 0)
-			return new IntAttribute(1);
+    private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    private static Calendar cal = Calendar.getInstance();
 
-		return atts[0].isNull().toInt();
-	}
+    public static int dayfn(String date) {
+        try {
+            cal.setTime(sdf.parse(date));
+            return cal.get(Calendar.DAY_OF_MONTH);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse date string " + date);
+        }
+    }
 
-	public Attribute eval() {
-		return new IntAttribute(0);
-	}
+    public day() {
+	super("simsql.functions.scalar.day", "dayfn", String.class);
+    }
 
-	public String getName() {
-		return "nullfn";
-	}
-
-	public AttributeType getOutputType() {
-		return new AttributeType(new IntType());
-	}
+    @Override
+    public String getName() {
+	return "day";
+    }
 }

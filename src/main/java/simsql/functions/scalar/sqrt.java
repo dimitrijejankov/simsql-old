@@ -19,7 +19,7 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import simsql.runtime.*;
 
@@ -28,9 +28,9 @@ import simsql.runtime.*;
  * @author Luis
  */
 
-public class ceil extends ReflectedFunction { 
+public class sqrt extends ReflectedFunction { 
 
-    public ceil() {
-	super("java.lang.Math", "ceil", double.class);
+    public sqrt() {
+	super("java.lang.Math", "sqrt", double.class);
     }
 }

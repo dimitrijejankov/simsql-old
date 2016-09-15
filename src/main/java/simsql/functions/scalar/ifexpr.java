@@ -19,7 +19,7 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -40,7 +40,7 @@ public class ifexpr extends ReflectedFunction {
   }
 
   public ifexpr() {
-    super("simsql.functions.ifexpr", "iffn", int.class, int.class, int.class);
+    super("simsql.functions.scalar.ifexpr", "iffn", int.class, int.class, int.class);
   }
 
   @Override

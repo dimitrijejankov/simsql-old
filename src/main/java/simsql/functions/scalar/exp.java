@@ -19,32 +19,18 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
-import java.util.*;
 import simsql.runtime.*;
-import java.net.*;
-import java.lang.*;
-import java.lang.management.*;
 
-/**
- * A function for ORs.
+/** A reflected function obtained from a java method.
  *
  * @author Luis
  */
-public class orfn extends ReflectedFunction {
 
-  public static int orf(int bool1, int bool2) {
+public class exp extends ReflectedFunction { 
 
-    return ((bool1 == 1) || (bool2 == 1)) ? 1 : 0;
-  }
-
-  public orfn() {
-    super("simsql.functions.orfn", "orf", int.class, int.class);
-  }
-
-  @Override
-  public String getName() {
-    return "orfn";
-  }
+    public exp() {
+	super("java.lang.Math", "exp", double.class);
+    }
 }

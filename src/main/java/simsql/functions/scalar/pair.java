@@ -19,18 +19,32 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
+import java.util.*;
 import simsql.runtime.*;
+import java.net.*;
+import java.lang.*;
+import java.lang.management.*;
 
-/** A reflected function obtained from a java method.
+/**
+ * A function for combining two integers into a single long value.
  *
  * @author Luis
  */
+public class pair extends ReflectedFunction {
 
-public class sqrt extends ReflectedFunction { 
+  public static long pairfn(int value1, int value2) {
 
-    public sqrt() {
-	super("java.lang.Math", "sqrt", double.class);
-    }
+    return (long)value1 << 32 | value2 & 0xFFFFFFFFL;    
+  }
+
+  public pair() {
+    super("simsql.functions.scalar.pair", "pairfn", int.class, int.class);
+  }
+
+  @Override
+  public String getName() {
+    return "pair";
+  }
 }

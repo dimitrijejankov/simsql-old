@@ -19,7 +19,7 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -28,23 +28,23 @@ import java.lang.*;
 import java.lang.management.*;
 
 /**
- * A function for simulating the CASE expression.
+ * A function for ORs.
  *
  * @author Luis
  */
-public class caseexpr extends ReflectedFunction {
+public class orfn extends ReflectedFunction {
 
-  public static double casefn(int booleanVal, double return1, double return2) {
+  public static int orf(int bool1, int bool2) {
 
-    return (booleanVal == 1) ? return1 : return2;
+    return ((bool1 == 1) || (bool2 == 1)) ? 1 : 0;
   }
 
-  public caseexpr() {
-    super("simsql.functions.caseexpr", "casefn", int.class, double.class, double.class);
+  public orfn() {
+    super("simsql.functions.scalar.orfn", "orf", int.class, int.class);
   }
 
   @Override
   public String getName() {
-    return "caseexpr";
+    return "orfn";
   }
 }

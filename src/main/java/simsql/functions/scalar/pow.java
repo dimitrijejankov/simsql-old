@@ -19,31 +19,18 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
-import java.util.*;
 import simsql.runtime.*;
-import java.net.*;
-import java.lang.*;
-import java.lang.management.*;
 
-/**
- * A function for the modulo (%) operator.
+/** A reflected function obtained from a java method.
  *
  * @author Luis
  */
-public class mod extends ReflectedFunction {
 
-  public static int modfn(int val1, int val2) {
-    return val1 % val2;
-  }
+public class pow extends ReflectedFunction { 
 
-  public mod() {
-    super("simsql.functions.mod", "modfn", int.class, int.class);
-  }
-
-  @Override
-  public String getName() {
-    return "mod";
-  }
+    public pow() {
+	super("java.lang.Math", "pow", double.class, double.class);
+    }
 }

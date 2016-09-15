@@ -100,4 +100,14 @@ public class ReflectedFunction extends Function {
 	else
 	    return outVal.getAttribute();
     }
+
+	public static boolean isScalarFunction(String function) {
+		try {
+			Class scalar = Class.forName("simsql.functions.scalar." + function);
+
+			return scalar != null;
+		} catch (Exception e) {
+			return false;
+		}
+	}
 }

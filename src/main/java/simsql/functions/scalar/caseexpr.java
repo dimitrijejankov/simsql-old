@@ -19,18 +19,32 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
+import java.util.*;
 import simsql.runtime.*;
+import java.net.*;
+import java.lang.*;
+import java.lang.management.*;
 
-/** A reflected function obtained from a java method.
+/**
+ * A function for simulating the CASE expression.
  *
  * @author Luis
  */
+public class caseexpr extends ReflectedFunction {
 
-public class abs extends ReflectedFunction { 
+  public static double casefn(int booleanVal, double return1, double return2) {
 
-    public abs() {
-	super("java.lang.Math", "abs", double.class);
-    }
+    return (booleanVal == 1) ? return1 : return2;
+  }
+
+  public caseexpr() {
+    super("simsql.functions.scalar.caseexpr", "casefn", int.class, double.class, double.class);
+  }
+
+  @Override
+  public String getName() {
+    return "caseexpr";
+  }
 }

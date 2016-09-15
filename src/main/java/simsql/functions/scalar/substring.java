@@ -19,32 +19,30 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
-import java.util.*;
 import simsql.runtime.*;
-import java.net.*;
-import java.lang.*;
-import java.lang.management.*;
+import java.text.*;
+import java.util.*;
 
 /**
- * A function for simulating string (in)equality.
+ * A 'substring' function.
  *
- * @author Luis
+ * @author Luis.
  */
-public class neq extends ReflectedFunction {
 
-  public static int neqfn(String val1, String val2) {
+public class substring extends ReflectedFunction {
 
-    return val1.equals(val2) ? 0 : 1;
+  public static String substr(String str1, int pos1, int pos2) {
+    return str1.substring(pos1, pos2);
   }
 
-  public neq() {
-    super("simsql.functions.neq", "neqfn", String.class, String.class);
+  public substring() {
+    super("simsql.functions.scalar.substring", "substr", String.class, int.class, int.class);
   }
 
   @Override
   public String getName() {
-    return "neq";
+    return "substring";
   }
 }

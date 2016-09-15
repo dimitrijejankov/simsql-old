@@ -19,7 +19,7 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -28,23 +28,34 @@ import java.lang.*;
 import java.lang.management.*;
 
 /**
- * A function for ANDs.
+ * A function that returns a positive integer if an input attribute is
+ * NULL, zero otherwise.
  *
- * @author Luis
+ * @author Luis.
  */
-public class andfn extends ReflectedFunction {
+public class nullfn extends Function {
 
-  public static int fand(int bool1, int bool2) {
+	// simple constructor
+	public nullfn() {
+		super(new AttributeType(new DoubleType()));
+	}
 
-    return ((bool1 == 1) && (bool2 == 1)) ? 1 : 0;
-  }
+	public Attribute apply(Attribute... atts) {
+		if (atts.length == 0)
+			return new IntAttribute(1);
 
-  public andfn() {
-    super("simsql.functions.andfn", "fand", int.class, int.class);
-  }
+		return atts[0].isNull().toInt();
+	}
 
-  @Override
-  public String getName() {
-    return "andfn";
-  }
+	public Attribute eval() {
+		return new IntAttribute(0);
+	}
+
+	public String getName() {
+		return "nullfn";
+	}
+
+	public AttributeType getOutputType() {
+		return new AttributeType(new IntType());
+	}
 }

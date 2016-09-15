@@ -19,7 +19,7 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import simsql.runtime.*;
 import java.text.*;
@@ -63,7 +63,7 @@ public class normalCDF extends ReflectedFunction {
     }
 
     public normalCDF() {
-	super("simsql.functions.normalCDF", "normal_cdf", double.class, double.class, double.class);
+	super("simsql.functions.scalar.normalCDF", "normal_cdf", double.class, double.class, double.class);
     }
     
 

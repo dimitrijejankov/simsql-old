@@ -19,32 +19,18 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
-import java.util.*;
 import simsql.runtime.*;
-import java.net.*;
-import java.lang.*;
-import java.lang.management.*;
 
-/**
- * A function for obtaining the integer part of a double.
+/** A reflected function obtained from a java method.
  *
  * @author Luis
  */
-public class int_part extends ReflectedFunction {
 
-  public static long intpartfn(double value1) {
+public class floor extends ReflectedFunction { 
 
-      return (long)value1;
-  }
-
-  public int_part() {
-    super("simsql.functions.int_part", "intpartfn", double.class);
-  }
-
-  @Override
-  public String getName() {
-    return "int_part";
-  }
+    public floor() {
+	super("java.lang.Math", "floor", double.class);
+    }
 }

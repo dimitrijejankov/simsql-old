@@ -19,7 +19,7 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import simsql.runtime.*;
 import java.text.*;
@@ -31,26 +31,26 @@ import java.util.*;
  * @author Luis.
  */
 
-public class day extends ReflectedFunction {
+public class year extends ReflectedFunction {
 
     private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     private static Calendar cal = Calendar.getInstance();
 
-    public static int dayfn(String date) {
+    public static int yearfn(String date) {
         try {
             cal.setTime(sdf.parse(date));
-            return cal.get(Calendar.DAY_OF_MONTH);
+            return cal.get(Calendar.YEAR);
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse date string " + date);
         }
     }
 
-    public day() {
-	super("simsql.functions.day", "dayfn", String.class);
+    public year() {
+	super("simsql.functions.scalar.year", "yearfn", String.class);
     }
 
     @Override
     public String getName() {
-	return "day";
+	return "year";
     }
 }

@@ -19,7 +19,7 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -28,23 +28,23 @@ import java.lang.*;
 import java.lang.management.*;
 
 /**
- * A function for simulating string equality.
+ * A function for ANDs.
  *
  * @author Luis
  */
-public class eq extends ReflectedFunction {
+public class andfn extends ReflectedFunction {
 
-  public static int eqfn(String val1, String val2) {
+  public static int fand(int bool1, int bool2) {
 
-    return val1.equals(val2) ? 1 : 0;
+    return ((bool1 == 1) && (bool2 == 1)) ? 1 : 0;
   }
 
-  public eq() {
-    super("simsql.functions.eq", "eqfn", String.class, String.class);
+  public andfn() {
+    super("simsql.functions.scalar.andfn", "fand", int.class, int.class);
   }
 
   @Override
   public String getName() {
-    return "eq";
+    return "andfn";
   }
 }

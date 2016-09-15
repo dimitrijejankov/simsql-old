@@ -19,31 +19,41 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import simsql.runtime.*;
 import java.text.*;
 import java.util.*;
 
-/**
- * Evaluates the logistic CDF function.
+/** 
+ * A date function reflected from its own method.
  *
  * @author Luis.
  */
 
-public class logisticCDF extends ReflectedFunction {
+public class days_between extends ReflectedFunction {
 
-    public static double logistic_cdf(double x, double intercept, double coef) {
-        return 1.0 / (1 + Math.exp(-1*(intercept + (x*coef))));
+    private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    private static Calendar cal = Calendar.getInstance();
+
+    public static int daysbfn(String date1, String date2) {
+        try {
+            cal.setTime(sdf.parse(date1));
+	    long d1 = cal.getTimeInMillis();
+	    cal.setTime(sdf.parse(date2));
+	    long d2 = cal.getTimeInMillis();
+	    return (int)Math.round(Math.abs(d1 - d2) / 86400000D);
+        } catch (Exception e) {
+	  throw new RuntimeException("Failed to parse date strings " + date1 + " " + date2);
+	}
     }
 
-    public logisticCDF() {
-	super("simsql.functions.logisticCDF", "logistic_cdf", double.class, double.class, double.class);
+    public days_between() {
+      super("simsql.functions.scalar.days_between", "daysbfn", String.class, String.class);
     }
-    
 
     @Override
     public String getName() {
-	return "logisticCDF";
+	return "days_between";
     }
 }

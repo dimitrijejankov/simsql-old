@@ -19,41 +19,30 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import simsql.runtime.*;
 import java.text.*;
 import java.util.*;
 
-/** 
- * A date function reflected from its own method.
+/**
+ * A 'LIKE' function, reflected from its own method.
  *
  * @author Luis.
  */
 
-public class days_between extends ReflectedFunction {
+public class likefn extends ReflectedFunction {
 
-    private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    private static Calendar cal = Calendar.getInstance();
-
-    public static int daysbfn(String date1, String date2) {
-        try {
-            cal.setTime(sdf.parse(date1));
-	    long d1 = cal.getTimeInMillis();
-	    cal.setTime(sdf.parse(date2));
-	    long d2 = cal.getTimeInMillis();
-	    return (int)Math.round(Math.abs(d1 - d2) / 86400000D);
-        } catch (Exception e) {
-	  throw new RuntimeException("Failed to parse date strings " + date1 + " " + date2);
-	}
+    public static int like(String pat, String str) {
+	return str.matches(pat.replaceAll("%", ".*")) ? 1 : 0;
     }
 
-    public days_between() {
-      super("simsql.functions.days_between", "daysbfn", String.class, String.class);
+    public likefn() {
+	super("simsql.functions.scalar.likefn", "like", String.class, String.class);
     }
 
     @Override
     public String getName() {
-	return "days_between";
+	return "likefn";
     }
 }

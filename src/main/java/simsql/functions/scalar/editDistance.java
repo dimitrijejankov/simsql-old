@@ -19,7 +19,7 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import simsql.runtime.*;
 import java.text.*;
@@ -62,7 +62,7 @@ public class editDistance extends ReflectedFunction {
 
 
     public editDistance() {
-	super("simsql.functions.editDistance", "ed", String.class, String.class);
+	super("simsql.functions.scalar.editDistance", "ed", String.class, String.class);
     }
 
     @Override

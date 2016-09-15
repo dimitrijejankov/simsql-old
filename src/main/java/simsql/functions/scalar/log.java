@@ -19,38 +19,18 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import simsql.runtime.*;
-import java.text.*;
-import java.util.*;
 
-/** 
- * A date function reflected from its own method.
+/** A reflected function obtained from a java method.
  *
- * @author Luis.
+ * @author Luis
  */
 
-public class year extends ReflectedFunction {
+public class log extends ReflectedFunction { 
 
-    private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    private static Calendar cal = Calendar.getInstance();
-
-    public static int yearfn(String date) {
-        try {
-            cal.setTime(sdf.parse(date));
-            return cal.get(Calendar.YEAR);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse date string " + date);
-        }
-    }
-
-    public year() {
-	super("simsql.functions.year", "yearfn", String.class);
-    }
-
-    @Override
-    public String getName() {
-	return "year";
+    public log() {
+	super("java.lang.Math", "log", double.class);
     }
 }

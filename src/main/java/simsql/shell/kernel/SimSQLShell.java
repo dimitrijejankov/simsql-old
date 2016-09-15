@@ -293,8 +293,7 @@ public class SimSQLShell<MyCompiledQuery extends CompiledQuery, MyOptimizedQuery
             }
 
             System.out.print("Loading default regular functions");
-            for (String stat : myQueryProcessor.getRuntimeParameter()
-                    .getFunctionCTs()) {
+            for (String stat : myQueryProcessor.getRuntimeParameter().getFunctionCTs()) {
                 try {
                     //System.out.println("I am parsing "+stat);
                     myCompiler.parseString(stat).cleanUp();
@@ -980,7 +979,6 @@ public class SimSQLShell<MyCompiledQuery extends CompiledQuery, MyOptimizedQuery
             // and give it back to the query processor for post-processing
             myQueryProcessor.doneExecuting(myRuntimeOutput, outputFile);
 
-            //myQueryProcessor.saveRequiredRelations();
         }
 
         // save the outputs so they can be queried

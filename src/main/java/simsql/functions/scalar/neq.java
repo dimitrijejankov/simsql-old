@@ -19,30 +19,32 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
-import simsql.runtime.*;
-import java.text.*;
 import java.util.*;
+import simsql.runtime.*;
+import java.net.*;
+import java.lang.*;
+import java.lang.management.*;
 
 /**
- * A 'LIKE' function, reflected from its own method.
+ * A function for simulating string (in)equality.
  *
- * @author Luis.
+ * @author Luis
  */
+public class neq extends ReflectedFunction {
 
-public class likefn extends ReflectedFunction {
+  public static int neqfn(String val1, String val2) {
 
-    public static int like(String pat, String str) {
-	return str.matches(pat.replaceAll("%", ".*")) ? 1 : 0;
-    }
+    return val1.equals(val2) ? 0 : 1;
+  }
 
-    public likefn() {
-	super("simsql.functions.likefn", "like", String.class, String.class);
-    }
+  public neq() {
+    super("simsql.functions.scalar.neq", "neqfn", String.class, String.class);
+  }
 
-    @Override
-    public String getName() {
-	return "likefn";
-    }
+  @Override
+  public String getName() {
+    return "neq";
+  }
 }

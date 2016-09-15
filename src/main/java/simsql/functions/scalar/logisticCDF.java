@@ -19,38 +19,31 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import simsql.runtime.*;
 import java.text.*;
 import java.util.*;
 
-/** 
- * A date function reflected from its own method.
+/**
+ * Evaluates the logistic CDF function.
  *
  * @author Luis.
  */
 
-public class month extends ReflectedFunction {
+public class logisticCDF extends ReflectedFunction {
 
-    private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    private static Calendar cal = Calendar.getInstance();
-
-    public static int monthfn(String date) {
-        try {
-            cal.setTime(sdf.parse(date));
-            return cal.get(Calendar.MONTH);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse date string " + date);
-        }
+    public static double logistic_cdf(double x, double intercept, double coef) {
+        return 1.0 / (1 + Math.exp(-1*(intercept + (x*coef))));
     }
 
-    public month() {
-	super("simsql.functions.month", "monthfn", String.class);
+    public logisticCDF() {
+	super("simsql.functions.scalar.logisticCDF", "logistic_cdf", double.class, double.class, double.class);
     }
+    
 
     @Override
     public String getName() {
-	return "month";
+	return "logisticCDF";
     }
 }

@@ -19,30 +19,38 @@
  *****************************************************************************/
 
 
-package simsql.functions;
+package simsql.functions.scalar;
 
 import simsql.runtime.*;
 import java.text.*;
 import java.util.*;
 
-/**
- * A 'substring' function.
+/** 
+ * A date function reflected from its own method.
  *
  * @author Luis.
  */
 
-public class substring extends ReflectedFunction {
+public class month extends ReflectedFunction {
 
-  public static String substr(String str1, int pos1, int pos2) {
-    return str1.substring(pos1, pos2);
-  }
+    private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    private static Calendar cal = Calendar.getInstance();
 
-  public substring() {
-    super("simsql.functions.substring", "substr", String.class, int.class, int.class);
-  }
+    public static int monthfn(String date) {
+        try {
+            cal.setTime(sdf.parse(date));
+            return cal.get(Calendar.MONTH);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse date string " + date);
+        }
+    }
 
-  @Override
-  public String getName() {
-    return "substring";
-  }
+    public month() {
+	super("simsql.functions.scalar.month", "monthfn", String.class);
+    }
+
+    @Override
+    public String getName() {
+	return "month";
+    }
 }
