@@ -107,191 +107,156 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 
 		    this.translatorHelper = new TranslatorHelper();
 	        Translator translator = new Translator (translatorHelper);
-	        
-	        for(int i = 0; i < expressionList.size(); i++)
-	        {
-	        	String sql = (String)token.nextElement();
-	        	//System.out.println(sql);
-	        	Expression expression = expressionList.get(i);
-	        	
-	        	TypeChecker tempChecker = CompilerProcessor.typeCheck(expression, sql);
-	        	
-	        	if(tempChecker == null)
-	        	{
-	        		errMessage = "Nothing came back from the type checker!";
-	        		break;
-	        	}
-	        	else if(tempChecker instanceof RandomTableTypeChecker)
-	        	{
-	            	unnester = new RandomTableUnnester((RandomTableTypeChecker)tempChecker);
-	        	}
-	        	else
-	        	{
-	        		unnester = new Unnester(tempChecker);
-	        	}
-	        	
+
+			for (Expression expression : expressionList) {
+				String sql = (String) token.nextElement();
+				//System.out.println(sql);
+
+				TypeChecker tempChecker = CompilerProcessor.typeCheck(expression, sql);
+
+				if (tempChecker == null) {
+					errMessage = "Nothing came back from the type checker!";
+					break;
+				} else if (tempChecker instanceof RandomTableTypeChecker) {
+					unnester = new RandomTableUnnester((RandomTableTypeChecker) tempChecker);
+				} else {
+					unnester = new Unnester(tempChecker);
+				}
+
 	        	/*
 	        	 * 4. Translate the unnestedElement
 	        	 */
-		        if(expression instanceof SelectStatement)
-		        {
-		        	UnnestedSelectStatement result = unnester.unnestSelectStatement((SelectStatement)expression);
-		        	//System.out.println(result);
-		        	Operator element = translator.translate(result);
+				if (expression instanceof SelectStatement) {
+					UnnestedSelectStatement result = unnester.unnestSelectStatement((SelectStatement) expression);
+					//System.out.println(result);
+					Operator element = translator.translate(result);
 		        	
 		        	/*
 		        	 * 5. PostProcessing
 		        	 */
-		        	sinkList.add(element);
-		        	sqlList.add(sql);
-		        	
-		        	empty = false;
-		        }
-		        else if(expression instanceof BaseLineArrayRandomTableStatement)
-		        {
-		        	String baseLineArrayQueryElmentHyphenate = ((BaselineArrayRandomTypeChecker)tempChecker).getInitializedQueryList();
-		        	ArrayList<Expression> baseLineArrayQueryElmentHypList = CompilerProcessor.parse(baseLineArrayQueryElmentHyphenate);
-		        	Expression baseLineArrayElement;
-		        	
-		        	if(baseLineArrayQueryElmentHypList != null)
-		        	{
-			        	CompilerProcessor.simplify(baseLineArrayQueryElmentHypList);
-			        	
-			        	for(int j = 0; j < baseLineArrayQueryElmentHypList.size(); j++)
-			        	{
-			        		baseLineArrayElement = baseLineArrayQueryElmentHypList.get(j);
-			        		((BaseLineRandomTableStatement) baseLineArrayElement).setSqlString(sql);
-			        		BaseLineRandomTableTypeChecker baselineElmentChecker = new BaseLineRandomTableTypeChecker(false);
-			        		baselineElmentChecker.setSaved(false);
-			        		boolean subcheck = baselineElmentChecker.visitBaseLineRandomTableStatement((BaseLineRandomTableStatement)baseLineArrayElement);
-							if(!subcheck)
-							{
+					sinkList.add(element);
+					sqlList.add(sql);
+
+					empty = false;
+				} else if (expression instanceof BaseLineArrayRandomTableStatement) {
+					String baseLineArrayQueryElmentHyphenate = ((BaselineArrayRandomTypeChecker) tempChecker).getInitializedQueryList();
+					ArrayList<Expression> baseLineArrayQueryElmentHypList = CompilerProcessor.parse(baseLineArrayQueryElmentHyphenate);
+					Expression baseLineArrayElement;
+
+					if (baseLineArrayQueryElmentHypList != null) {
+						CompilerProcessor.simplify(baseLineArrayQueryElmentHypList);
+
+						for (int j = 0; j < baseLineArrayQueryElmentHypList.size(); j++) {
+							baseLineArrayElement = baseLineArrayQueryElmentHypList.get(j);
+							((BaseLineRandomTableStatement) baseLineArrayElement).setSqlString(sql);
+							BaseLineRandomTableTypeChecker baselineElmentChecker = new BaseLineRandomTableTypeChecker(false);
+							baselineElmentChecker.setSaved(false);
+							boolean subcheck = baselineElmentChecker.visitBaseLineRandomTableStatement((BaseLineRandomTableStatement) baseLineArrayElement);
+							if (!subcheck) {
 								throw new RuntimeException("BaseLineArrayRandomTableStatement typecher wrong");
 							}
-			        	}
-		        	}
-		        }
-		        else if(expression instanceof BaseLineRandomTableStatement)
-		        {
-		        	//nothing to do
-		        }
-		        else if(expression instanceof GeneralRandomTableStatement)
-		        {
-		        	//nothing to do
-		        }
-		        else if(expression instanceof RandomTableStatement)
-		        {
-		        	//nothing to do
-		        }
-		        else if(expression instanceof ViewStatement)
-		        {
-		        	//nothing to do
-		        }
-		        else if(expression instanceof MaterializedViewStatement)
-		        {
-		        	UnnestedSelectStatement result = unnester.unnestSelectStatement(((MaterializedViewStatement) expression).statement);
-		        	//System.out.println(result);
-		        	Operator element = translator.translate(result);
-		        	MaterializedViewTypeChecker checker = (MaterializedViewTypeChecker)tempChecker;
+						}
+					}
+				} else if (expression instanceof BaseLineRandomTableStatement) {
+					//nothing to do
+				} else if (expression instanceof GeneralRandomTableStatement) {
+					//nothing to do
+				} else if (expression instanceof RandomTableStatement) {
+					//nothing to do
+				} else if (expression instanceof ViewStatement) {
+					//nothing to do
+				} else if (expression instanceof MaterializedViewStatement) {
+					UnnestedSelectStatement result = unnester.unnestSelectStatement(((MaterializedViewStatement) expression).statement);
+					//System.out.println(result);
+					Operator element = translator.translate(result);
+					MaterializedViewTypeChecker checker = (MaterializedViewTypeChecker) tempChecker;
 		        	
 		        	/*
 		    		 * 5. Combine the sinkOperatorlist together by frameOutput.
 		    		 *
 		    		 */
-		    		String nodeName = "frameOutput";
-		    		ArrayList<Operator> parents = new ArrayList<Operator>();
-		    		ArrayList<Operator> children = new ArrayList<Operator>();
-		    		children.add(element);
-		    		ArrayList<String> tableNameList = new ArrayList<String>();
-		    		tableNameList.add(checker.getDefinedSchema().getViewName());
-		    		Operator frameOutput = new FrameOutput(nodeName, children, parents, tableNameList);
-		    		
-		    		element.addParent(frameOutput);
-		    		sinkList.add(frameOutput);
-		    		sqlList.add(sql);
-		        	
-		        	empty = false;
-		        }
-		        else if(expression instanceof UnionViewStatement)
-		        {
-		        	//nothing to do
-		        }
-		        else if(expression instanceof TableDefinitionStatement)
-		        {
-		        	// save the table to the catalog
-		            TableDefinitionStatement myStatement = (TableDefinitionStatement) expression;
-		            myStatement.save ();
-		             
-		            // and also save a physical version of the table
-		            physicalDB.registerTable (myStatement.getTableName ());
-		            
-		        }
-		        else if(expression instanceof VGFunctionDefinitionStatement)
-		        {
-		        	// and load up the corresponding VG function into the runtime parameters
-		            VGFunctionDefinitionStatement myStatement = (VGFunctionDefinitionStatement) expression;
-		            // save it to the catalog
-		           
-		            String myPath = myStatement.getPath ();
-		            if (myPath.charAt (0) == '\'') {
-		              myPath = myPath.substring (1, myPath.length () - 1);
-		            }
-		  			
-		            File myFile = new File (myPath);
-		            if (!myFile.isFile()) {
-		              System.err.println ("Error!  I could not find the file " + myStatement.getPath ());
-		              errMessage = "Error!  I could not find the file " + myStatement.getPath ();
-		        		
-		              continue;
-		            }
-		            
-		            myStatement.save ();
-		            
-		            runtimeParameters.readVGFunctionFromFile (myStatement.getName (), myFile);
+					String nodeName = "frameOutput";
+					ArrayList<Operator> parents = new ArrayList<Operator>();
+					ArrayList<Operator> children = new ArrayList<Operator>();
+					children.add(element);
+					ArrayList<String> tableNameList = new ArrayList<String>();
+					tableNameList.add(checker.getDefinedSchema().getViewName());
+					Operator frameOutput = new FrameOutput(nodeName, children, parents, tableNameList);
 
-		        }
-		        else if(expression instanceof FunctionDefinitionStatement)
-		        {
-		        	// and load up the corresponding function into the runtime parameters 
-		            FunctionDefinitionStatement myStatement = (FunctionDefinitionStatement) expression;
-		            // save it to the catalog
-		           
-		            String myPath = myStatement.getPath ();
-		            if (myPath.charAt (0) == '\'') {
-		              myPath = myPath.substring (1, myPath.length () - 1);
-		            }
-		  					File myFile = new File (myPath);
-		            if (!myFile.isFile ()) {
-		              System.err.println ("Error!  I could not find the file " + myStatement.getPath ());
-		              errMessage = "Error!  I could not find the file " + myStatement.getPath ();
-		        		
-		              continue;
-		            } 
-		            
-		            myStatement.save ();
-		        	
-		            runtimeParameters.readFunctionFromFile (myStatement.getName (), myFile);		            
-		        }
-		        else if(expression instanceof DropElement)
-		        {
-		        	DropElement drop = (DropElement)expression;
-	
+					element.addParent(frameOutput);
+					sinkList.add(frameOutput);
+					sqlList.add(sql);
+
+					empty = false;
+				} else if (expression instanceof UnionViewStatement) {
+					//nothing to do
+				} else if (expression instanceof TableDefinitionStatement) {
+					// save the table to the catalog
+					TableDefinitionStatement myStatement = (TableDefinitionStatement) expression;
+					myStatement.save();
+
+					// and also save a physical version of the table
+					physicalDB.registerTable(myStatement.getTableName());
+
+				} else if (expression instanceof VGFunctionDefinitionStatement) {
+					// and load up the corresponding VG function into the runtime parameters
+					VGFunctionDefinitionStatement myStatement = (VGFunctionDefinitionStatement) expression;
+					// save it to the catalog
+
+					String myPath = myStatement.getPath();
+					if (myPath.charAt(0) == '\'') {
+						myPath = myPath.substring(1, myPath.length() - 1);
+					}
+
+					File myFile = new File(myPath);
+					if (!myFile.isFile()) {
+						System.err.println("Error!  I could not find the file " + myStatement.getPath());
+						errMessage = "Error!  I could not find the file " + myStatement.getPath();
+
+						continue;
+					}
+
+					myStatement.save();
+
+					runtimeParameters.readVGFunctionFromFile(myStatement.getName(), myFile);
+
+				} else if (expression instanceof FunctionDefinitionStatement) {
+					// and load up the corresponding function into the runtime parameters
+					FunctionDefinitionStatement myStatement = (FunctionDefinitionStatement) expression;
+					// save it to the catalog
+
+					String myPath = myStatement.getPath();
+					if (myPath.charAt(0) == '\'') {
+						myPath = myPath.substring(1, myPath.length() - 1);
+					}
+					File myFile = new File(myPath);
+					if (!myFile.isFile()) {
+						System.err.println("Error!  I could not find the file " + myStatement.getPath());
+						errMessage = "Error!  I could not find the file " + myStatement.getPath();
+
+						continue;
+					}
+
+					myStatement.save();
+
+					runtimeParameters.readFunctionFromFile(myStatement.getName(), myFile);
+				} else if (expression instanceof DropElement) {
+					DropElement drop = (DropElement) expression;
+
 					// do the dropping on the catalog.
 					drop.drop();
 					// is it a table?
 					if (drop.getType() == DropElement.TABLEORCOMMON_RANDOM_TABLE && !drop.isRandom()) {
-						
+
 						// if so, kill it on the phys database
 						physicalDB.deleteTable(drop.getObjectName());
 					}
-		        }
-		        else
-		        {
-		        	
-		        	errMessage = "I saw an expression type I don't know how to handle";
-	        		break;
-		        }
-	        }
+				} else {
+
+					errMessage = "I saw an expression type I don't know how to handle";
+					break;
+				}
+			}
 	        
 	        // handle different kinds of errors.
 	        if(errMessage != null)

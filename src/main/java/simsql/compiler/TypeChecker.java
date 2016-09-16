@@ -2913,7 +2913,10 @@ public class TypeChecker extends ASTVisitor {
             tableReferenceMap = currentChecker.getTableReferenceMap();
             for (String s : tableReferenceMap.keySet()) {
                 tempReference = tableReferenceMap.get(s);
-                if (tempReference.isConstantRandomTable() || tempReference.isGeneralIndexTable()) {
+                if (tempReference.isConstantRandomTable() ||
+                    tempReference.isGeneralIndexTable() ||
+                    tempReference.isMultidimensionalConstantTable() ||
+                    tempReference.isMultidimensionalGeneralIndexTable()) {
                     dependedSet.add(tempReference.getTable());
                 }
             }

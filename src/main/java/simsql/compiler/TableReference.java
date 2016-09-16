@@ -107,7 +107,15 @@ public class TableReference extends SQLExpression{
         }
         this.expressions.put("i", expression);
     }
-	
+
+    public boolean isMultidimensionalConstantTable() {
+        return (type == MULTIDIMENSIONAL_CONSTANT_INDEX_TABLE);
+    }
+
+    public boolean isMultidimensionalGeneralIndexTable() {
+        return (type == MULTIDIMENSIONAL_GENERAL_INDEX_TABLE);
+    }
+
 	public boolean isConstantRandomTable()
 	{
 		return (type == CONSTANT_INDEX_TABLE);

@@ -424,7 +424,7 @@ public class SimSQLShell<MyCompiledQuery extends CompiledQuery, MyOptimizedQuery
                 String myQuery = queryStr;
                 queryStr = null;
 
-                MyCompiledQuery myCompiledQuery = null;
+                MyCompiledQuery myCompiledQuery;
                 try {
                     // parse it.
                     IndexReplacer myReplacer = new IndexReplacer(myQuery, myQueryProcessor.getCatalog());
