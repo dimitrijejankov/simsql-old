@@ -43,8 +43,7 @@ public class Topologic
 	 */
 	private ArrayList<Operator> operatorList;
 	private HashMap<Operator, String> randomTableMap;
-	
-	private HashMap<String, HashSet<String>> forwardEdge;
+
 	private HashMap<String, HashSet<String>> backwardEdge;
 	
 	public Topologic(ArrayList<Operator> operatorList, HashMap<Operator, String> randomTableMap)
@@ -52,11 +51,9 @@ public class Topologic
 		this.operatorList = operatorList;
 		this.randomTableMap = randomTableMap;
 
-		this.forwardEdge = new HashMap<String, HashSet<String>>();
 		this.backwardEdge = new HashMap<String, HashSet<String>>();	
 		
 		generateBackwardEdges();
-		generateForwardEdges();
 	}
 
 	/**
@@ -135,43 +132,17 @@ public class Topologic
 		return resultList;
 	}
 	
-	public void generateForwardEdges()
-	{
-		for(Object o: backwardEdge.keySet())
-		{
-			String table = (String)o;
-			
-			HashSet<String> referencedTableSet = backwardEdge.get(o);
-			for(String referencedTable: referencedTableSet)
-			{
-				HashSet<String> forwardSet; 
-				if(forwardEdge.containsKey(referencedTable))
-				{
-					forwardSet = forwardEdge.get(referencedTable);
-				}
-				else
-				{
-					forwardSet = new HashSet<String>();
-					forwardEdge.put(referencedTable, forwardSet);
-				}
-				
-				forwardSet.add(table);
-			}
-		}
-		
-	}
-	
 	public void generateBackwardEdges()
 	{
 		for(Object o:randomTableMap.keySet())
 		{
-			String tablename = randomTableMap.get(o);
-			tablename = getTableName(tablename);
+			String tableName = randomTableMap.get(o);
+			tableName = getTableName(tableName);
 			
 			Operator operator = (Operator)o;
 			
 			HashSet<String> referencedTables = getReferencedRandomTables(operator);
-			backwardEdge.put(tablename, referencedTables);
+			backwardEdge.put(tableName, referencedTables);
 		}
 	}
 	
@@ -403,10 +374,6 @@ public class Topologic
 		return name;
 	}
 
-	public HashMap<String, HashSet<String>> getForwardEdges() {
-		return forwardEdge;
-	}
-	
 	public HashMap<String, HashSet<String>> getBackwardEdges() {
 		return backwardEdge;
 	}

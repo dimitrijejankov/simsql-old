@@ -40,7 +40,7 @@ public class IndexReplacer {
                  */
 
 		// this will match any random table statements
-		Pattern p = Pattern.compile("[a-z|A-Z|_][a-z|A-Z|0-9|_]*\\s*\\[\\s*[0-9]+\\s*\\]");
+		Pattern p = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*\\s*(\\[\\s*[0-9]+\\s*\\])+");
 		query = inQuery;
 		Matcher m = p.matcher(query);
 		StringBuffer sb = new StringBuffer();
@@ -48,27 +48,8 @@ public class IndexReplacer {
 			
 			// we found a match, so see if the table exists in the catalog
 			String current = m.group ();
-			String tableName = "";
-			
-			// find the end of the identifier
-			int i = 0;
-			while (current.charAt (i) != '[' && !Character.isWhitespace (current.charAt (i))) {
-				tableName += current.charAt (i);
-				i++;
-			}
-
-			// add in an underscore
-			tableName += "_";
-
-			// now add in the identifier
-			while (current.charAt (i) != ']') {
-				if (Character.isDigit (current.charAt (i)))
-					tableName += current.charAt (i);
-				i++;
-			}
-
+			String tableName = MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(current.replaceAll("\\s", ""));
 			tableName += "_saved";
-
 
 			// OK, so we have the table name... see if it exists in the catalog
 			if (catalog.getRelation (tableName) != null) {

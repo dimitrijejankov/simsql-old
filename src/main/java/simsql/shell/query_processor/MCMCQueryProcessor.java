@@ -336,8 +336,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             wri.write(":- dynamic stats/6.\r\n");
             wri.write(":- dynamic relation/3.\r\n");
 
-            for (int i = 0; i < generatedSinkList.size(); i++) {
-                Operator element = generatedSinkList.get(i);
+            for (Operator element : generatedSinkList) {
                 wri.write("parent(planRoot, " + element.getNodeName() + ").\r\n");
             }
 
@@ -351,8 +350,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
             wri.close();
 
-            for (int i = 0; i < generatedSinkList.size(); i++) {
-                Operator element = generatedSinkList.get(i);
+            for (Operator element : generatedSinkList) {
                 if (element instanceof FrameOutput) {
                     compiledQuery.addMaterilizedView((FrameOutput) element);
                 }
