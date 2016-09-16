@@ -1,4 +1,4 @@
-package simsql.functions;
+package simsql.functions.ud;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -23,7 +23,7 @@ public class get_nonzero_pos extends ReflectedUDFunction {
   }
 
   public get_nonzero_pos() {
-    super("simsql.functions.get_nonzero_pos", "nonzero_pos", new AttributeType(new IntType()), double[].class);
+    super("simsql.functions.ud.get_nonzero_pos", "nonzero_pos", new AttributeType(new IntType()), double[].class);
   }
 
   @Override

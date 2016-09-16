@@ -1,4 +1,4 @@
-package simsql.functions;
+package simsql.functions.ud;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -23,7 +23,7 @@ public class inner_product extends ReflectedUDFunction {
   }
 
   public inner_product() {
-    super("simsql.functions.inner_product", "inner", new AttributeType(new DoubleType()), double[].class, double[].class);
+    super("simsql.functions.ud.inner_product", "inner", new AttributeType(new DoubleType()), double[].class, double[].class);
     setInputTypes(new AttributeType(new VectorType("vector[a]")), new AttributeType(new VectorType("vector[a]")));
     setOutputType(new AttributeType(new DoubleType()));
   }

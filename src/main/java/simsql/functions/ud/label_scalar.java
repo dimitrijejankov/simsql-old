@@ -1,10 +1,8 @@
-package simsql.functions;
+package simsql.functions.ud;
 
-import java.util.*;
 import simsql.runtime.*;
-import java.net.*;
+
 import java.lang.*;
-import java.lang.management.*;
 
 /**
  * A function for labeling scalars.
@@ -23,7 +21,7 @@ public class label_scalar extends ReflectedUDFunction {
   }
 
   public label_scalar() {
-    super("simsql.functions.label_scalar", "label", new AttributeType(new ScalarType()), double.class, int.class);
+    super("simsql.functions.ud.label_scalar", "label", new AttributeType(new ScalarType()), double.class, int.class);
   }
 
   @Override

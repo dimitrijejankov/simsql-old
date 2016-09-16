@@ -1,4 +1,4 @@
-package simsql.functions;
+package simsql.functions.ud;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -36,7 +36,7 @@ public class vector_trans extends ReflectedUDFunction {
   }
 
   public vector_trans() {
-    super("simsql.functions.vector_trans", "trans", new AttributeType(new VectorType("vector[]")), double[].class, int.class, int.class);
+    super("simsql.functions.ud.vector_trans", "trans", new AttributeType(new VectorType("vector[]")), double[].class, int.class, int.class);
     setInputTypes(new AttributeType(new VectorType("vector[a]")), new AttributeType(new IntType()), new AttributeType(new IntType()));
     setOutputType(new AttributeType(new VectorType("vector[b]")));
   }

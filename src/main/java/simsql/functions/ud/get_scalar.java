@@ -1,4 +1,4 @@
-package simsql.functions;
+package simsql.functions.ud;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -23,7 +23,7 @@ public class get_scalar extends ReflectedUDFunction {
   }
 
   public get_scalar() {
-    super("simsql.functions.get_scalar", "get", new AttributeType(new ScalarType()), double[].class, int.class);
+    super("simsql.functions.ud.get_scalar", "get", new AttributeType(new ScalarType()), double[].class, int.class);
     //setInputTypes(new AttributeType(new VectorType("vector[a]")), new AttributeType(new IntType()));
     //setOutputType(new AttributeType(new ScalarType()));
   }

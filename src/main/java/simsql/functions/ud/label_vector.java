@@ -1,10 +1,8 @@
-package simsql.functions;
+package simsql.functions.ud;
 
-import java.util.*;
 import simsql.runtime.*;
-import java.net.*;
+
 import java.lang.*;
-import java.lang.management.*;
 
 /**
  * A function for labeling vectors.
@@ -24,7 +22,7 @@ public class label_vector extends ReflectedUDFunction {
   }
 
   public label_vector() {
-    super("simsql.functions.label_vector", "label", new AttributeType(new VectorType("vector[]")), double[].class, int.class);
+    super("simsql.functions.ud.label_vector", "label", new AttributeType(new VectorType("vector[]")), double[].class, int.class);
     setInputTypes(new AttributeType(new VectorType("vector[a]")), new AttributeType(new IntType()));
     setOutputType(new AttributeType(new VectorType("vector[a]")));
   }

@@ -146,7 +146,7 @@
                         </goals>
                         <configuration>
                             <executable>/usr/bin/make</executable>
-                            <workingDirectory>${basedir}/src/main/java/simsql/functions/</workingDirectory>
+                            <workingDirectory>${basedir}/src/main/java/simsql/functions/ud</workingDirectory>
                             <arguments>
                                 <argument>-f</argument>
                                 <argument>ud.Makefile</argument>

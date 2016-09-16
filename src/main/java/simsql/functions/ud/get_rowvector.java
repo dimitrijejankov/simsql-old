@@ -1,4 +1,4 @@
-package simsql.functions;
+package simsql.functions.ud;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -24,7 +24,7 @@ public class get_rowvector extends ReflectedUDFunction {
   }
 
   public get_rowvector() {
-    super("simsql.functions.get_rowvector", "get", new AttributeType(new VectorType("vector[]")), double[][].class, int.class);
+    super("simsql.functions.ud.get_rowvector", "get", new AttributeType(new VectorType("vector[]")), double[][].class, int.class);
     setInputTypes(new AttributeType(new MatrixType("matrix[a][b]")), new AttributeType(new IntType()));
     setOutputType(new AttributeType(new VectorType("vector[b]")));
   }

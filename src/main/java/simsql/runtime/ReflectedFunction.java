@@ -110,4 +110,14 @@ public class ReflectedFunction extends Function {
 			return false;
 		}
 	}
+
+    public static boolean isUDFunction(String function) {
+        try {
+            Class scalar = Class.forName("simsql.functions.ud." + function);
+
+            return scalar != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

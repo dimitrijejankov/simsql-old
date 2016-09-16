@@ -38,6 +38,7 @@ import org.apache.log4j.Level;
 import java.lang.reflect.*;
 
 import static simsql.runtime.ReflectedFunction.isScalarFunction;
+import static simsql.runtime.ReflectedFunction.isUDFunction;
 
 public class ExampleRuntimeParameter implements RuntimeParameter {
 
@@ -253,7 +254,7 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
         HashSet<File> files = new HashSet<File>();
 
         // the ud functions
-        files.addAll(Arrays.asList(getAllFilesInDirectory("simsql/functions", ".class")));
+        files.addAll(Arrays.asList(getAllFilesInDirectory("simsql/functions/ud", ".class")));
 
         // the scalar functions
         files.addAll(Arrays.asList(getAllFilesInDirectory("simsql/functions/scalar", ".class")));
@@ -373,8 +374,11 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
             if(isScalarFunction(ff)) {
                 writeFunctionToFile(ff, new File(whereToWrite + "/scalar", ff + ".class"));
             }
+            else if(isUDFunction(ff)){
+                writeFunctionToFile(ff, new File(whereToWrite + "/ud", ff + ".class"));
+            }
             else {
-                writeFunctionToFile(ff, new File(whereToWrite, ff + ".class"));
+                throw new RuntimeException(ff + " is not a Scalar nor a UD function!");
             }
 
         }

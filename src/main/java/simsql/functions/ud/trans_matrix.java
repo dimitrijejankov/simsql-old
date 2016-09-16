@@ -1,4 +1,4 @@
-package simsql.functions;
+package simsql.functions.ud;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -27,7 +27,7 @@ public class trans_matrix extends ReflectedUDFunction {
   }
 
   public trans_matrix() {
-    super("simsql.functions.trans_matrix", "transpose", new AttributeType(new MatrixType("matrix[][]")), double[][].class);
+    super("simsql.functions.ud.trans_matrix", "transpose", new AttributeType(new MatrixType("matrix[][]")), double[][].class);
     setInputTypes(new AttributeType(new MatrixType("matrix[a][b]")));
     setOutputType(new AttributeType(new MatrixType("matrix[b][a]")));
   }

@@ -39,6 +39,7 @@ import org.apache.hadoop.io.*;
 import simsql.shell.PhysicalDatabase;
 
 import static simsql.runtime.ReflectedFunction.isScalarFunction;
+import static simsql.runtime.ReflectedFunction.isUDFunction;
 
 /**
  * A general relational operator class.
@@ -502,8 +503,11 @@ public abstract class RelOp {
             if(isScalarFunction(s)) {
                 outStr += "simsql.functions.scalar." + s + " func_" + s + " = new simsql.functions.scalar." + s + "();\n  ";
             }
+            else if(isUDFunction(s)) {
+                outStr += "simsql.functions.ud." + s + " func_" + s + " = new simsql.functions.ud." + s + "();\n  ";
+            }
             else {
-                outStr += "simsql.functions." + s + " func_" + s + " = new simsql.functions." + s + "();\n  ";
+                throw new RuntimeException(s + " is not a scalar nor a ud function!");
             }
         }
 
@@ -868,7 +872,8 @@ public abstract class RelOp {
         // make the directories with their runtime/functions substructure
         if (!(new File(workDirectory + "/simsql/runtime").mkdirs()) ||
             !(new File(workDirectory + "/simsql/functions").mkdirs()) ||
-            !(new File(workDirectory + "/simsql/functions/scalar").mkdirs())) {
+            !(new File(workDirectory + "/simsql/functions/scalar").mkdirs()) ||
+            !(new File(workDirectory + "/simsql/functions/ud").mkdirs())) {
             throw new RuntimeException("Could not prepare/create the work directories for macro replacement");
         }
 

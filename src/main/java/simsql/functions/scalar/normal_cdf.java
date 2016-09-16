@@ -26,47 +26,50 @@ import java.text.*;
 import java.util.*;
 
 /**
- * An 'edit distance' function, reflected from its own method.
+ * Evaluates the normal CDF function.
  *
  * @author Luis.
  */
 
-public class editDistance extends ReflectedFunction {
+public class normal_cdf extends ReflectedFunction {
 
-    // minimum of 3 values.                                                                                                                                                                                
-    public static int min3(int a, int b, int c) {
-        return Math.min(Math.min(a, b), c);
-    }
 
-    // edit distance between two strings,
-    // got it from http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Java
-    public static int ed(String str1, String str2) {
-        int[][] distance = new int[str1.length() + 1][str2.length() + 1];
+    public static double erf(double z) {
+        double t = 1.0 / (1.0 + 0.5 * Math.abs(z));
 
-        for (int i = 0; i <= str1.length(); i++)
-            distance[i][0] = i;
-        for (int j = 0; j <= str2.length(); j++)
-            distance[0][j] = j;
+        double ans = 1 - t * Math.exp( -z*z   -   1.26551223 +
+                                       t * ( 1.00002368 +
+                                       t * ( 0.37409196 +
+                                       t * ( 0.09678418 +
+                                       t * (-0.18628806 +
+                                       t * ( 0.27886807 +
+                                       t * (-1.13520398 +
+                                       t * ( 1.48851587 +
+                                       t * (-0.82215223 +
+                                       t * ( 0.17087277))))))))));
 
-        for (int i = 1; i <= str1.length(); i++)
-            for (int j = 1; j <= str2.length(); j++)
-                distance[i][j] = min3(
-                                      distance[i - 1][j] + 1,
-                                      distance[i][j - 1] + 1,
-                                      distance[i - 1][j - 1]
-                                      + ((str1.charAt(i - 1) == str2.charAt(j - 1)) ? 0
-                                         : 1));
-
-        return distance[str1.length()][str2.length()];
+        if (z >= 0) return  ans;
+        else        return -ans;
     }
 
 
-    public editDistance() {
-	super("simsql.functions.scalar.editDistance", "ed", String.class, String.class);
+    public static double normal_cdf(double x, double mu, double stdev) {
+
+	// error function parameter.
+        double erfP = (x - mu) / (stdev * 1.4142135623);
+
+	// return CDF value by calling the error function.
+        return 0.5 * (1 + erf(erfP));
     }
+
+    public normal_cdf() {
+	super("simsql.functions.scalar.normal_cdf", "normal_cdf", double.class, double.class, double.class);
+    }
+    
 
     @Override
     public String getName() {
-	return "editDistance";
+	return "normal_cdf";
     }
+
 }

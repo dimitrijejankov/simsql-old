@@ -1,4 +1,4 @@
-package simsql.functions;
+package simsql.functions.ud;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -24,7 +24,7 @@ public class outer_product extends ReflectedUDFunction {
   }
 
   public outer_product() {
-    super("simsql.functions.outer_product", "outer", new AttributeType(new MatrixType("matrix[][]")), double[].class, double[].class);
+    super("simsql.functions.ud.outer_product", "outer", new AttributeType(new MatrixType("matrix[][]")), double[].class, double[].class);
     setInputTypes(new AttributeType(new VectorType("vector[a]")), new AttributeType(new VectorType("vector[b]")));
     setOutputType(new AttributeType(new MatrixType("matrix[a][b]")));
   }

@@ -1,4 +1,4 @@
-package simsql.functions;
+package simsql.functions.ud;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -24,7 +24,7 @@ public class sqrt_vector extends ReflectedUDFunction {
   }
 
   public sqrt_vector() {
-    super("simsql.functions.sqrt_vector", "sqrt_vector", new AttributeType(new VectorType("vector[a]")), double[].class);
+    super("simsql.functions.ud.sqrt_vector", "sqrt_vector", new AttributeType(new VectorType("vector[a]")), double[].class);
     setInputTypes(new AttributeType(new VectorType("vector[a]")));
     setOutputType(new AttributeType(new VectorType("vector[a]")));
   }

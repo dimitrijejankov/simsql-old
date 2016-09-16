@@ -26,24 +26,47 @@ import java.text.*;
 import java.util.*;
 
 /**
- * Evaluates the logistic CDF function.
+ * An 'edit distance' function, reflected from its own method.
  *
  * @author Luis.
  */
 
-public class logisticCDF extends ReflectedFunction {
+public class edit_distance extends ReflectedFunction {
 
-    public static double logistic_cdf(double x, double intercept, double coef) {
-        return 1.0 / (1 + Math.exp(-1*(intercept + (x*coef))));
+    // minimum of 3 values.                                                                                                                                                                                
+    public static int min3(int a, int b, int c) {
+        return Math.min(Math.min(a, b), c);
     }
 
-    public logisticCDF() {
-	super("simsql.functions.scalar.logisticCDF", "logistic_cdf", double.class, double.class, double.class);
+    // edit distance between two strings,
+    // got it from http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Java
+    public static int ed(String str1, String str2) {
+        int[][] distance = new int[str1.length() + 1][str2.length() + 1];
+
+        for (int i = 0; i <= str1.length(); i++)
+            distance[i][0] = i;
+        for (int j = 0; j <= str2.length(); j++)
+            distance[0][j] = j;
+
+        for (int i = 1; i <= str1.length(); i++)
+            for (int j = 1; j <= str2.length(); j++)
+                distance[i][j] = min3(
+                                      distance[i - 1][j] + 1,
+                                      distance[i][j - 1] + 1,
+                                      distance[i - 1][j - 1]
+                                      + ((str1.charAt(i - 1) == str2.charAt(j - 1)) ? 0
+                                         : 1));
+
+        return distance[str1.length()][str2.length()];
     }
-    
+
+
+    public edit_distance() {
+	super("simsql.functions.scalar.edit_distance", "ed", String.class, String.class);
+    }
 
     @Override
     public String getName() {
-	return "logisticCDF";
+	return "edit_distance";
     }
 }

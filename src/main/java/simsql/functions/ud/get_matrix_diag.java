@@ -1,4 +1,4 @@
-package simsql.functions;
+package simsql.functions.ud;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -25,7 +25,7 @@ public class get_matrix_diag extends ReflectedUDFunction {
   }
 
   public get_matrix_diag() {
-    super("simsql.functions.get_matrix_diag", "get_diag", new AttributeType(new VectorType("vector[]")), double[][].class);
+    super("simsql.functions.ud.get_matrix_diag", "get_diag", new AttributeType(new VectorType("vector[]")), double[][].class);
     setInputTypes(new AttributeType(new MatrixType("matrix[a][a]")));
     setOutputType(new AttributeType(new VectorType("vector[a]")));
     

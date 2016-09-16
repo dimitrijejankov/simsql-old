@@ -1,4 +1,4 @@
-package simsql.functions;
+package simsql.functions.ud;
 
 import java.util.*;
 import simsql.runtime.*;
@@ -43,7 +43,7 @@ public class vector_emits extends ReflectedUDFunction {
   }
 
   public vector_emits() {
-    super("simsql.functions.vector_emits", "emits", new AttributeType(new VectorType("vector[]")), double[].class, double[].class, int.class, int.class);
+    super("simsql.functions.ud.vector_emits", "emits", new AttributeType(new VectorType("vector[]")), double[].class, double[].class, int.class, int.class);
     setInputTypes(new AttributeType(new VectorType("vector[a]")), new AttributeType(new VectorType("vector[a]")), new AttributeType(new IntType()), new AttributeType(new IntType()));
     setOutputType(new AttributeType(new VectorType("vector[b]")));
   }
