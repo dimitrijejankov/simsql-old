@@ -383,6 +383,40 @@ public class TypeChecker extends ASTVisitor {
         return errorNum == 0;
     }
 
+    private boolean isIndexDescenting(MathExpression expression) {
+
+        if (!(expression instanceof ArithmeticExpression))
+            return false;
+
+        ArithmeticExpression arithmeticExp = (ArithmeticExpression) expression;
+
+        if (arithmeticExp.operandList.size() != 2)
+            return false;
+
+        if (!(arithmeticExp.operandList.get(0) instanceof GeneralTableIndex))
+            return false;
+
+        if (!(arithmeticExp.operandList.get(1) instanceof NumericExpression))
+            return false;
+
+        GeneralTableIndex index = (GeneralTableIndex) arithmeticExp.operandList.get(0);
+        NumericExpression numericExpression = (NumericExpression) arithmeticExp.operandList.get(1);
+
+        return index.identifier.equals("i") &&
+               numericExpression.value >= 0 &&
+               arithmeticExp.operatorList.get(0) == FinalVariable.MINUS;
+    }
+
+    private boolean isGeneralIndexWithIdentifier(MathExpression expression, String identifier) {
+
+        if(!(expression instanceof GeneralTableIndex))
+            return false;
+
+        GeneralTableIndex index = (GeneralTableIndex) expression;
+
+        return index.identifier.equals(identifier);
+    }
+
     /*
      * 1. sqlExpression
      * 1.1 check the "from" clause.
@@ -467,6 +501,12 @@ public class TypeChecker extends ASTVisitor {
                     return false;
                 }
             }
+
+            if(!isIndexDescenting(expressions.get("i")) && !isGeneralIndexWithIdentifier(expressions.get("i"), "i")) {
+                System.err.println("Relation/View [" + table + "] is general index table" +
+                        ", that doesn't have a descenting 'i' index.");
+                return false;
+            }
         }
 
         /*
@@ -543,29 +583,6 @@ public class TypeChecker extends ASTVisitor {
             BaselineTableName baselineTableName) throws Exception {
         String name = baselineTableName.getName();
         String indexString = baselineTableName.getIndex();
-		
-		/*//Redundant
-		TableReference tableReference1 = new TableReference(name);
-		if(!this.checkValidTableIdentifier(tableReference1))
-		{
-			return false;
-		}
-		
-		try
-		{
-			int index = Integer.parseInt(indexString);
-			if(index < 0)
-			{
-				System.err.println("The constant index is not valid!");
-				return false;
-			}
-		}
-		catch(Exception e)
-		{
-			System.err.println("The constant index is not valid!");
-			return false;
-		}
-		*/
 		
 		/*
 		 * check the whether such a BaselineTableName exists
