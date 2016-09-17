@@ -119,7 +119,7 @@ public class ChainGeneration
         HashSet<String> dependentTables = getDependentTables(tableName);
 
         for(String dependentTable : dependentTables) {
-            if(getTickForTable(dependentTable) > iteration) {
+            if(getTickForTable(dependentTable) >= iteration) {
                 return true;
             }
         }
@@ -128,9 +128,10 @@ public class ChainGeneration
     }
 
     public HashSet<String> getDependentTables(String tableName) {
+        tableName = MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(tableName);
+
         for(int i : simulateTableMap.keySet()) {
             TableByTime tt = simulateTableMap.get(i);
-
             if(tt.getTableSet().contains(tableName)){
                 return tt.getTimeMap().get(tableName);
             }

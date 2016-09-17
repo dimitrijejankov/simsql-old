@@ -78,21 +78,20 @@ public class TableDependencyGraph {
         String tableName = node.tableName;
         String tablePrefix = MultidimensionalTableSchema.getPrefixFromBracketsTableName(tableName);
 
-        // If this is a general index table
-        if(node.indexStrings.size() == 1) {
-            if(backwardEdges.containsKey(tableName)) {
-                return backwardEdges.get(tableName);
-            }
-            else {
-                return backwardEdges.get(tablePrefix + "[i]");
-            }
+        if(backwardEdges.containsKey(tableName)) {
+            return backwardEdges.get(tableName);
         }
-        else {
-        // It's a multidimensional index table
-            for(String edge : backwardEdges.keySet()) {
+
+        if(backwardEdges.containsKey(tablePrefix + "[i]")){
+            return backwardEdges.get(tablePrefix + "[i]");
+        }
+
+        for(String edge : backwardEdges.keySet()) {
+
+            if(edge.matches("^[^_]+((\\[[0-9]+to[0-9]])+|(\\[[0-9]+to])|(\\[[0-9]+]))+$")) {
                 MultidimensionalSchemaIndices indices = new MultidimensionalSchemaIndices(MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(edge));
 
-                if(indices.areIndicesForThisTable(node.indexStrings)){
+                if (indices.areIndicesForThisTable(node.indexStrings)) {
                     return backwardEdges.get(edge);
                 }
             }

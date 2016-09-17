@@ -177,7 +177,7 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
                                                                HashMap<String, Integer> indices) {
         HashMap<String, Integer> newIndices = new HashMap<String, Integer>();
 
-        for(String key : indices.keySet()) {
+        for(String key : expressions.keySet()) {
             MathExpression e = expressions.get(key);
             MPNGenerator generator = new MPNGenerator(e);
             newIndices.put(key, generator.initializeTime(indices));
