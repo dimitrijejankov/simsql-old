@@ -523,6 +523,9 @@ public class PlanInstantiation {
                 for (String tableName : referencedTables) {
                     if (!alreadyInPlanTables.contains(tableName)) {
                         qualifiedTableName = MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(tableName);
+                        String prefix = MultidimensionalTableSchema.getTablePrefixFromQualifiedName(qualifiedTableName);
+                        HashMap<String, Integer> referencedIndices = MultidimensionalTableSchema.getIndicesFromQualifiedName(qualifiedTableName);
+
                         View view;
                         try {
                             view = SimsqlCompiler.catalog.getView(qualifiedTableName);
@@ -530,8 +533,7 @@ public class PlanInstantiation {
                             throw new RuntimeException("exception in generaing the plans for a union view");
                         }
 
-                        HashMap<String, Integer> referencedIndices = MultidimensionalTableSchema.getIndicesFromQualifiedName(qualifiedTableName);
-                        TableReference tempReference = new TableReference(qualifiedTableName, qualifiedTableName, referencedIndices, TableReference.CONSTANT_INDEX_TABLE);
+                        TableReference tempReference = new TableReference(prefix, qualifiedTableName, referencedIndices, TableReference.CONSTANT_INDEX_TABLE);
                         Operator translatorElement = translator.sqlExpressionTranslator.indexTableScan(view, qualifiedTableName, tempReference);
 
                         if (translatorElement instanceof Projection) {

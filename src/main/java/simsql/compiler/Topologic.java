@@ -142,8 +142,41 @@ public class Topologic
 			Operator operator = (Operator)o;
 			
 			HashSet<String> referencedTables = getReferencedRandomTables(operator);
+            referencedTables = findRangeTables(referencedTables);
 			backwardEdge.put(tableName, referencedTables);
 		}
+	}
+
+
+	private HashSet<String> findRangeTables(HashSet<String> tables){
+
+		HashSet<String> toAdd = new HashSet<String>();
+		HashSet<String> toRemove = new HashSet<String>();
+
+		for(String table : tables) {
+
+			if(table.matches("^[^\\[\\]]+\\[i-[0-9]+:i]")) {
+
+				int offset = table.indexOf("[");
+				String expression = table.substring(offset);
+				expression = table.substring(offset + 1, expression.length() - 1);
+
+				int value = Integer.parseInt(expression.split(":")[0].substring(2));
+                String prefix = table.substring(0, offset);
+
+                for(int i = value; i > 0; --i) {
+                    toAdd.add(prefix + "[i-" + i + "]");
+                }
+
+                toAdd.add(prefix + "[i]");
+                toRemove.add(table);
+			}
+		}
+
+		tables.removeAll(toRemove);
+        tables.addAll(toAdd);
+
+		return tables;
 	}
 	
 	public static ArrayList<Operator> topologicalSort(ArrayList<Operator> nodeList)

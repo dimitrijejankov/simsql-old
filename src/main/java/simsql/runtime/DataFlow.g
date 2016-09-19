@@ -53,7 +53,22 @@ parse returns [ArrayList <RelOp> value]
                                  } else if (whichOne.getIdentifier ().equals ("inference")) {
                                     $value.add (new InferOp ($v1.value));
                                  } else if (whichOne.getIdentifier ().equals ("vgwrapper")) {
-                                     $value.add (new VGWrapperOp ($v1.value));
+
+					// there are two cases here.  Since we do this little cheat and encode a union as a VG function,
+					// sometimes a union will come up as a VG function.  To check for this, we see if the name of the
+					// VG function indicates that we are actually doing a union
+					whichOne = $v1.value.get ("function");
+					String funcName = whichOne.getVarList ().get ("functionName").getStringLiteral ();
+					if (funcName.contains ("union_view_function")) {
+
+						// if we got in here, we are actually doing a union
+						$value.add (new UnionOp ($v1.value));
+
+					} else {
+
+						// it is really a VG function, not a union encoded as a VG function
+						$value.add (new VGWrapperOp ($v1.value));
+					}
                                  } else if (whichOne.getIdentifier ().equals ("select")) {
                                      $value.add (new SelectionOp ($v1.value));
                                  } else if (whichOne.getIdentifier ().equals ("tempTable")) {
@@ -73,7 +88,20 @@ parse returns [ArrayList <RelOp> value]
                                  } else if (whichOne.getIdentifier ().equals ("inference")) {
                                     $value.add (new InferOp ($v2.value));
                                  } else if (whichOne.getIdentifier ().equals ("vgwrapper")) {
-                                     $value.add (new VGWrapperOp ($v2.value));
+
+					// just like above: we might have a union encoded as a VG function
+					whichOne = $v2.value.get ("function");
+					String funcName = whichOne.getVarList ().get ("functionName").getStringLiteral ();
+					if (funcName.contains ("union_view_function")) {
+
+						// if we got in here, we are actually doing a union
+						$value.add (new UnionOp ($v2.value));
+
+					} else {
+
+						// it is really a VG function, not a union encoded as a VG function
+						$value.add (new VGWrapperOp ($v2.value));
+					}
 								 } else if (whichOne.getIdentifier ().equals ("select")) {
                                      $value.add (new SelectionOp ($v2.value));
                                  } else if (whichOne.getIdentifier ().equals ("tempTable")) {
