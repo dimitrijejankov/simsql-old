@@ -2018,7 +2018,9 @@ updatePlanOutputAttributes(WhichNode, GraphIn, NodesIn, NodesOut, OutputAttrsIn,
 
         append([seedAttributes(WhichNode, [SeedAttrOut])], IntSeedAttrs, SeedAttrsOut),
 
-        append([SeedAttrOut], VGOutAttrs, NodeOutputAttrs),
+        ((member(parent(ParentNode, WhichNode), GraphIn), member(parent(GrandparentNode, ParentNode), GraphIn), \+ member(join(GrandparentNode, _, _), NodesIn)) ->
+            NodeOutputAttrs = VGOutAttrs;
+            append([SeedAttrOut], VGOutAttrs, NodeOutputAttrs)),
         append([outputAttributes(WhichNode, NodeOutputAttrs)], IntOutputAttrs2, OutputAttrsOut)).
 
 %**** version that deals with the case where the node is a selection
