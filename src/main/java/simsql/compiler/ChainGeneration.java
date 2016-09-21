@@ -127,13 +127,13 @@ public class ChainGeneration
         return false;
     }
 
-    public HashSet<String> getDependentTables(String tableName) {
+    private HashSet<String> getDependentTables(String tableName) {
         tableName = MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(tableName);
 
         for(int i : simulateTableMap.keySet()) {
             TableByTime tt = simulateTableMap.get(i);
             if(tt.getTableSet().contains(tableName)){
-                return tt.getTimeMap().get(tableName);
+                return tt.getTimeMap().get(tableName) != null ? tt.getTimeMap().get(tableName) : new HashSet<String>();
             }
         }
 

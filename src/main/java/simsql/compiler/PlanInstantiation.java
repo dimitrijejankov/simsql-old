@@ -161,7 +161,7 @@ public class PlanInstantiation {
             }
         }
 
-        ArrayList<String> sinkTableList = getFutureUsedTable(tpMap, generatedListMap);
+        ArrayList<String> sinkTableList = getFutureUsedTable(tpMap, end_index);
         if (sinkTableList == null || sinkTableList.size() == 0) {
             sinkTableList = new ArrayList<String>();
             sinkTableList.addAll(tpMap);
@@ -740,18 +740,14 @@ public class PlanInstantiation {
         return table.matches("^[^_]+(_[a-z])+$") || table.matches("^[^_]+(\\[[a-z]])+$");
     }
 
-    private ArrayList<String> getFutureUsedTable(HashSet<String> tpMap, HashMap<String, HashSet<String>> generatedListMap) {
+    private ArrayList<String> getFutureUsedTable(HashSet<String> tpMap, int iteration) {
         ArrayList<String> resultList = new ArrayList<String>();
 
         for (String table : tpMap) {
-            HashSet<String> generatedlist = generatedListMap.get(table);
-            if (generatedlist != null) {
-                for (String key : generatedlist) {
-                    if (!tpMap.contains(key)) {
-                        if (!resultList.contains(table))
-                            resultList.add(table);
-                    }
-                }
+            String qualifiedTableName = MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(table);
+            if (this.chain.isTableRequiredAfterIteration(qualifiedTableName, iteration) || finalTables.contains(qualifiedTableName)) {
+                if (!resultList.contains(table))
+                    resultList.add(table);
             }
         }
 
