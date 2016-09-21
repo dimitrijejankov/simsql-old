@@ -24,6 +24,8 @@
  */
 package simsql.compiler;
 
+import simsql.runtime.Hash;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,17 +36,17 @@ import java.util.HashSet;
  */
 public class TableByTime {
 	private int time;
-	private HashSet<String> tableSet;
+	private ArrayList<String> tableSet;
 	private HashMap<String, HashSet<String>> timeMap;
 	
 	public TableByTime(int time)
 	{
 		this.time = time;
-		this.tableSet = new HashSet<String>();
+		this.tableSet = new ArrayList<String>();
 		this.timeMap = new HashMap<String, HashSet<String>>();
 	}
 	
-	public TableByTime(int time, HashSet<String> tableSet, HashMap<String, HashSet<String>> timeMap)
+	public TableByTime(int time, ArrayList<String> tableSet, HashMap<String, HashSet<String>> timeMap)
 	{
 		this.time = time;
 		this.tableSet = tableSet;
@@ -92,14 +94,14 @@ public class TableByTime {
 	/**
 	 * @return the tableList
 	 */
-	public HashSet<String> getTableSet() {
+	public ArrayList<String> getTableSet() {
 		return tableSet;
 	}
 
 	/**
 	 * @param tableList the tableList to set
 	 */
-	public void setTableSet(HashSet<String> tableList) {
+	public void setTableSet(ArrayList<String> tableList) {
 		this.tableSet = tableList;
 	}
 
@@ -120,35 +122,46 @@ public class TableByTime {
 	public TableByTime copy()
 	{
 		int c_time = time;
-		HashSet<String> c_tableList = copy(tableSet);
+		ArrayList<String> c_tableList = copyArrayList(tableSet);
 		HashMap<String, HashSet<String>> c_timeMap = new HashMap<String, HashSet<String>>();
-		
-		if(c_timeMap != null)
+
+		for(String s: timeMap.keySet())
 		{
-			for(String s: timeMap.keySet())
-			{
-				c_timeMap.put(s, copy(timeMap.get(s)));
-			}
+			c_timeMap.put(s, copyHashSet(timeMap.get(s)));
 		}
 		
 		return new TableByTime(c_time, c_tableList, c_timeMap);
 	}
 	
-	public HashSet<String> copy(HashSet<String> set)
+	public ArrayList<String> copyArrayList(ArrayList<String> set)
 	{
-		HashSet<String> resultSet = new HashSet<String>();
+		ArrayList<String> resultSet = new ArrayList<String>();
 		if(set != null)
 		{
 			for(String temp: set)
 			{
-				resultSet.add(new String(temp));
+				resultSet.add(temp);
 			}
 		}
 		
 		return resultSet;
 	}
-	
-	
+
+	public HashSet<String> copyHashSet(HashSet<String> set)
+	{
+        HashSet<String> resultSet = new HashSet<String>();
+		if(set != null)
+		{
+			for(String temp: set)
+			{
+				resultSet.add(temp);
+			}
+		}
+
+		return resultSet;
+	}
+
+
 	public String toString()
 	{
 		String result = "time " + time;

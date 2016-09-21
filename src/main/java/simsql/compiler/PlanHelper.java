@@ -158,8 +158,7 @@ public class PlanHelper {
         for (TableScan ts : indexedTableList) {
 
             String prefix = MultidimensionalTableSchema.getTablePrefixFromQualifiedName(ts.getTableName());
-            String tableName = MultidimensionalTableSchema.getBracketsTableNameFromIndices(prefix, ts.getIndexStrings());
-            requiredTableList.add(new TimeTableNode(tableName, ts.getIndexStrings()));
+            requiredTableList.add(new TimeTableNode(prefix, ts.getIndexStrings()));
         }
 
         return requiredTableList;

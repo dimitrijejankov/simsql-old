@@ -73,20 +73,20 @@ public class ChainGeneration
 
         TableDependencyGraph dependencyGraph = new TableDependencyGraph(requiredTables, topologic.getBackwardEdges());
 
-		/*
-		 * 1. starting point
-		 */
-		startPointList = dependencyGraph.getStartingPoint();
-
         /*
-		 * 2. ruleMap
+		 * 1. ruleMap
 		 */
         ruleMap = dependencyGraph.generateRuleMap();
 
         /*
-		 * 3. simulateTableMap
+		 * 2. simulateTableMap
 		 */
         simulateTableMap = dependencyGraph.extractSimulateTableMap();
+
+		/*
+		 * 3. starting point
+		 */
+		startPointList = simulateTableMap.get(0).getTableSet();
 
         /*
 		 * 4. startTimeTick
