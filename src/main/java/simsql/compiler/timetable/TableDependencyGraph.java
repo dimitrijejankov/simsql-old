@@ -89,8 +89,10 @@ public class TableDependencyGraph {
 
             if(edge.matches("^[^_]+((\\[[0-9]+to[0-9]])+|(\\[[0-9]+to])|(\\[[0-9]+]))+$")) {
                 MultidimensionalSchemaIndices indices = new MultidimensionalSchemaIndices(MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(edge));
+                String prefix = MultidimensionalTableSchema.getPrefixFromBracketsTableName(edge);
 
-                if (indices.areIndicesForThisTable(node.getIndexStrings())) {
+                if (indices.areIndicesForThisTable(node.getIndexStrings()) &&
+                    prefix.equals(node.getTableName())) {
                     return backwardEdges.get(edge);
                 }
             }
