@@ -65,8 +65,9 @@ public class MultidimensionalSchemaIndices {
     public String getPresentationSuffix() {
         String ret = "";
 
+        int i = 0;
         for(String key : indices.keySet()) {
-            ret += "[" + indices.get(key).getPresentationStringValue() + "]";
+            ret += "[" + labelingOrder[i++]  + ":" + indices.get(key).getPresentationStringValue() + "]";
         }
 
         return ret;

@@ -40,22 +40,27 @@ public class DropElement extends SQLExpression{
 	public static final int UNION_VIEW = 5;
 	public static final int VGFUNC = 6;
 	public static final int FUNC = 7;
+	public static final int MULTIDIMENSIONAL_INDEX_TABLE = 8;
 	
-	public String objectName;
+	private String objectName;
 	public int type;
 	public boolean isRandom;
+    public MultidimensionalSchemaIndices indices;
 	
 	public DropElement(String objectName, int objectType) {
 		super();
-		this.objectName = objectName.toLowerCase();
+		this.setObjectName(objectName.toLowerCase());
 		this.type = objectType;
 		this.isRandom = false;
 	}
-	
-	
-	public String getObjectName() {
-		return objectName;
-	}
+
+    public DropElement(String objectName, MultidimensionalSchemaIndices ids, int objectType) {
+        super();
+        this.setObjectName(objectName.toLowerCase());
+        this.type = objectType;
+        this.isRandom = false;
+        this.indices = ids;
+    }
 
 
 
@@ -93,6 +98,15 @@ public class DropElement extends SQLExpression{
 	}
 
 
+    public String getObjectName() {
+
+        if(type == MULTIDIMENSIONAL_INDEX_TABLE) {
+            return MultidimensionalTableSchema.getGeneralIndexTableNameFromIndices(objectName, indices);
+        }
+
+        return objectName;
+    }
+
 	/**
 	 * 
 	 */
@@ -105,61 +119,62 @@ public class DropElement extends SQLExpression{
 		switch(type)
 		{
 			case DropElement.TABLEORCOMMON_RANDOM_TABLE:
-				relation = SimsqlCompiler.catalog.getRelation(objectName);
+				relation = SimsqlCompiler.catalog.getRelation(getObjectName());
 				if(relation != null)
 				{
-					SimsqlCompiler.catalog.dropRelation(objectName);
+					SimsqlCompiler.catalog.dropRelation(getObjectName());
 				}
 				else
 				{
-					SimsqlCompiler.catalog.dropView(objectName);
+					SimsqlCompiler.catalog.dropView(getObjectName());
 				}
 				break;
 				
 			case DropElement.CONSTANT_INDEX_TABLE:
 			case DropElement.GENERAL_INDEX_TABLE:
-				SimsqlCompiler.catalog.dropView(objectName);
-				SimsqlCompiler.catalog.dropIndexTable(objectName);
-				SimsqlCompiler.catalog.deleteMCDependecy(objectName);
+            case DropElement.MULTIDIMENSIONAL_INDEX_TABLE:
+				SimsqlCompiler.catalog.dropView(getObjectName());
+				SimsqlCompiler.catalog.dropIndexTable(getObjectName());
+				SimsqlCompiler.catalog.deleteMCDependecy(getObjectName());
 				break;
 				
 			case DropElement.VIEW:
-				view = SimsqlCompiler.catalog.getView(objectName);
+				view = SimsqlCompiler.catalog.getView(getObjectName());
 				
 				if(view != null)
 				{
-					SimsqlCompiler.catalog.dropView(objectName);
+					SimsqlCompiler.catalog.dropView(getObjectName());
 				}
 				break;
 				
 			case DropElement.UNION_VIEW:
-				view = SimsqlCompiler.catalog.getView(objectName);
+				view = SimsqlCompiler.catalog.getView(getObjectName());
 				if(view != null)
 				{
-					SimsqlCompiler.catalog.dropView(objectName);
-					SimsqlCompiler.catalog.dropIndexTable(objectName);
-					SimsqlCompiler.catalog.deleteMCDependecy(objectName);
+					SimsqlCompiler.catalog.dropView(getObjectName());
+					SimsqlCompiler.catalog.dropIndexTable(getObjectName());
+					SimsqlCompiler.catalog.deleteMCDependecy(getObjectName());
 				}
 				break;
 				
 				
 			case DropElement.VGFUNC:
-				SimsqlCompiler.catalog.dropVGFunction(objectName);
+				SimsqlCompiler.catalog.dropVGFunction(getObjectName());
 				break;
 				
 			case DropElement.FUNC:
-				SimsqlCompiler.catalog.dropFunction(objectName);
+				SimsqlCompiler.catalog.dropFunction(getObjectName());
 				break;
 				
 			case DropElement.ARRAY_CONSTANT_INDEX_TABLE:
-				int start = objectName.lastIndexOf("_");
+				int start = getObjectName().lastIndexOf("_");
 				if(start < 0)
 				{
 					throw new RuntimeException("There is exception in droping the array index table");
 				}
 				
-				String suffix = objectName.substring(start+1, objectName.length());
-				String realTableName = objectName.substring(0, start);
+				String suffix = getObjectName().substring(start+1, getObjectName().length());
+				String realTableName = getObjectName().substring(0, start);
 				
 				if(suffix != null)
 				{

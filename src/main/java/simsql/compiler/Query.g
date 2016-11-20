@@ -168,6 +168,11 @@ dropTableStatement returns[Expression statement]:
 			      $statement = new DropElement($tableName.text+"_" + $indexName.text, DropElement.CONSTANT_INDEX_TABLE);
 			}
 			|
+			tableName=IDENTIFIER ids=multidimensionalSchemaIndices
+			{
+			      $statement = new DropElement($tableName.text, ids, DropElement.MULTIDIMENSIONAL_INDEX_TABLE);
+			}
+			|
 			tableName=IDENTIFIER LBRACKET GENERALTABLEINDEX RBRACKET
 			{
 			      $statement = new DropElement($tableName.text+"_i", DropElement.GENERAL_INDEX_TABLE); 
