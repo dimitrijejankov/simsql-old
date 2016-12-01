@@ -27,7 +27,7 @@ public class build_matrix_from_col extends ReflectedUDFunction {
   }
 
   public build_matrix_from_col() {
-    super("simsql.functions.ud.diag_matrix", "build", new AttributeType(new MatrixType("matrix[][]")), double[].class, double.class);
+    super("simsql.functions.ud.build_matrix_from_col", "build", new AttributeType(new MatrixType("matrix[][]")), double[].class, double.class);
     setInputTypes(new AttributeType(new VectorType("vector[a]")), new AttributeType(new DoubleType()));
     setOutputType(new AttributeType(new MatrixType("matrix[a][a]")));
   }
