@@ -555,11 +555,6 @@ public class TypeChecker extends ASTVisitor {
                 ArrayList<MathExpression> expressionList = new ArrayList<MathExpression>();
                 GeneralTableIndexExtractor.getGeneralTableIndexInMathExpression(indexMathExp, expressionList);
 
-                if (expressionList.size() == 0) {
-                    System.err.println("The general index does not have index \"i\" !");
-                    return false;
-                }
-
                 if (!GeneralTableIndexChecker.checkInMathExpression(indexMathExp)) {
                     System.err.println("The general index does not follow the rule!");
                     return false;

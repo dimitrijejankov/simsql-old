@@ -87,10 +87,8 @@ public class GeneralTableIndexChecker {
 	public static boolean checkInGeneralFunctionExpression(
 			GeneralFunctionExpression generalFunctionExpression) {
 		ArrayList<MathExpression> paraList = generalFunctionExpression.parasList;
-		for(int i = 0; i < paraList.size(); i++)
-		{
-			MathExpression expression = paraList.get(i);
-			if(!checkInMathExpression(expression))
+		for (MathExpression expression : paraList) {
+			if (!checkInMathExpression(expression))
 				return false;
 		}
 		return true;
@@ -114,9 +112,7 @@ public class GeneralTableIndexChecker {
 		{
 			return true;
 		}
-		else
-		{
-			return false;
-		}
+
+		return false;
 	}
 }
