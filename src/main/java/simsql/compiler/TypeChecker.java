@@ -555,11 +555,6 @@ public class TypeChecker extends ASTVisitor {
                 ArrayList<MathExpression> expressionList = new ArrayList<MathExpression>();
                 GeneralTableIndexExtractor.getGeneralTableIndexInMathExpression(indexMathExp, expressionList);
 
-                if (expressionList.size() == 0) {
-                    System.err.println("The general index does not have index \"i\" !");
-                    return false;
-                }
-
                 if (!GeneralTableIndexChecker.checkInMathExpression(indexMathExp)) {
                     System.err.println("The general index does not follow the rule!");
                     return false;
@@ -2640,7 +2635,7 @@ public class TypeChecker extends ASTVisitor {
      */
     @Override
     public boolean visitDropElement(DropElement dropElement) throws Exception {
-        String objectName = dropElement.objectName;
+        String objectName = dropElement.getObjectName();
         int type = dropElement.type;
         boolean subCheck = true;
         Relation relation;
@@ -2655,28 +2650,8 @@ public class TypeChecker extends ASTVisitor {
             case DropElement.TABLEORCOMMON_RANDOM_TABLE:
             case DropElement.CONSTANT_INDEX_TABLE:
             case DropElement.GENERAL_INDEX_TABLE:
+            case DropElement.MULTIDIMENSIONAL_INDEX_TABLE:
 
-                //check the name rule. We use the checkValidTableIdentifier function to check that.
-                if (type == DropElement.TABLEORCOMMON_RANDOM_TABLE) {
-                    tableReference = new TableReference(objectName,
-                            objectName,
-                            new HashMap<String, Integer>(),
-                            TableReference.COMMON_TABLE);
-                } else if (type == DropElement.CONSTANT_INDEX_TABLE) {
-                    tableReference = new TableReference(objectName,
-                            objectName,
-                            new HashMap<String, Integer>(),
-                            TableReference.CONSTANT_INDEX_TABLE);
-                } else {
-                    tableReference = new TableReference(objectName,
-                            objectName,
-                            new HashMap<String, Integer>(),
-                            TableReference.GENERAL_INDEX_TABLE);
-                }
-
-                if (!this.checkValidTableIdentifier(tableReference)) {
-                    return false;
-                }
 
                 //check the catlog
                 relation = catalog.getRelation(objectName);
@@ -2686,7 +2661,11 @@ public class TypeChecker extends ASTVisitor {
                     subCheck = false;
                     if (type == DropElement.TABLEORCOMMON_RANDOM_TABLE) {
                         System.err.println("Entity [" + objectName + "] does not exist!");
-                    } else {
+                    }
+                    else if(type == DropElement.MULTIDIMENSIONAL_INDEX_TABLE) {
+                        System.err.println("Entity [" + MultidimensionalTableSchema.getLabeledBracketsGeneralIndexTableNameFromGeneralIndexTableName(objectName) + "] does not exist!");
+                    }
+                    else {
                         int start = objectName.lastIndexOf("_");
                         String outputObjectName = objectName.substring(0, start) + "[" +
                                 objectName.substring(start + 1, objectName.length()) + "]";
@@ -2698,7 +2677,13 @@ public class TypeChecker extends ASTVisitor {
                     if (type == DropElement.TABLEORCOMMON_RANDOM_TABLE) {
                         System.err.println("Wrong type of table [" + objectName + "]: both table and" +
                                 "random table exist!");
-                    } else {
+                    }
+                    else if(type == DropElement.MULTIDIMENSIONAL_INDEX_TABLE) {
+                        System.err.println("Entity [" +
+                                MultidimensionalTableSchema.getLabeledBracketsGeneralIndexTableNameFromGeneralIndexTableName(objectName) + "] both table and " +
+                                "random table exist!");
+                    }
+                    else {
                         int start = objectName.lastIndexOf("_");
                         String outputObjectName = objectName.substring(0, start) + "[" +
                                 objectName.substring(start + 1, objectName.length()) + "]";
@@ -2709,14 +2694,18 @@ public class TypeChecker extends ASTVisitor {
 
 
                 } else if (relation != null && view == null) {
-                    if (type == DropElement.CONSTANT_INDEX_TABLE
-                            || type == DropElement.GENERAL_INDEX_TABLE) {
+                    if (type == DropElement.CONSTANT_INDEX_TABLE || type == DropElement.GENERAL_INDEX_TABLE ) {
                         subCheck = false;
                         int start = objectName.lastIndexOf("_");
                         String outputObjectName = objectName.substring(0, start) + "[" +
                                 objectName.substring(start + 1, objectName.length()) + "]";
 
                         System.err.println("Table [" + outputObjectName + "] is a Simulation random table, but we find that it is a relation!");
+                    }
+                    else if(type == DropElement.MULTIDIMENSIONAL_INDEX_TABLE) {
+                        System.err.println("Table [" +
+                                MultidimensionalTableSchema.getLabeledBracketsGeneralIndexTableNameFromGeneralIndexTableName(objectName) +
+                                "] is a Simulation random table, but we find that it is a relation!");
                     }
 
                     boolean hasReferencingTable = catalog.hasReferencingTable(objectName);

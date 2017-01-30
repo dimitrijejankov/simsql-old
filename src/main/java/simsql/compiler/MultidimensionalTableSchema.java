@@ -192,7 +192,32 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
         return bracketsName.replace("]", "");
     }
 
+    /**
+     * Generate general index table name from the index specification
+     * @param prefix the table name prefix
+     * @param indices a MultidimensionalSchemaIndices object that has the index specification for the table schema
+     * @return general index table name for example tablePrefix_2to_5to6
+     */
     public static String getGeneralIndexTableNameFromIndices(String prefix, MultidimensionalSchemaIndices indices) {
         return prefix + indices.getSuffix();
+    }
+
+    /**
+     * Generate a brackets labeled general index table name from the index specification
+     * @param tableName the table name in it's general index form, for example tablePrefix_2to_5to6
+     * @return general index table name for example tablePrefix[i:2...][j:5...6]
+     */
+    public static String getLabeledBracketsGeneralIndexTableNameFromGeneralIndexTableName(String tableName) {
+
+        String dots = tableName.replace("to", "..."); // tablePrefix_2..._5...6
+        String[] splits = dots.split("_"); // ["tablePrefix", "2...", 5...6"]
+
+        String ret = splits[0]; // "tablePrefix"
+
+        for(int i = 1; i < splits.length; i++) {
+            ret +=  "[" + labelingOrder[i-1] + ":" + splits[i] + "]";
+        }
+
+        return ret;
     }
 }

@@ -560,7 +560,7 @@ public class TableScan extends Operator{
 		
 		String c_tableName = this.tableName;
 		ArrayList<String> c_attributeList = copyHelper.copyStringList(attributeList);
-		RelationStatistics c_relationStatistics = this.relationStatistics;
+		RelationStatistics c_relationStatistics = this.relationStatistics.copy();
 
         HashMap<String, Integer> c_indexStrings = new HashMap<String, Integer>(indexStrings);
 		

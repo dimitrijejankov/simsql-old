@@ -106,7 +106,7 @@ public:
         theta = *input.theta;
         initialized = true;
 
-        printf("Init %d \n", id);
+        printf("Init %ld \n", id);
         fflush(stdout);
     }
 
@@ -129,7 +129,7 @@ public:
         return 0;
     }
 
-    printf("Init id = %d, w_a = %f \n", id, w_a);
+    printf("Init id = %ld, w_a = %f \n", id, w_a);
     fflush(stdout);
 
     output.id = &id;
@@ -137,7 +137,7 @@ public:
     output.w_b = &w_b;
     output.theta = &theta;
 
-    printf("Init id = %d, w_a = %f \n", *output.id, *output.w_a);
+    printf("Init id = %ld, w_a = %f \n", *output.id, *output.w_a);
     fflush(stdout);
 
     active = false;
