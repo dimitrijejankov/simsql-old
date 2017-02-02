@@ -102,25 +102,28 @@ public class TableDependencyGraph {
     }
 
 
-    private TableByTime getNextTick(int minFirstIndex) {
+    private TableByTime getNextTick() {
 
-        boolean foundTables = true;
         TableByTime tableByTime = new TableByTime(time);
 
-        while(foundTables){
-            // If there is a table found that can be added to the tableByTime
-            foundTables = false;
+        // TODO MAKE THIS GRAPH CUTTING ALGORITHM SMART
 
-            for(TimeTableNode table : nodes.keySet()) {
-                if(nodes.get(table).isEmpty() && table.getIndexStrings().get("i") == minFirstIndex) {
-                    tableByTime.addTable(table.getBracketsTableName());
-                    foundTables = true;
-                }
+        // Get the fist layer of independent tables
+        for(TimeTableNode table : nodes.keySet()) {
+            if(nodes.get(table).isEmpty()) {
+                tableByTime.addTable(table.getBracketsTableName());
             }
+        }
 
-            for(String table : tableByTime.getTableSet()) {
-                updateEdges(tableByTime, table);
+        // Get the layer that just became independent
+        for(TimeTableNode table : nodes.keySet()) {
+            if(nodes.get(table).isEmpty()) {
+                tableByTime.addTable(table.getBracketsTableName());
             }
+        }
+
+        for(String table : tableByTime.getTableSet()) {
+            updateEdges(tableByTime, table);
         }
 
         time++;
@@ -176,9 +179,7 @@ public class TableDependencyGraph {
 
         while (nodes.size() != 0) {
 
-            int minFirstIndex = findMinimumFirstIndex();
-
-            TableByTime tt = getNextTick(minFirstIndex);
+            TableByTime tt = getNextTick();
 
             if(tt.getTableSet().isEmpty()) {
                 throw new RuntimeException("Could not extract simulateTableMap, circles in the graph!");

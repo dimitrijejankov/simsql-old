@@ -277,7 +277,7 @@ public class PlanInstantiation {
 
     private String findMatchingGeneralIndexTable(String table) {
 
-        if(table.matches("^[^_]+((\\[[0-9]])+){2,}$")) {
+        if(table.matches("^[^_]+((\\[[0-9]+])+){2,}$")) {
             String prefix = MultidimensionalTableSchema.getPrefixFromBracketsTableName(table);
             HashMap<String, Integer> indices = MultidimensionalTableSchema.getIndicesFromBracketsName(table);
 
