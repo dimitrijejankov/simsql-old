@@ -134,13 +134,11 @@ public class Topologic
 	
 	public void generateBackwardEdges()
 	{
-		for(Object o:randomTableMap.keySet())
+		for(Operator operator : randomTableMap.keySet())
 		{
-			String tableName = randomTableMap.get(o);
+			String tableName = randomTableMap.get(operator);
 			tableName = getTableName(tableName);
-			
-			Operator operator = (Operator)o;
-			
+
 			HashSet<String> referencedTables = getReferencedRandomTables(operator);
             referencedTables = findRangeTables(referencedTables);
 			backwardEdge.put(tableName, referencedTables);

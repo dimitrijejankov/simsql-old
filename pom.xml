@@ -104,7 +104,7 @@
                                 <argument>-f</argument>
                                 <argument>VGFunction.jni.Makefile</argument>
                                 <argument>CC=/usr/bin/g++</argument>
-                                <argument>INCLUDE=${java.home}/include</argument>
+                                <argument>INCLUDE=/usr/java/default/include</argument>
                                 <argument>OUTDIR=${basedir}/src/generated/resources/simsql/runtime</argument>
                             </arguments>
                         </configuration>

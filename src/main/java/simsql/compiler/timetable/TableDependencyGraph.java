@@ -29,16 +29,25 @@ public class TableDependencyGraph {
 
     private void generateGraph(LinkedList<TimeTableNode> finalNodes) {
 
-        HashSet<TimeTableNode> processingList = new HashSet<TimeTableNode>(finalNodes);
+        LinkedList<TimeTableNode> processingList = new LinkedList<TimeTableNode>(finalNodes);
         HashSet<TimeTableNode> visitedNodes = new HashSet<TimeTableNode>();
 
         while (processingList.size() != 0) {
 
+            long l1 = System.nanoTime();
+
             // set the fist element from the HashSet
             TimeTableNode activeNode = processingList.iterator().next();
 
+            long l2 = System.nanoTime();
+
             HashSet<String> edges = findBackwardEdge(activeNode);
+
+            long l3 = System.nanoTime();
+
             HashSet<TimeTableNode> tables = evaluateDependentTables(edges, activeNode.getIndexStrings());
+
+            long l4 = System.nanoTime();
 
             // only adds not previously visited tables to the processing list
             for (TimeTableNode table : tables) {
@@ -47,11 +56,25 @@ public class TableDependencyGraph {
                 }
             }
 
+            long l5 = System.nanoTime();
+
             // adds the dependencies for the table
             nodes.put(activeNode, tables);
 
+            long l6 = System.nanoTime();
+
             processingList.remove(activeNode);
             visitedNodes.add(activeNode);
+
+            long l7 = System.nanoTime();
+
+            System.out.println("t1 = " + (l2 - l1));
+            System.out.println("t2 = " + (l3 - l2));
+            System.out.println("t3 = " + (l4 - l3));
+            System.out.println("t4 = " + (l5 - l4));
+            System.out.println("t5 = " + (l6 - l5));
+            System.out.println("t6 = " + (l7 - l6));
+
         }
 
     }

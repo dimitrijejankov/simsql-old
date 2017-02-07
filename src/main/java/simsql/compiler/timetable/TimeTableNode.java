@@ -38,7 +38,8 @@ public class TimeTableNode {
 
     @Override
     public int hashCode() {
-        return tableName.hashCode();
+        // the i index is added to get a more even distribution
+        return tableName.hashCode() + indexStrings.get("i");
     }
 
     @Override
