@@ -9,27 +9,28 @@ import java.lang.management.*;
 
 /**
  * A function for building a matrix from a vector.
- * The input vector is put at the column indicated by the input position. 
+ * The input vector is a column in the output matrix.
+ * Its position is indicated by the second input (starting from 0).
+ * The last input is the column dimension of the output matrix. 
  * The other entries of the matrix are 0.
  * 
  * @author Shangyu
  */
 public class build_matrix_from_col extends ReflectedUDFunction {
 
-  public static double[][] build(double[] vec, double pos) {
+  public static double[][] build(double[] vec, int pos, int col_dim) {
 
-    double[][] m = new double[vec.length][vec.length];
-    int mypos = (int)pos;
+    double[][] m = new double[vec.length][col_dim];
     for (int i = 0; i < vec.length; i++)
-      m[i][mypos] = vec[i];
+      m[i][pos] = vec[i];
 
     return m;
   }
 
   public build_matrix_from_col() {
-    super("simsql.functions.ud.build_matrix_from_col", "build", new AttributeType(new MatrixType("matrix[][]")), double[].class, double.class);
-    setInputTypes(new AttributeType(new VectorType("vector[a]")), new AttributeType(new DoubleType()));
-    setOutputType(new AttributeType(new MatrixType("matrix[a][a]")));
+    super("simsql.functions.ud.build_matrix_from_col", "build", new AttributeType(new MatrixType("matrix[][]")), double[].class, int.class, int.class);
+    setInputTypes(new AttributeType(new VectorType("vector[a]")), new AttributeType(new IntType()), new AttributeType(new IntType()));
+    setOutputType(new AttributeType(new MatrixType("matrix[a][b]")));
   }
 
   @Override
