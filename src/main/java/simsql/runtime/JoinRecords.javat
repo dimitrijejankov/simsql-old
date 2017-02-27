@@ -170,7 +170,9 @@ class RightOut extends HashableRecord {
 }
 
 class Result extends JoinResultRecord {
-  
+
+  <<<<functionDeclarations>>>>
+
   public int getNumAttributes () {
     return <<<<outputNumOutAtts>>>>; 
   }
@@ -179,13 +181,10 @@ class Result extends JoinResultRecord {
 
 
   private static final RecordPool jpool_res = new RecordPool(32, new Result());
-    
+
   // join two records; return null if they don't match; return the resulting
   // Record object otherwise
   static public Record join (AbstractRecord left, AbstractRecord right) {
-
-  <<<<functionDeclarations>>>>    
-
 
     // make sure that we have the records in the correct order (OutL on the left,
     // OurR on the right)... if this is not the case, then swap them
@@ -217,8 +216,6 @@ class Result extends JoinResultRecord {
   // tests the join predicate 
   public static Bitstring test(AbstractRecord left, AbstractRecord right) {
 
-  <<<<functionDeclarations>>>>    
-
 
     // make sure that we have the records in the correct order (OutL on the left,
     // OurR on the right)... if this is not the case, then swap them
@@ -236,8 +233,6 @@ class Result extends JoinResultRecord {
 
   // assembles the record for the semijoin.
   public static Record compose(AbstractRecord left, AbstractRecord right, Bitstring predResult) {
-
-  <<<<functionDeclarations>>>>    
 
 
     // make sure that we have the records in the correct order (OutL on the left,
