@@ -147,7 +147,7 @@ public:
     currentColumn = currentColumn + 1 < input_split ? currentColumn + 1 : 0;
 
     // done outputting
-    active = currentRow < input_split && currentColumn < output_split ? true : false;
+    active = currentRow < output_split ? true : false;
 
     return 1;
   }

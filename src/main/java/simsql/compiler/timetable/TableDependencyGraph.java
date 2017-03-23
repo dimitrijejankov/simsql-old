@@ -137,7 +137,6 @@ public class TableDependencyGraph {
                 tableByTime.addTable(table.getBracketsTableName());
             }
         }
-
         // Get the layer that just became independent
         for(TimeTableNode table : nodes.keySet()) {
             if(nodes.get(table).isEmpty()) {
