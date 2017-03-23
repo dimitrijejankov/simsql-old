@@ -15,8 +15,6 @@ public class outer_product extends ReflectedUDFunction {
     double[] vec1 = a[0];
     double[] vec2 = b[0];
 
-    System.out.println(vec1.length, vec2.length);
-
     double[][] sum = new double[vec1.length][vec2.length];
     for (int i = 0; i < vec1.length; i++)
       for (int j = 0; j < vec2.length; j++)
