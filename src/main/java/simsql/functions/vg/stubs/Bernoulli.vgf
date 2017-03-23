@@ -1,3 +1,0 @@
-vgfunction Bernoulli
-input [prob: double]
-output [value: integer]

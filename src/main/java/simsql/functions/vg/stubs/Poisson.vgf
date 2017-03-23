@@ -1,3 +1,0 @@
-vgfunction Poisson
-input [lambda: double]
-output [value: integer]

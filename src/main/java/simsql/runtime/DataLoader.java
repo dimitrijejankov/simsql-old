@@ -47,7 +47,7 @@ public abstract class DataLoader {
       //pr = new PipedReader();
       pw = new PipedWriter();
       //pw.connect(pr);
-      pr = new PipedReader(pw, 1024 * 1024);
+      pr = new PipedReader(pw, 100 * 1024 * 1024);
       br = new BufferedReader(pr);
     } catch (Exception e) {
       throw new RuntimeException("Failed to connect streams for bulk loading!");

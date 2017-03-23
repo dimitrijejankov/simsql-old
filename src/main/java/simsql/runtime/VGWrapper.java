@@ -97,6 +97,9 @@ class VGWrapper {
   /** Simple constructor -- starts up the VGWrapper. */
   public VGWrapper(int bufferSize, VGFunction vgf, int numMC, OutputAdapter writer, ObjectWithPipeNetwork pipe) {
 
+    System.out.println("Allocating buffer VG!!!!");
+    System.out.flush();
+
     // copy the function, numMC, pipe and writer
     this.vgf = vgf;
     this.numMC = numMC;

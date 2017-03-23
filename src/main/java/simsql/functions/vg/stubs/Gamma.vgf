@@ -1,3 +1,0 @@
-vgfunction Gamma
-input [shape: double, scale: double]
-output [value: double]

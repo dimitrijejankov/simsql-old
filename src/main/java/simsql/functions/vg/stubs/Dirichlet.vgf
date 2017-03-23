@@ -1,3 +1,0 @@
-vgfunction Dirichlet
-input [num_rv: integer, rv: integer, value: double]
-output [rv: integer, value: double]

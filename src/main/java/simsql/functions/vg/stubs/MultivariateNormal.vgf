@@ -1,3 +1,0 @@
-vgfunction MultivariateNormal
-input [num_rv: integer, rv: integer, mean: double, rv_x: integer, rv_y: integer, covar: double]
-output [rv: integer, value: double]

@@ -46,8 +46,8 @@ class MatrixVectorMultiply : public VGFunction {
 private:
 
   // input matrix and vector.
-  gsl_matrix *input1;
-  gsl_vector *input2;
+  gsl_matrix *input1 = NULL;
+  gsl_vector *input2 = NULL;
 
   bool active;
 
@@ -89,7 +89,14 @@ public:
    */
   void clearParams() {
 
-    // do nothing.
+    // if input
+    if(input1 != NULL)
+        gsl_matrix_free(input1);
+    input1 = NULL;
+
+    if(input2 != NULL)
+        gsl_vector_free(input2);
+    input2 = NULL;
   }
 
   

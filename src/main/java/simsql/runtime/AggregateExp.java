@@ -19,18 +19,17 @@
  *****************************************************************************/
 
 
-
 package simsql.runtime;
 
 /**
  * This class is used to store aggregate operations of the form
- *
+ * <p>
  * var = aggType(expression)
  */
 class AggregateExp {
 
     public enum Type {
-	COUNT, COUNTALL, SUM, AVG, VAR, STDEV, MAX, MIN, VECTOR, ROWMATRIX, COLMATRIX
+        COUNT, COUNTALL, SUM, AVG, VAR, STDEV, MAX, MIN, VECTOR, ROWMATRIX, COLMATRIX
     }
 
     private String identifier;
@@ -38,27 +37,24 @@ class AggregateExp {
     private Expression exp;
 
     public String getIdentifier() {
-	return identifier;
+        return identifier;
     }
 
     public AggregateExp.Type getType() {
-	return type;
+        return type;
     }
 
     public Expression getExpression() {
-	return exp;
+        return exp;
     }
 
     public String print() {
-	return identifier + ": " + type.toString() + "(" + exp.print() + ")";
+        return identifier + ": " + type.toString() + "(" + exp.print() + ")";
     }
 
     public AggregateExp(String id, String t, Expression e) {
-	identifier = id;
-	exp = e;
-	type = AggregateExp.Type.valueOf(t.toUpperCase());
-	if (type == null) {
-	    throw new RuntimeException("Unrecognized aggregate type " + t);
-	}
-    } 
+        identifier = id;
+        exp = e;
+        type = AggregateExp.Type.valueOf(t.toUpperCase());
+    }
 }

@@ -1,15 +1,6 @@
 package simsql.runtime;
 
 import java.nio.*;
-import java.io.*;
-import java.util.*;
-import java.lang.reflect.*;
-import java.lang.ref.*;
-import java.util.concurrent.*;
-import org.apache.hadoop.fs.*;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.conf.*;
-import java.text.NumberFormat;
 
 /**
  * Encapsulates all the UDWrapper logic.
@@ -18,218 +9,250 @@ import java.text.NumberFormat;
  */
 public class UDWrapper {
 
-  // the position exchange buffers
-  private LongBuffer posBuffIn;
-  private LongBuffer posBuffOut;
-  
-  // the data exchange buffers
-  private ByteBuffer dataBuffIn;
-  private ByteBuffer dataBuffOut;
+    // the position exchange buffers
+    private LongBuffer posBuffIn;
+    private LongBuffer posBuffOut;
 
-  private int dataStartPosition = 0;  // for the cross products.
-  private int posStartPosition = 0;   // same thing.
+    // the data exchange buffers
+    private ByteBuffer dataBuffIn;
+    private ByteBuffer dataBuffOut;
 
-  // the tuple buffer
-  private LongBuffer tupleBuf;
+    private int dataStartPosition = 0;  // for the cross products.
+    private int posStartPosition = 0;   // same thing.
 
-  // data types on the UDF
-  private AttributeType[] inTypes;
-  private AttributeType outType;
-    
-  // the UD function
-  VGFunction udf;
+    // the tuple buffer
+    private LongBuffer tupleBuf;
 
-  /** Simple constructor -- starts up the UDWrapper. */
-  public UDWrapper(VGFunction udf) {
+    // data types on the UDF
+    private AttributeType[] inTypes;
+    private AttributeType outType;
 
-    // copy the function
-    this.udf = udf;
+    // the UD function
+    VGFunction udf;
 
-    // get the input and output types.
-    inTypes = udf.getInputTypes();
-    outType = udf.getOutputTypes()[0];
-  }
+    /** Simple constructor -- starts up the UDWrapper. */
+    public UDWrapper(VGFunction udf) {
 
-  /** Runs the UDWrapper. */
-  public Attribute run(IntermediateValue[] inParams, int numMC) {
+        System.out.println("Allocating buffer UD!!!!");
+        System.out.flush();
 
-    // System.out.println("The number of numMC is: " + numMC);
+        // copy the function
+        this.udf = udf;
 
-    IntermediateValue outVal = new IntermediateValue(outType, numMC);
+        // get the input and output types.
+        inTypes = udf.getInputTypes();
+        outType = udf.getOutputTypes()[0];
 
-    calculateSize(inParams, numMC);
+        ByteBuffer pbo = ByteBuffer.allocateDirect(1000*1000*8 + 20);
+        pbo.order(ByteOrder.nativeOrder());
+        posBuffOut = pbo.asLongBuffer();
 
-    for (int i=0;i<numMC;i++) {
+        // and data output buffer.
+        dataBuffOut = ByteBuffer.allocateDirect(1000*1000*8 + 20);
+        dataBuffOut.order(ByteOrder.nativeOrder());
 
-      tupleBuf.position(0);
-      tupleBuf.put(posBuffIn.position());
+        // create the input data exchange buffer.
+        dataBuffIn = ByteBuffer.allocateDirect(10*100000*8*2 + 40);
+        dataBuffIn.order(ByteOrder.nativeOrder());
 
-      // go through each attribute value.
-      for (int j=0;j<inTypes.length;j++) {
+        // and position buffer.
+        ByteBuffer pbi = ByteBuffer.allocateDirect(10*100000*8*2 + 40);
+        pbi.order(ByteOrder.nativeOrder());
+        posBuffIn = pbi.asLongBuffer();
 
-        // if it's null, put -1 in the position buffer and move on.
-        if (IntermediateValue.getAttributes(inParams)[j].isNull().getValue(i)) {
-          posBuffIn.put(-1);
-          continue;
-        }
+        // declare the tuple buffer.
+        ByteBuffer tbi = ByteBuffer.allocateDirect(100001);
+        tbi.order(ByteOrder.nativeOrder());
+        tupleBuf = tbi.asLongBuffer();          /** use a dummy! */
+        this.udf.setBuffers(posBuffIn, posBuffOut, dataBuffIn, dataBuffOut, tupleBuf);
 
-        // otherwise, buffer the data and advance the position.
-        posBuffIn.put(dataBuffIn.position());
-        byte[] bx = IntermediateValue.getAttributes(inParams)[j].getValue(i, inTypes[j]);
-        dataBuffIn.put(bx);
-      }
 
-      udf.clearParams();
+    }
 
-      udf.takeParams(1);  /** num of input tuples */
+    /** Runs the UDWrapper. */
+    public Attribute run(IntermediateValue[] inParams, int numMC) {
 
-    	// call the UDF for samples
-    	int outVals = (int)udf.outputVals();
+        // System.out.println("The number of numMC is: " + numMC);
 
-      long[] outTup = new long[1];
-      if (outVals == 1) {  /** success */
-        posBuffOut.position(0);
-        posBuffOut.get(outTup, 0, 1);
+        IntermediateValue outVal = new IntermediateValue(outType, numMC);
+
+//    calculateSize(inParams, numMC);
+        dataBuffIn.position(0);
         dataBuffOut.position(0);
-      }
-           
-  	  // update the intermediates...
-  	  // deserialize the output values.
-  	      
-	    int kVal = (int)outTup[0];
-	    if (kVal >= 0) {
-		
-	      switch(outType.getTypeCode()) {
-  	      case INT: {
-      		  outVal.set(dataBuffOut.getLong(kVal), i);
-      	  }
-      		break;
-      		
-      	  case DOUBLE: {
-      		  outVal.set(dataBuffOut.getDouble(kVal), i);
-      	  }
-      		break;
+        posBuffIn.position(0);
+        posBuffOut.position(0);
 
-  	      case STRING: {
-  		
-        		// get to the position
-        		dataBuffOut.position(kVal);
-        		
-        		// read the length of the string
-        		int len = (int)(dataBuffOut.getLong());
-        		
-        		// read those chars and make a string.
-        		byte[] btr = new byte[len];
-        		dataBuffOut.get(btr, 0, len);
-  		
-        		try {
-        		  outVal.set(new String(btr, "UTF-8"), i);
-        		} catch (Exception e) {
-        		  throw new RuntimeException("Failed to read string from UD function!", e);
-        		}
-  	      }
-  		    break;
+        for (int i=0;i<numMC;i++) {
 
-          case SCALAR: {
-            outVal.set(dataBuffOut.getDouble(kVal), -1, i);
-          }
-          break;
+            tupleBuf.position(0);
+            tupleBuf.put(posBuffIn.position());
 
-          case VECTOR: {
+            // go through each attribute value.
+            for (int j=0;j<inTypes.length;j++) {
 
-            // get to the position
-            dataBuffOut.position(kVal);
+                // if it's null, put -1 in the position buffer and move on.
+                if (IntermediateValue.getAttributes(inParams)[j].isNull().getValue(i)) {
+                    posBuffIn.put(-1);
+                    continue;
+                }
 
-            // read the length of the vector
-            int len = (int)(dataBuffOut.getLong());
+                // otherwise, buffer the data and advance the position.
+                posBuffIn.put(dataBuffIn.position());
+                byte[] bx = IntermediateValue.getAttributes(inParams)[j].getValue(i, inTypes[j]);
+                dataBuffIn.put(bx);
+            }
 
-            // read those doubles and make an array.
-            double[] vec = new double[len];
-            for (int j = 0; j < len; j++)
-              vec[j] = dataBuffOut.getDouble();
+            udf.clearParams();
 
-            outVal.set(vec, -1, i);
-          }
-          break;
+            udf.takeParams(1);  /** num of input tuples */
 
-          case MATRIX: {
-            
-            // get to the position
-            dataBuffOut.position(kVal);
-            
-            // read the row and column numbers of the matrix
-            int row = (int)(dataBuffOut.getLong());
-            int col = (int)(dataBuffOut.getLong());
+            // call the UDF for samples
+            int outVals = (int)udf.outputVals();
 
-            // read those doubles and make an array.
-            double[][] mat = new double[row][col];
-            for (int j = 0; j < row; j++)
-              for (int k = 0; k < col; k++)
-                mat[j][k] = dataBuffOut.getDouble();
+            long[] outTup = new long[1];
+            if (outVals == 1) {  /** success */
+                posBuffOut.position(0);
+                posBuffOut.get(outTup, 0, 1);
+                dataBuffOut.position(0);
+            }
 
-            outVal.set(mat, true, i);
-          }
-          break;
-	      }
-	    }
-    }
-    
-    return outVal.getAttribute();
-  }
+            // update the intermediates...
+            // deserialize the output values.
 
-  public void calculateSize(IntermediateValue[] inParams, int numMC) {
+            int kVal = (int)outTup[0];
+            if (kVal >= 0) {
 
-    long size = 0;
+                switch(outType.getTypeCode()) {
+                    case INT: {
+                        outVal.set(dataBuffOut.getLong(kVal), i);
+                    }
+                    break;
 
-    for (int i=0;i<numMC;i++) {
+                    case DOUBLE: {
+                        outVal.set(dataBuffOut.getDouble(kVal), i);
+                    }
+                    break;
 
-        // go through each attribute value.
-        for (int j=0;j<inTypes.length;j++) {
+                    case STRING: {
 
-          // if it's null, move on.
-          if (IntermediateValue.getAttributes(inParams)[j].isNull().getValue(i)) {
-            continue;
-          }
+                        // get to the position
+                        dataBuffOut.position(kVal);
 
-          byte[] bx = IntermediateValue.getAttributes(inParams)[j].getValue(i, inTypes[j]);
-          size += bx.length;
+                        // read the length of the string
+                        int len = (int)(dataBuffOut.getLong());
+
+                        // read those chars and make a string.
+                        byte[] btr = new byte[len];
+                        dataBuffOut.get(btr, 0, len);
+
+                        try {
+                            outVal.set(new String(btr, "UTF-8"), i);
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to read string from UD function!", e);
+                        }
+                    }
+                    break;
+
+                    case SCALAR: {
+                        outVal.set(dataBuffOut.getDouble(kVal), -1, i);
+                    }
+                    break;
+
+                    case VECTOR: {
+
+                        // get to the position
+                        dataBuffOut.position(kVal);
+
+                        // read the length of the vector
+                        int len = (int)(dataBuffOut.getLong());
+
+                        // read those doubles and make an array.
+                        double[] vec = new double[len];
+                        for (int j = 0; j < len; j++)
+                            vec[j] = dataBuffOut.getDouble();
+
+                        outVal.set(vec, -1, i);
+                    }
+                    break;
+
+                    case MATRIX: {
+
+                        // get to the position
+                        dataBuffOut.position(kVal);
+
+                        // read the row and column numbers of the matrix
+                        int row = (int)(dataBuffOut.getLong());
+                        int col = (int)(dataBuffOut.getLong());
+
+                        // read those doubles and make an array.
+                        double[][] mat = new double[row][col];
+                        for (int j = 0; j < row; j++)
+                            for (int k = 0; k < col; k++)
+                                mat[j][k] = dataBuffOut.getDouble();
+
+                        outVal.set(mat, true, i);
+                    }
+                    break;
+                }
+            }
         }
+
+        return outVal.getAttribute();
     }
 
-    long bufferSize = 20 * size;
+    public void calculateSize(IntermediateValue[] inParams, int numMC) {
 
-    // declare the output position buffer.
-    int memAmount;
-    if (bufferSize / 10 > Integer.MAX_VALUE) 
-	memAmount = Integer.MAX_VALUE;
-    else
-        memAmount = (int) (bufferSize / 10);
-    ByteBuffer pbo = ByteBuffer.allocateDirect(memAmount);
-    pbo.order(ByteOrder.nativeOrder());
-    posBuffOut = pbo.asLongBuffer();
+        long size = 0;
 
-    // and data output buffer.
-    dataBuffOut = ByteBuffer.allocateDirect(memAmount);
-    dataBuffOut.order(ByteOrder.nativeOrder());
+        for (int i=0;i<numMC;i++) {
 
-    // create the input data exchange buffer.
-    if (bufferSize / 4 > Integer.MAX_VALUE) 
-	memAmount = Integer.MAX_VALUE;
-    else
-        memAmount = (int) (bufferSize / 4);
-    dataBuffIn = ByteBuffer.allocateDirect(memAmount);
-    dataBuffIn.order(ByteOrder.nativeOrder());
+            // go through each attribute value.
+            for (int j=0;j<inTypes.length;j++) {
 
-    // and position buffer.
-    ByteBuffer pbi = ByteBuffer.allocateDirect(memAmount);
-    pbi.order(ByteOrder.nativeOrder());
-    posBuffIn = pbi.asLongBuffer();
+                // if it's null, move on.
+                if (IntermediateValue.getAttributes(inParams)[j].isNull().getValue(i)) {
+                    continue;
+                }
 
-    // declare the tuple buffer.
-    ByteBuffer tbi = ByteBuffer.allocateDirect(memAmount);
-    tbi.order(ByteOrder.nativeOrder());
-    tupleBuf = tbi.asLongBuffer();          /** use a dummy! */
-    udf.setBuffers(posBuffIn, posBuffOut, dataBuffIn, dataBuffOut, tupleBuf);
-  }
+                byte[] bx = IntermediateValue.getAttributes(inParams)[j].getValue(i, inTypes[j]);
+                size += bx.length;
+            }
+        }
+
+        long bufferSize = 20 * size;
+
+        // declare the output position buffer.
+        int memAmount;
+        if (bufferSize / 10 > Integer.MAX_VALUE)
+            memAmount = Integer.MAX_VALUE;
+        else
+            memAmount = (int) (bufferSize / 10);
+        ByteBuffer pbo = ByteBuffer.allocateDirect(memAmount);
+        pbo.order(ByteOrder.nativeOrder());
+        posBuffOut = pbo.asLongBuffer();
+
+        // and data output buffer.
+        dataBuffOut = ByteBuffer.allocateDirect(memAmount);
+        dataBuffOut.order(ByteOrder.nativeOrder());
+
+        // create the input data exchange buffer.
+        if (bufferSize / 4 > Integer.MAX_VALUE)
+            memAmount = Integer.MAX_VALUE;
+        else
+            memAmount = (int) (bufferSize / 4);
+        dataBuffIn = ByteBuffer.allocateDirect(memAmount);
+        dataBuffIn.order(ByteOrder.nativeOrder());
+
+        // and position buffer.
+        ByteBuffer pbi = ByteBuffer.allocateDirect(memAmount);
+        pbi.order(ByteOrder.nativeOrder());
+        posBuffIn = pbi.asLongBuffer();
+
+        // declare the tuple buffer.
+        ByteBuffer tbi = ByteBuffer.allocateDirect(memAmount);
+        tbi.order(ByteOrder.nativeOrder());
+        tupleBuf = tbi.asLongBuffer();          /** use a dummy! */
+        udf.setBuffers(posBuffIn, posBuffOut, dataBuffIn, dataBuffOut, tupleBuf);
+    }
 
 }

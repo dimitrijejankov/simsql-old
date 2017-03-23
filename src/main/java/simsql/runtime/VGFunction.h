@@ -98,6 +98,17 @@ gsl_matrix* getMatrix(Matrix* input) {
   return output;
 }
 
+gsl_matrix* updateMatrix(Matrix* input, gsl_matrix* output) {
+  for (size_t i = 0; i < output->size1; i++) {
+    for (size_t j = 0; j < output->size2; j++) {
+      if (!isnan(input->value[i * output->size2 + j]) && isfinite(input->value[i * output->size2 + j])) {
+        gsl_matrix_set(output, i, j, input->value[i * output->size2 + j]);
+      }
+    }
+  }
+  return output;
+}
+
 void setVector(gsl_vector* input, Vector** output) {
   *output = (Vector *)malloc(sizeof(Vector));
   (*output)->length = (double)input->size;
