@@ -136,7 +136,7 @@ class VGWrapper {
     posBuffOut = pbo.asLongBuffer();
 
     // and data output buffer.
-    dataBuffOut = ByteBuffer.allocateDirect(bufferSize / 10);
+    dataBuffOut = ByteBuffer.allocateDirect(bufferSize / 4);
     dataBuffOut.order(ByteOrder.nativeOrder());
 
     // create the input data exchange buffer.
@@ -144,12 +144,12 @@ class VGWrapper {
     dataBuffIn.order(ByteOrder.nativeOrder());
 
     // and position buffer.
-    ByteBuffer pbi = ByteBuffer.allocateDirect(bufferSize / 4);
+    ByteBuffer pbi = ByteBuffer.allocateDirect(bufferSize / 10);
     pbi.order(ByteOrder.nativeOrder());
     posBuffIn = pbi.asLongBuffer();
 
     // declare the tuple buffer.
-    ByteBuffer tbi = ByteBuffer.allocateDirect(bufferSize / 4);
+    ByteBuffer tbi = ByteBuffer.allocateDirect(bufferSize / 10);
     tbi.order(ByteOrder.nativeOrder());
     tupleBuf = tbi.asLongBuffer();
     vgf.setBuffers(posBuffIn, posBuffOut, dataBuffIn, dataBuffOut, tupleBuf); 

@@ -9,20 +9,6 @@ import java.nio.*;
  */
 public class UDWrapper {
 
-    // the position exchange buffers
-    private LongBuffer posBuffIn;
-    private LongBuffer posBuffOut;
-
-    // the data exchange buffers
-    private ByteBuffer dataBuffIn;
-    private ByteBuffer dataBuffOut;
-
-    private int dataStartPosition = 0;  // for the cross products.
-    private int posStartPosition = 0;   // same thing.
-
-    // the tuple buffer
-    private LongBuffer tupleBuf;
-
     // data types on the UDF
     private AttributeType[] inTypes;
     private AttributeType outType;
@@ -33,39 +19,12 @@ public class UDWrapper {
     /** Simple constructor -- starts up the UDWrapper. */
     public UDWrapper(VGFunction udf) {
 
-        System.out.println("Allocating buffer UD!!!!");
-        System.out.flush();
-
         // copy the function
         this.udf = udf;
 
         // get the input and output types.
         inTypes = udf.getInputTypes();
         outType = udf.getOutputTypes()[0];
-
-        ByteBuffer pbo = ByteBuffer.allocateDirect(1000*1000*8 + 20);
-        pbo.order(ByteOrder.nativeOrder());
-        posBuffOut = pbo.asLongBuffer();
-
-        // and data output buffer.
-        dataBuffOut = ByteBuffer.allocateDirect(1000*1000*8 + 20);
-        dataBuffOut.order(ByteOrder.nativeOrder());
-
-        // create the input data exchange buffer.
-        dataBuffIn = ByteBuffer.allocateDirect(10*100000*8*2 + 40);
-        dataBuffIn.order(ByteOrder.nativeOrder());
-
-        // and position buffer.
-        ByteBuffer pbi = ByteBuffer.allocateDirect(10*100000*8*2 + 40);
-        pbi.order(ByteOrder.nativeOrder());
-        posBuffIn = pbi.asLongBuffer();
-
-        // declare the tuple buffer.
-        ByteBuffer tbi = ByteBuffer.allocateDirect(100001);
-        tbi.order(ByteOrder.nativeOrder());
-        tupleBuf = tbi.asLongBuffer();          /** use a dummy! */
-        this.udf.setBuffers(posBuffIn, posBuffOut, dataBuffIn, dataBuffOut, tupleBuf);
-
 
     }
 
@@ -75,6 +34,48 @@ public class UDWrapper {
         // System.out.println("The number of numMC is: " + numMC);
 
         IntermediateValue outVal = new IntermediateValue(outType, numMC);
+
+        ByteBuffer dataBuffIn = UDFunction.getDataBuffIn();
+        ByteBuffer dataBuffOut = UDFunction.getDataBuffIn();
+        LongBuffer posBuffIn = UDFunction.getPosBuffIn();
+        LongBuffer posBuffOut = UDFunction.getPosBuffOut();
+        LongBuffer tupleBuf = UDFunction.getTupleBuf();
+
+        if (posBuffIn == null || posBuffOut == null || dataBuffIn == null || dataBuffOut == null || tupleBuf == null) {
+            // allocate buffers
+            System.out.println("Allocating buffer only once!!!!");
+            System.out.flush();
+            int bufferSize = Integer.MAX_VALUE;
+
+            // declare the output position buffer.
+            ByteBuffer pbo = ByteBuffer.allocateDirect(bufferSize / 10);
+            pbo.order(ByteOrder.nativeOrder());
+            posBuffOut = pbo.asLongBuffer();
+            UDFunction.setPosBuffOut(posBuffOut);
+
+            // and data output buffer.
+            dataBuffOut = ByteBuffer.allocateDirect(bufferSize / 4);
+            dataBuffOut.order(ByteOrder.nativeOrder());
+            UDFunction.setDataBuffOut(dataBuffOut);
+
+            // create the input data exchange buffer.
+            dataBuffIn = ByteBuffer.allocateDirect(bufferSize / 4);
+            dataBuffIn.order(ByteOrder.nativeOrder());
+            UDFunction.setDataBuffIn(dataBuffIn);
+
+            // and position buffer.
+            ByteBuffer pbi = ByteBuffer.allocateDirect(bufferSize / 10);
+            pbi.order(ByteOrder.nativeOrder());
+            posBuffIn = pbi.asLongBuffer();
+            UDFunction.setPosBuffIn(posBuffIn);
+
+            // declare the tuple buffer.
+            ByteBuffer tbi = ByteBuffer.allocateDirect(bufferSize / 10);
+            tbi.order(ByteOrder.nativeOrder());
+            tupleBuf = tbi.asLongBuffer();
+            UDFunction.setTupleBuf(tupleBuf);
+        }
+        udf.setBuffers(posBuffIn, posBuffOut, dataBuffIn, dataBuffOut, tupleBuf);
 
 //    calculateSize(inParams, numMC);
         dataBuffIn.position(0);
@@ -200,6 +201,7 @@ public class UDWrapper {
         return outVal.getAttribute();
     }
 
+    /*
     public void calculateSize(IntermediateValue[] inParams, int numMC) {
 
         long size = 0;
@@ -251,8 +253,9 @@ public class UDWrapper {
         // declare the tuple buffer.
         ByteBuffer tbi = ByteBuffer.allocateDirect(memAmount);
         tbi.order(ByteOrder.nativeOrder());
-        tupleBuf = tbi.asLongBuffer();          /** use a dummy! */
+        tupleBuf = tbi.asLongBuffer();
         udf.setBuffers(posBuffIn, posBuffOut, dataBuffIn, dataBuffOut, tupleBuf);
     }
+    */
 
 }
