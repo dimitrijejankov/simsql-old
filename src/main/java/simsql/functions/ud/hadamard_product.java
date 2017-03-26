@@ -30,7 +30,7 @@ public class hadamard_product extends ReflectedUDFunction {
   public hadamard_product() {
     super("simsql.functions.ud.hadamard_product", "execute", new AttributeType(new MatrixType("matrix[][]")), double[][].class, double[][].class);
     setInputTypes(new AttributeType(new MatrixType("matrix[a][b]")), new AttributeType(new MatrixType("matrix[a][b]")));
-    setOutputType(new AttributeType(new MatrixType("matrix[b][a]")));
+    setOutputType(new AttributeType(new MatrixType("matrix[a][b]")));
   }
 
   @Override

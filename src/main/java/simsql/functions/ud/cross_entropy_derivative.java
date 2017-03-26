@@ -31,8 +31,8 @@ public class cross_entropy_derivative extends ReflectedUDFunction {
 
     public cross_entropy_derivative() {
         super("simsql.functions.ud.cross_entropy_derivative", "cx", new AttributeType(new MatrixType("matrix[][]")), double[][].class, int.class, int.class);
-        setInputTypes(new AttributeType(new MatrixType("matrix[a][a]")), new AttributeType(new IntType()), new AttributeType(new IntType()));
-        setOutputType(new AttributeType(new MatrixType("matrix[a][a]")));
+        setInputTypes(new AttributeType(new MatrixType("matrix[][]")), new AttributeType(new IntType()), new AttributeType(new IntType()));
+        setOutputType(new AttributeType(new MatrixType("matrix[][]")));
     }
 
     @Override
