@@ -46,8 +46,8 @@ class MatrixVectorMultiply : public VGFunction {
 private:
 
   // input matrix and vector.
-  gsl_matrix *input1 = NULL;
-  gsl_vector *input2 = NULL;
+  gsl_matrix *input1;
+  gsl_vector *input2;
 
   bool active;
 
@@ -89,14 +89,7 @@ public:
    */
   void clearParams() {
 
-    // if input
-    if(input1 != NULL)
-        gsl_matrix_free(input1);
-    input1 = NULL;
-
-    if(input2 != NULL)
-        gsl_vector_free(input2);
-    input2 = NULL;
+    // do nothing.
   }
 
   
@@ -109,10 +102,14 @@ public:
     if (input.value1 != NULL) {
       this->input1 = getMatrix(input.value1);
     }
+    else
+      printf("we are reading a null matrix!");
 
     if (input.value2 != NULL) {
       this->input2 = getVector(input.value2);
     }
+    else
+      printf("we are reading a null vector!");
 
     active = true;
   }
@@ -130,9 +127,11 @@ public:
 
     gsl_vector* product = gsl_vector_calloc(input1->size1);
 
-    /* Compute y = A x */
-
-    gsl_blas_dgemv (CblasNoTrans, 1.0, input1, input2, 0.0, product);
+    /* if input2 is not an all-0 vector */
+    
+    if (input2->size != 0)
+    /* Compute y = A x */	
+    	gsl_blas_dgemv (CblasNoTrans, 1.0, input1, input2, 0.0, product);
 
     if (runningError > 0) {
       gsl_vector_set_zero(product);
