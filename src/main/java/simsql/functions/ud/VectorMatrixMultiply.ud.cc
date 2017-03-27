@@ -176,8 +176,10 @@ public:
     // the product vector
     gsl_matrix* product = gsl_matrix_calloc(1, this->m->size2);
 
-    /* Compute y = x A */
-    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, v, m, 0.0, product);
+    // if the vector is not an all 0 vector
+    if (this->v->size1 != 0)
+    	/* Compute y = x A */
+	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, v, m, 0.0, product);
 
     // check if we have gotten an error...
     if (runningError > 0) {
