@@ -21,7 +21,7 @@ public class trans_matrix extends ReflectedUDFunction {
     double[][] trans = new double[col][row];
     for (int i = 0; i < col; i++)
       for (int j = 0; j < row; j++)
-      trans[i][j] = mat[j][i];
+        trans[i][j] = mat[j][i];
 
     return trans;
   }

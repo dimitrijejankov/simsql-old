@@ -5,7 +5,7 @@ import simsql.runtime.MatrixType;
 import simsql.runtime.ReflectedUDFunction;
 
 /**
- * A function for transposing a matrix.
+ * A function for calculating the sigmoid derivative.
  *
  * @author Jacob
  */
@@ -16,15 +16,15 @@ public class sigmoid_derivative extends ReflectedUDFunction {
     int row = mat.length;
     int col = mat[0].length;
 
-    double[][] trans = new double[row][col];
+    double[][] out = new double[row][col];
 
     for (int i = 0; i < row; i++) {
       for (int j = 0; j < col; j++) {
-        trans[i][j] = mat[i][j] * (1 - mat[i][j]);
+        out[i][j] = mat[i][j] * (1 - mat[i][j]);
       }
     }
 
-    return trans;
+    return out;
   }
 
   public sigmoid_derivative() {

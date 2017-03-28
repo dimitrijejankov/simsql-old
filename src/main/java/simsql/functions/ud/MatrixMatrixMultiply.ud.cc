@@ -27,9 +27,6 @@ struct RecordOut {
   Matrix *out;
 };
 
-int r1,c1;
-int r2,c2;
-
 int runningError;
 void handler (const char * reason,
         const char * file,
@@ -39,13 +36,12 @@ void handler (const char * reason,
 
   runningError = 1;
   fprintf(stderr, "reason: %s\n, file: %s\n, line: %d\n, gsl_errno: %d\n\n", reason, file, line, gsl_errno);
-  fprintf(stderr, "r1: %d\n, c1: %d\n, r2: %d\n, c2: %d\n\n", r1, c1, r2, c2);
 }
 
 // ----------------------------------------------------------- //
 
 /** A pseudo-VG function for inverting a matrix. */
-class VectorTransposeMatrixMultiply : public VGFunction {
+class MatrixMatrixMultiply : public VGFunction {
 
 private:
 
@@ -61,7 +57,7 @@ public:
   /** Constructor. Use this to declare your RNG and other
    * important structures.
    */
-  VectorTransposeMatrixMultiply() {
+  MatrixMatrixMultiply() {
     gsl_set_error_handler(&handler);
 
     // resets the inputs...
@@ -70,7 +66,7 @@ public:
   }
 
   /** Destructor. Deallocate everything from the constructor. */
-  ~VectorTransposeMatrixMultiply() {
+  ~MatrixMatrixMultiply() {
 
     // free the memory we are done with it...
     gsl_matrix_free(v);
@@ -130,7 +126,6 @@ public:
         }
       }
 
-
       // we stored the vector
       hasVector = true;
     }
@@ -171,11 +166,6 @@ public:
    */
   int outputVals(RecordOut &output) {
 
-    r1 = this->v->size1;
-    c1 = this->v->size2;
-    r2 = this->m->size1;
-    c2 = this->m->size2;
-
     // do we have the inputs...
     if (!hasVector || !hasMatrix)
       return 0;
@@ -184,10 +174,12 @@ public:
     runningError = -1;
 
     // the product vector
-    gsl_matrix* product = gsl_matrix_calloc(1, this->m->size1);
+    gsl_matrix* product = gsl_matrix_calloc(1, this->m->size2);
 
-    /* Compute y = x trans(A) */
-    gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, v, m, 0.0, product);
+    // if the vector is not an all 0 vector
+    if (this->v->size1 != 0)
+    	/* Compute y = x A */
+	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, v, m, 0.0, product);
 
     // check if we have gotten an error...
     if (runningError > 0) {
@@ -221,7 +213,7 @@ public:
   }
 
   const char *getName() {
-    return "VectorTransposeMatrixMultiply";
+    return "MatrixMatrixMultiply";
   }
 };
 
@@ -229,9 +221,10 @@ public:
 
 /** External creation/destruction methods -- DO NOT MODIFY */
 VGFunction *create() {
-  return(new VectorTransposeMatrixMultiply());
+  return(new MatrixMatrixMultiply());
 }
 
 void destroy(VGFunction *vgFunction) {
-  delete (VectorTransposeMatrixMultiply *)vgFunction;
+  delete (MatrixMatrixMultiply *)vgFunction;
 }
+
