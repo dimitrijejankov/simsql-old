@@ -383,30 +383,6 @@ public class TypeChecker extends ASTVisitor {
         return errorNum == 0;
     }
 
-    private boolean isIndexDescenting(MathExpression expression) {
-
-        if (!(expression instanceof ArithmeticExpression))
-            return false;
-
-        ArithmeticExpression arithmeticExp = (ArithmeticExpression) expression;
-
-        if (arithmeticExp.operandList.size() != 2)
-            return false;
-
-        if (!(arithmeticExp.operandList.get(0) instanceof GeneralTableIndex))
-            return false;
-
-        if (!(arithmeticExp.operandList.get(1) instanceof NumericExpression))
-            return false;
-
-        GeneralTableIndex index = (GeneralTableIndex) arithmeticExp.operandList.get(0);
-        NumericExpression numericExpression = (NumericExpression) arithmeticExp.operandList.get(1);
-
-        return index.identifier.equals("i") &&
-               numericExpression.value >= 0 &&
-               arithmeticExp.operatorList.get(0) == FinalVariable.MINUS;
-    }
-
     private boolean isGeneralIndexWithIdentifier(MathExpression expression, String identifier) {
 
         if(!(expression instanceof GeneralTableIndex))
@@ -500,12 +476,6 @@ public class TypeChecker extends ASTVisitor {
                             ", that the indexMathExp has check error!");
                     return false;
                 }
-            }
-
-            if(!isIndexDescenting(expressions.get("i")) && !isGeneralIndexWithIdentifier(expressions.get("i"), "i")) {
-                System.err.println("Relation/View [" + table + "] is general index table" +
-                        ", that doesn't have a descenting 'i' index.");
-                return false;
             }
         }
 
