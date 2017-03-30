@@ -22,7 +22,7 @@
 grammar Query;
 
 options {
-	k = 4;
+	k = 3;
 	backtrack = true;
 	memoize=true;
 }
@@ -175,7 +175,7 @@ dropTableStatement returns[Expression statement]:
 			|
 			tableName=IDENTIFIER LBRACKET GENERALTABLEINDEX RBRACKET
 			{
-			      $statement = new DropElement($tableName.text+"_i", DropElement.GENERAL_INDEX_TABLE); 
+			      $statement = new DropElement($tableName.text+"_i", DropElement.GENERAL_INDEX_TABLE);
 			}
 			|
 			tableName=IDENTIFIER
@@ -183,7 +183,7 @@ dropTableStatement returns[Expression statement]:
 	              $statement = new DropElement($tableName.text, DropElement.TABLEORCOMMON_RANDOM_TABLE);
 	        }
 	     );
-		
+
 dropViewStatement returns[Expression statement]:
 		DROP VIEW viewName=IDENTIFIER
 		(
@@ -207,31 +207,31 @@ dropViewStatement returns[Expression statement]:
              $statement = new DropElement($viewName2.text, DropElement.TABLEORCOMMON_RANDOM_TABLE);
         }
 		;
-		
+
 dropVGFunctionStatement returns[Expression statement]:
 		DROP VGFUNCTION vgName=IDENTIFIER
 		{
-			  $statement = new DropElement($vgName.text, DropElement.VGFUNC);	
-		};	
-		
+			  $statement = new DropElement($vgName.text, DropElement.VGFUNC);
+		};
+
 dropFunctionStatement returns[Expression statement]:
         DROP FUNCTION fgName=IDENTIFIER
         {
-              $statement = new DropElement($fgName.text, DropElement.FUNC); 
+              $statement = new DropElement($fgName.text, DropElement.FUNC);
         };
 /*
  * 1. ---------------------------select statement--------------------------------------
 */
-			   
-selectStatement returns [SelectStatement statement]: 
+
+selectStatement returns [SelectStatement statement]:
            SELECT setQuantifier selectList
-           fromClause 
-           whereClause 
-           groupByClause 
+           fromClause
+           whereClause
+           groupByClause
            havingClause
            orderByClause
            {
-                $statement = new SelectStatement($setQuantifier.setQuantifier, 
+                $statement = new SelectStatement($setQuantifier.setQuantifier,
 				                                     $selectList.selectList,
 				                                     $fromClause.tableReferenceList,
 				                                     $whereClause.predicate,
@@ -266,7 +266,7 @@ selectList returns [ArrayList<SQLExpression> selectList]:
  			{
  			      $selectList = $selectVarious.selectList;
  			};
- 
+
 selectVarious returns [ArrayList<SQLExpression> selectList]:
             l1=selectSubList
             {
@@ -277,7 +277,7 @@ selectVarious returns [ArrayList<SQLExpression> selectList]:
             {
                  $selectList.add($l2.vcolumn);
             })*;
-            
+
 selectSubList returns [SQLExpression vcolumn]:
             derivedColumn
             {
@@ -291,9 +291,9 @@ selectSubList returns [SQLExpression vcolumn]:
             |
             ASTERISK
  			{
- 				  $vcolumn = new AsteriskTable(); 		      
+ 				  $vcolumn = new AsteriskTable();
  			};
- 
+
 derivedColumn returns [SQLExpression vcolumn]:
             valueExpression
             (
@@ -315,13 +315,13 @@ derivedColumn returns [SQLExpression vcolumn]:
 	        caseExpression
 	        {
 	        	$vcolumn = new DerivedColumn($caseExpression.expression, $caseExpression.text);
-	        } 
+	        }
 	        ;
-            
+
 
 /*
  *	1.3 ------------------------from clause--------------------------------------------------
- */            
+ */
 fromClause returns [ArrayList<SQLExpression> tableReferenceList]:
 			FROM tableReferenceList
 			{
@@ -331,7 +331,7 @@ fromClause returns [ArrayList<SQLExpression> tableReferenceList]:
 			{
 				$tableReferenceList = new ArrayList<SQLExpression>();
 			};
-            
+
 tableReferenceList returns [ArrayList<SQLExpression> tableReferenceList]:
             tr1=tableReference
             {
@@ -342,7 +342,7 @@ tableReferenceList returns [ArrayList<SQLExpression> tableReferenceList]:
             {
                  $tableReferenceList.add($tr2.expression);
             })*;
-            
+
 tableReference returns [SQLExpression expression]:
             IDENTIFIER
             {
@@ -384,9 +384,9 @@ tableReference returns [SQLExpression expression]:
             	if(!typeCheck)
             	{
             		System.err.println("ValuesTable defintion for \r\n" + valuesTable.toString() + " \r\n wrong!");
-            		
+
             	}
-            	
+
             	String valueTableName = ValuesTableHelper.getValuesTableName($tempTable.text);
             	$expression = new TableReference(valueTableName);
             	ValuesTableHelper.addValuesTable(valueTableName, valuesTable);
@@ -401,12 +401,12 @@ tableReference returns [SQLExpression expression]:
             		System.err.println("ValuesTable defintion for \r\n" + valuesTable.toString() + " \r\n wrong!");
             		reportError(new RecognitionException());
             	}
-            	
+
             	String valueTableName = ValuesTableHelper.getValuesTableName($tempTable.text);
             	$expression = new TableReference(valueTableName, $IDENTIFIER.text);
             	ValuesTableHelper.addValuesTable(valueTableName, valuesTable);
             };
-            
+
 indexTableReference returns [TableReference value]:
             tableName=IDENTIFIER LBRACKET indexString=NUMERIC RBRACKET
             {
@@ -440,7 +440,7 @@ indexTableReference returns [TableReference value]:
             ;
 
 tempTable returns [ValuesTable valuesTable]:
-		    VALUES 
+		    VALUES
 		    (
 		    	 tempTableRow
 		    	 {
@@ -453,11 +453,11 @@ tempTable returns [ValuesTable valuesTable]:
 			     tempTableRowList
 			     {
 			    	 $valuesTable = new ValuesTable($tempTableRowList.tempTableRowList);
-			    	
+
 			     }
 		    )
 		    ;
-		    
+
 tempTableRowList returns [ArrayList<ArrayList<MathExpression>> tempTableRowList]:
 			LPAREN
 			tr1 = tempTableRow
@@ -470,7 +470,7 @@ tempTableRowList returns [ArrayList<ArrayList<MathExpression>> tempTableRowList]
                  $tempTableRowList.add($tr2.tempTableRow);
             })*
             RPAREN;
-            
+
 tempTableRow returns[ArrayList<MathExpression> tempTableRow]:
 		    LPAREN
 			tr1 = constantValue
@@ -483,7 +483,7 @@ tempTableRow returns[ArrayList<MathExpression> tempTableRow]:
                  $tempTableRow.add($tr2.expression);
             })*
             RPAREN;
-		    
+
 constantValue returns [MathExpression expression]:
 	        STRING
             {
@@ -491,13 +491,13 @@ constantValue returns [MathExpression expression]:
             }
             |
             signedNumeric
-            { 
+            {
                  $expression = $signedNumeric.expression;
-            };          
+            };
 /*
  *	1.4 ------------------------where clause--------------------------------------------------
- */  
-            
+ */
+
 whereClause returns [BooleanPredicate predicate]:
             WHERE searchCondition
             {
@@ -507,11 +507,11 @@ whereClause returns [BooleanPredicate predicate]:
             {
                  $predicate = null;
             };
-            
+
 /*
  *	1.5 ------------------------groupby clause--------------------------------------------------
- */  
-             
+ */
+
 groupByClause returns [ArrayList<ColumnExpression> columnList]:
             GROUP BY groupingColumns
             {
@@ -522,7 +522,7 @@ groupByClause returns [ArrayList<ColumnExpression> columnList]:
                  $columnList = null;
             }
             ;
-            
+
 groupingColumns returns [ArrayList<ColumnExpression> columnList]:
             ce1=columnExpression
             {
@@ -536,8 +536,8 @@ groupingColumns returns [ArrayList<ColumnExpression> columnList]:
 
 /*
  *	1.6 ------------------------groupby clause--------------------------------------------------
- */ 
-             
+ */
+
 orderByClause returns[ArrayList<OrderByColumn> columnList]:
 			ORDER BY orderByColumns
 			{
@@ -550,7 +550,7 @@ orderByClause returns[ArrayList<OrderByColumn> columnList]:
 
 orderByColumns returns [ArrayList<OrderByColumn> columnList]:
 			{
-				
+
 			}
 			ve1=valueExpression (
 				{
@@ -578,12 +578,12 @@ orderByColumns returns [ArrayList<OrderByColumn> columnList]:
 	            DESC
 	            {
 	                 $columnList.add(new OrderByColumn($ve2.expression, FinalVariable.DESC));
-	            }))*;           
+	            }))*;
 
 /*
  *	1.7 ------------------------orderby clause--------------------------------------------------
- */ 
- 
+ */
+
 havingClause returns[BooleanPredicate predicate]:
 			{
                  $predicate = null;
@@ -592,10 +592,10 @@ havingClause returns[BooleanPredicate predicate]:
             HAVING searchCondition
             {
                  $predicate = $searchCondition.predicate;
-            }; 
-			
-            
-		
+            };
+
+
+
 
 subquery returns [MathExpression expression]:
 			LPAREN
@@ -610,15 +610,15 @@ subquery returns [MathExpression expression]:
  */
 
 //random statement for MCDB2
-createRandomTableStatement returns[RandomTableStatement statement]: 
-          CREATE TABLE 
+createRandomTableStatement returns[RandomTableStatement statement]:
+          CREATE TABLE
 	      (
 	          nonIndexRandomStatement
 	          {
 	            $statement = $nonIndexRandomStatement.statement;
 	          }
 	          /* -------------------------For Simulation------------------------
-	            */      
+	            */
 	          |
 	          baselineArrayRandomStatement
 	          {
@@ -643,8 +643,8 @@ createRandomTableStatement returns[RandomTableStatement statement]:
           /*------------------------------end-------------------------------
           */
           ;
-					
-nonIndexRandomStatement returns[RandomTableStatement statement]: 
+
+nonIndexRandomStatement returns[RandomTableStatement statement]:
           schema AS
           randomParameters
           {
@@ -655,8 +655,8 @@ nonIndexRandomStatement returns[RandomTableStatement statement]:
           };
 
 /* -------------------------For Simulation-------------------------------------
-*/      
-                   
+*/
+
 baselineRandomStatement returns[RandomTableStatement statement]:
           baselineSchema AS
           randomParameters
@@ -667,7 +667,7 @@ baselineRandomStatement returns[RandomTableStatement statement]:
                                $randomParameters.withStatementList,
                                $randomParameters.statement);
           };
-          
+
 baselineArrayRandomStatement returns[RandomTableStatement statement]:
            baselineArraySchema AS
            randomParameters
@@ -678,7 +678,7 @@ baselineArrayRandomStatement returns[RandomTableStatement statement]:
                                $randomParameters.withStatementList,
                                $randomParameters.statement);
            };
-          
+
 generalRandomStatement returns[RandomTableStatement statement]:
           generalSchema AS
           randomParameters
@@ -698,8 +698,8 @@ multidimensionalStatement returns[MultidimensionalTableStatement statement]:
                                $randomParameters.withStatementList,
                                $randomParameters.statement);
           };
-          
-baselineSchema returns[DefinedTableSchema schema, String index]: 
+
+baselineSchema returns[DefinedTableSchema schema, String index]:
       schemaName LBRACKET NUMERIC RBRACKET
       (
         LPAREN
@@ -716,8 +716,8 @@ baselineSchema returns[DefinedTableSchema schema, String index]:
         }
       )
       ;
-      
-baselineArraySchema returns[DefinedArrayTableSchema schema, String arrayString]: 
+
+baselineArraySchema returns[DefinedArrayTableSchema schema, String arrayString]:
       schemaName LBRACKET GENERALTABLEINDEX COLON lb=NUMERIC TWODOT ub=NUMERIC RBRACKET
       (
         LPAREN
@@ -725,20 +725,20 @@ baselineArraySchema returns[DefinedArrayTableSchema schema, String arrayString]:
         RPAREN
         {
           $arrayString = $lb.text+".."+$ub.text;
-          $schema = new DefinedArrayTableSchema($schemaName.name, 
-                                                $lb.text+".."+$ub.text, 
+          $schema = new DefinedArrayTableSchema($schemaName.name,
+                                                $lb.text+".."+$ub.text,
                                                 $attributeList.attributeList);
         }
         |
         {
           $arrayString = $lb.text+".."+$ub.text;
-          $schema = new DefinedArrayTableSchema($schemaName.name, 
+          $schema = new DefinedArrayTableSchema($schemaName.name,
                                                 $lb.text+".."+$ub.text);
         }
       )
       ;
-      
-generalSchema returns[DefinedTableSchema schema]: 
+
+generalSchema returns[DefinedTableSchema schema]:
       schemaName LBRACKET GENERALTABLEINDEX RBRACKET
       (
         LPAREN
@@ -803,7 +803,7 @@ multidimensionalSchemaIndexSpecification returns[MultidimensionalSchemaIndexSpec
 
 /* ---------------------------------------end----------------------------------------
 */
-					
+
 /*
  * WHen the Forsentense is empty, we assume that there is a value table in the sentense
  * that help creating the seed.
@@ -811,9 +811,9 @@ multidimensionalSchemaIndexSpecification returns[MultidimensionalSchemaIndexSpec
 randomParameters returns[SQLExpression tableReference,
                          ArrayList<WithStatement> withStatementList,
                          SelectStatement statement]:
-          FOR forsentense               
+          FOR forsentense
           withStatements
-          selectStatement 
+          selectStatement
           {
                 $tableReference = $forsentense.tableReference;
                 $withStatementList = $withStatements.withStatementList;
@@ -828,19 +828,19 @@ randomParameters returns[SQLExpression tableReference,
                 ArrayList<ArrayList<MathExpression>> tempTableRowList = new ArrayList<ArrayList<MathExpression>>();
                 tempTableRowList.add(tempTableRow);
                 ValuesTable valuesTable = new ValuesTable(tempTableRowList);
-             
+
                 String valueTableName = ValuesTableHelper.getValuesTableName();
 	              $tableReference = new TableReference(valueTableName, null);
 	              ValuesTableHelper.addValuesTable(valueTableName, valuesTable);
-	              
+
 	              $withStatementList = $withStatements.withStatementList;
                 $statement = $selectStatement.statement;
-          };		
+          };
 /*
- * We add two different 
- */	
-					
-forsentense returns [SQLExpression tableReference]: 
+ * We add two different
+ */
+
+forsentense returns [SQLExpression tableReference]:
 			EACH tupleName IN tableReference
 			{
 				tableReference = $tableReference.expression;
@@ -852,10 +852,10 @@ forsentense returns [SQLExpression tableReference]:
 			    {
 			   		  ((FromSubquery)tableReference).setAlias($tupleName.name);
 			    }
-				   
+
 			};
-	        	
-schema returns[DefinedTableSchema schema]: 
+
+schema returns[DefinedTableSchema schema]:
 			schemaName
 			(
 				LPAREN
@@ -871,12 +871,12 @@ schema returns[DefinedTableSchema schema]:
 			)
 			;
 
-schemaName returns[String name]: 
+schemaName returns[String name]:
 			IDENTIFIER
 			{
 			    $name = $IDENTIFIER.text;
 			};
-			
+
 attributeList returns[ArrayList<String> attributeList]:
 			at1 = attribute
 			{
@@ -894,8 +894,8 @@ attribute returns[String name]:
 			{
 				$name = $IDENTIFIER.text;
 			};
-       
-tupleName returns[String name]: 
+
+tupleName returns[String name]:
 			IDENTIFIER
 			{
 				$name = $IDENTIFIER.text;
@@ -923,16 +923,16 @@ tempVGTable returns[String name]:
 			{
 				$name = $IDENTIFIER.text;
 			};
-			
 
-vgFunctionStatement returns[GeneralFunctionExpression expression]: 
+
+vgFunctionStatement returns[GeneralFunctionExpression expression]:
 			generalFunction
 			{
 				// remember that this corresponds to a VG function call
 				$expression = $generalFunction.expression;
 				$expression.setVGFunctionCall (true);
-			};			
-			
+			};
+
 /*
  * 8 --------------This section describes the table definition for catalog---------------------------
  */
@@ -952,14 +952,14 @@ createViewStatement returns[Expression statement]:
             ;
 
 
-         
+
 createTableStatement returns[TableDefinitionStatement statement]:
 			CREATE TABLE definedTableName table_contents_source
 			{
-				$statement = new TableDefinitionStatement($definedTableName.name, 
+				$statement = new TableDefinitionStatement($definedTableName.name,
 				                         $table_contents_source.attributeList);
 			};
-			
+
 createVGFunctionStatement returns[VGFunctionDefinitionStatement statement]:
 			CREATE VGFUNCTION i1=IDENTIFIER functionInAtts RETURNS vgFunctionOutAtts SOURCE file
 			{
@@ -989,32 +989,32 @@ createUnionViewStatement returns[UnionViewStatement statement]:
             {
                 $statement = $generalUnionViewStatement.statement;
             };
-            
+
 commonUnionViewStatement returns[ConstantUnionViewStatement statement]:
              CREATE VIEW schema AS UNION
              tableNameList
              {
-                 $statement = new ConstantUnionViewStatement($schema.schema, 
+                 $statement = new ConstantUnionViewStatement($schema.schema,
                                                            $tableNameList.tableNameList);
              };
-             
+
 baselineUnionViewStatement returns[BaselineUnionViewStatement statement]:
              CREATE VIEW baselineSchema AS UNION
              tableNameList
              {
-                 $statement = new BaselineUnionViewStatement($baselineSchema.schema, 
-										                 $tableNameList.tableNameList, 
+                 $statement = new BaselineUnionViewStatement($baselineSchema.schema,
+										                 $tableNameList.tableNameList,
 										                 $baselineSchema.index);
              };
-             
+
 generalUnionViewStatement returns[GeneralUnionViewStatement statement]:
              CREATE VIEW generalSchema AS UNION
              tableNameList
              {
-                 $statement = new GeneralUnionViewStatement($generalSchema.schema, 
+                 $statement = new GeneralUnionViewStatement($generalSchema.schema,
 										                 $tableNameList.tableNameList);
              };
-             
+
 tableNameList returns[ArrayList<SQLExpression> tableNameList]:
             tr1=uniontableName
             {
@@ -1025,7 +1025,7 @@ tableNameList returns[ArrayList<SQLExpression> tableNameList]:
             {
                  $tableNameList.add($tr2.table);
             })*;
-            
+
 uniontableName returns[SQLExpression table]:
             commonTableName=IDENTIFIER
             {
@@ -1044,17 +1044,17 @@ uniontableName returns[SQLExpression table]:
             |
             baselineTableNameArray=IDENTIFIER LBRACKET lb=NUMERIC TWODOT ub=NUMERIC RBRACKET
             {
-                $table = new BaselineTableNameArray($baselineTableNameArray.text, 
+                $table = new BaselineTableNameArray($baselineTableNameArray.text,
                                                     $lb.text + ".." + $ub.text);
             }
             |
             generalTableNameArray=IDENTIFIER LBRACKET generalLowerBound=valueExpression TWODOT generalUpBound=valueExpression RBRACKET
             {
-                $table = new GeneralTableNameArray($generalTableNameArray.text, 
+                $table = new GeneralTableNameArray($generalTableNameArray.text,
                                                     $generalLowerBound.expression,
                                                     $generalUpBound.expression);
             };
-            
+
 
 file returns[String fName]:
 			IDENTIFIER
@@ -1065,7 +1065,7 @@ file returns[String fName]:
 			STRING
 			{
 				return $STRING.text;
-			}	
+			}
 			;
 
 functionInAtts returns[ArrayList<SQLExpression> attributeList]:
@@ -1083,7 +1083,7 @@ functionInAtts returns[ArrayList<SQLExpression> attributeList]:
 				$attributeList.add($a2.attributeElement);
 			})*
 			RPAREN;
-				
+
 vgFunctionOutAtts returns[ArrayList<SQLExpression> attributeList]:
 			LPAREN
 			a1=attributeDefineElement
@@ -1100,21 +1100,21 @@ vgFunctionOutAtts returns[ArrayList<SQLExpression> attributeList]:
 			}
 			)*
 			RPAREN;
-			
+
 
 returnType returns [TypeInfo typeInfo]:
-			type 
+			type
 			{
 				typeInfo = new TypeInfo ($type.dataType);
 			}
-			;	
+			;
 
 definedTableName returns[String name]:
 			IDENTIFIER
 			{
 				return $IDENTIFIER.text;
 			};
-			
+
 table_contents_source returns[ArrayList<SQLExpression> attributeList]:
 			LPAREN
 			a1=attributeElement
@@ -1127,8 +1127,8 @@ table_contents_source returns[ArrayList<SQLExpression> attributeList]:
 			{
 				$attributeList.add($a2.attributeElement);
 			})*
-			RPAREN;	
-			
+			RPAREN;
+
 attributeElement returns[SQLExpression attributeElement]:
 			attributeDefineElement
 			{
@@ -1140,14 +1140,14 @@ attributeElement returns[SQLExpression attributeElement]:
 				$attributeElement = $attributeConstraintElement.attributeElement;
 			}
 			;
-			
-attributeDefineElement returns[SQLExpression attributeElement]:		
-			name=IDENTIFIER  
+
+attributeDefineElement returns[SQLExpression attributeElement]:
+			name=IDENTIFIER
 			dataType=type
 			{
 				$attributeElement = new AttributeDefineElement($name.text, $dataType.text);
 			};
-			
+
 attributeConstraintElement returns[SQLExpression attributeElement]:
 			primaryKeyStatement
 			{
@@ -1158,9 +1158,9 @@ attributeConstraintElement returns[SQLExpression attributeElement]:
 			{
 				$attributeElement = $foreignKeyStatement.foreignKeyElement;
 			};
-			
+
 primaryKeyStatement returns[PrimaryKeyElement primaryKeyElement]:
-			PRIMARY KEY 
+			PRIMARY KEY
 			LPAREN
 			i1=IDENTIFIER
 			{
@@ -1175,7 +1175,7 @@ primaryKeyStatement returns[PrimaryKeyElement primaryKeyElement]:
 			 	}
 			)*
 			RPAREN;
-			
+
 foreignKeyStatement returns[ForeignKeyElement foreignKeyElement]:
 			FOREIGN KEY
 			LPAREN
@@ -1191,9 +1191,9 @@ foreignKeyStatement returns[ForeignKeyElement foreignKeyElement]:
 												   $i2.text,
 												   $i3.text);
 			};
-			
+
 type returns [String dataType]:
-      IDENTIFIER  
+      IDENTIFIER
       {
         $dataType = $IDENTIFIER.text;
       }
@@ -1220,13 +1220,13 @@ type returns [String dataType]:
         }
       )?
       ;
-     
+
 length returns [String length]:
 			IDENTIFIER
 			{
 			  $length = $IDENTIFIER.text;
 			}
-			| 
+			|
 			NUMERIC
 			{
 			  if($NUMERIC.text.indexOf(".") >= 0)
@@ -1237,13 +1237,13 @@ length returns [String length]:
 			  $length = $NUMERIC.text;
 			}
 			;
-			
-			
-			
+
+
+
 /*
  * 4 --------------This section describes the mathimatical expression---------------------------
  */
-	            
+
 valueExpression returns [MathExpression expression]:
 			me1 = mul_expr
 			{
@@ -1257,7 +1257,7 @@ valueExpression returns [MathExpression expression]:
 				{
 					((ArithmeticExpression)$expression).addOperator(FinalVariable.PLUS);
 				}
-				| 
+				|
 				MINUS
 				{
 					((ArithmeticExpression)$expression).addOperator(FinalVariable.MINUS);
@@ -1267,10 +1267,10 @@ valueExpression returns [MathExpression expression]:
 					((ArithmeticExpression)$expression).addMathExpression($me2.expression);
 				}
 			)*;
-			
+
 caseExpression returns [MathExpression expression]:
 			(
-				CASE v1 = valueExpression 
+				CASE v1 = valueExpression
 				{
 					ArrayList<MathExpression> parasList = new ArrayList<MathExpression>();
 					parasList.add($v1.expression);
@@ -1308,9 +1308,9 @@ caseExpression returns [MathExpression expression]:
 				 }
 			)
 			;
-			
-			
-            
+
+
+
 mul_expr returns [MathExpression expression]:
            	ve1 = valueExpressionPrimary
 			{
@@ -1324,7 +1324,12 @@ mul_expr returns [MathExpression expression]:
 				{
 					((ArithmeticExpression)$expression).addOperator(FinalVariable.TIMES);
 				}
-				| 
+				|
+                PERCENTILE
+                {
+                    ((ArithmeticExpression)$expression).addOperator(FinalVariable.MOD);
+                }
+                |
 				SLASH
 				{
 					((ArithmeticExpression)$expression).addOperator(FinalVariable.DIVIDE);
@@ -1334,7 +1339,7 @@ mul_expr returns [MathExpression expression]:
 					((ArithmeticExpression)$expression).addMathExpression($ve2.expression);
 				}
 			)*;
- 
+
 valueExpressionPrimary returns [MathExpression expression]:
             gi=GENERALTABLEINDEX
             {
@@ -1342,10 +1347,10 @@ valueExpressionPrimary returns [MathExpression expression]:
             }
             |
             signedNumeric
-            { 
+            {
                 $expression = $signedNumeric.expression;
             }
-            | 
+            |
             STRING
             {
                  $expression = new StringExpression($STRING.text);
@@ -1365,12 +1370,12 @@ valueExpressionPrimary returns [MathExpression expression]:
             {
             	$expression = $generalFunction.expression;
             }
-            | 
+            |
             LPAREN valueExpression RPAREN
             {
                  $expression = $valueExpression.expression;
             }
-            | 
+            |
             columnExpression
             {
                  $expression = $columnExpression.expression;
@@ -1391,7 +1396,7 @@ signedNumeric returns [MathExpression expression]:
             {
             	$expression = new NumericExpression("-"+$NUMERIC.text);
             } ;
-            
+
 setFunction returns [MathExpression expression]:
             AVG LPAREN setQuantifier valueExpression RPAREN
             {
@@ -1404,16 +1409,16 @@ setFunction returns [MathExpression expression]:
             {
                 $expression = new AggregateExpression(FinalVariable.SUM,
                                                      $setQuantifier.setQuantifier,
-                                                     $valueExpression.expression);  
+                                                     $valueExpression.expression);
             }
             |
-            COUNT LPAREN 
+            COUNT LPAREN
             (
             	setQuantifier valueExpression RPAREN
             	{
                 	 $expression = new AggregateExpression(FinalVariable.COUNT,
                                                      $setQuantifier.setQuantifier,
-                                                     $valueExpression.expression); 
+                                                     $valueExpression.expression);
             	}
             	|
             	ALL? ASTERISK RPAREN
@@ -1421,7 +1426,7 @@ setFunction returns [MathExpression expression]:
             		 AsteriskExpression asteriskExpression = new AsteriskExpression();
                 	 $expression = new AggregateExpression(FinalVariable.COUNT,
                 	                                      FinalVariable.ALL,
-                	                                      asteriskExpression); 
+                	                                      asteriskExpression);
             	}
             )
             |
@@ -1472,12 +1477,12 @@ setFunction returns [MathExpression expression]:
                 $expression = new AggregateExpression(FinalVariable.COLMATRIX,
                                                      $setQuantifier.setQuantifier,
                                                      $valueExpression.expression);
-            };            
-            
+            };
 
 
 
-columnExpression returns [MathExpression expression]: 
+
+columnExpression returns [MathExpression expression]:
             id2=IDENTIFIER
             {
                  $expression = new ColumnExpression(null, $id2.text);
@@ -1488,7 +1493,7 @@ columnExpression returns [MathExpression expression]:
                  $expression = new ColumnExpression($table.text,
                                                    $id1.text);
             };
-            
+
 
 setExpression returns [MathExpression expression]:
 			VALUES
@@ -1503,7 +1508,7 @@ setExpression returns [MathExpression expression]:
 			{
 				$expression = $subquery.expression;
 			};
-						
+
 enumerationExpression returns[MathExpression expression]:
 			LPAREN ve1=valueExpression
 			{
@@ -1538,7 +1543,7 @@ generalFunction returns[GeneralFunctionExpression expression]:
             )
             RPAREN
             ;
-            
+
 functionName returns[String name]:
 			IDENTIFIER
 			{
@@ -1559,21 +1564,21 @@ functionParas returns[ArrayList<MathExpression> paraList]:
 			    	}
 			    )*
 			    ;
-			    
-functionPara returns[MathExpression expression]: 
+
+functionPara returns[MathExpression expression]:
 				valueExpression
 				{
 					$expression = $valueExpression.expression;
-				};           
+				};
 /*
  * 5 -------------------------------------boolean expresssion ---------------------------
- */ 
- 
+ */
+
 searchCondition returns [BooleanPredicate predicate]:
 			bt1 = booleanTerm
 			{
 				ArrayList<BooleanPredicate> orList = new ArrayList<BooleanPredicate>();
-				$predicate = new OrPredicate(orList); 
+				$predicate = new OrPredicate(orList);
 				orList.add($bt1.predicate);
 			}
 			(
@@ -1582,7 +1587,7 @@ searchCondition returns [BooleanPredicate predicate]:
 					((OrPredicate)$predicate).addPredicate($bt2.predicate);
 				}
 			)*;
-			
+
 booleanTerm returns [BooleanPredicate predicate]:
             bf1 = booleanFactor
 			{
@@ -1596,9 +1601,9 @@ booleanTerm returns [BooleanPredicate predicate]:
 					((AndPredicate)$predicate).addPredicate($bf2.predicate);
 				}
 			)*;
-            
+
 booleanFactor returns [BooleanPredicate predicate]:
-            booleanPredicate 
+            booleanPredicate
             (
             	(EQUALS TRUE | NOTEQUALS FALSE)
            	 	{
@@ -1619,10 +1624,10 @@ booleanFactor returns [BooleanPredicate predicate]:
             {
                  $predicate = new NotPredicate($booleanPredicate.predicate);
             };
-            
-            
+
+
 booleanPredicate returns [BooleanPredicate predicate]:
-			booleanAtom 
+			booleanAtom
 			{
 				$predicate = new AtomPredicate($booleanAtom.value);
 			}
@@ -1680,14 +1685,14 @@ booleanPredicate returns [BooleanPredicate predicate]:
             	{
             	    $predicate =  new NotPredicate(new InPredicate($exp1.expression,
                                                 $set2Expression.expression));
-            	}	
+            	}
 			)
 			|
 			conditionExists
 			{
 				$predicate = $conditionExists.predicate;
 			};
-			
+
 booleanAtom returns [boolean value]:
 			TRUE
 			{
@@ -1698,8 +1703,8 @@ booleanAtom returns [boolean value]:
 			{
 				value = false;
 			};
-			
-			
+
+
 comparisonOperator returns [int op]:
 		     EQUALS
 		     {
@@ -1707,7 +1712,7 @@ comparisonOperator returns [int op]:
 		     }
 		     |
 		     NOTEQUALS
-		     { 
+		     {
 		          op = FinalVariable.NOTEQUALS;
 		     }
 		     |
@@ -1740,7 +1745,7 @@ conditionExists returns [BooleanPredicate predicate]:
 
 /*
  * 7 -------------------------------------basic elements ---------------------------
- */ 
+ */
 
 /** We have this to enable case insensitivity in our keywords */
 fragment A  : ('a'|'A') ;
@@ -1805,7 +1810,7 @@ EXISTS: E X I S T S;
 
 ASC: A S C;
 DESC: D E S C;
- 
+
 
 AVG: A V G;
 SUM: S U M;
@@ -1835,12 +1840,13 @@ OUT: O U T;
 DROP: D R O P;
 VGFUNCTION: V G F U N C T I O N;
 FUNCTION: F U N C T I O N;
-GENERALTABLEINDEX: I|J|K|L;
+GENERALTABLEINDEX: I|J;
 
 UNION: U N I O N;
 
 
 ASTERISK : '*';
+PERCENTILE : '%';
 SEMICOLON: ';';
 COMMA: ',';
 TREEDOT:'...';

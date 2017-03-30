@@ -45,12 +45,14 @@ public class FinalVariable {
 	public static final int VECTOR = 8;
 	public static final int ROWMATRIX = 9;
 	public static final int COLMATRIX = 10;
-	
+
+
 	//arithic type
 	public static final int PLUS = 0;
 	public static final int MINUS = 1;
 	public static final int TIMES = 2;
 	public static final int DIVIDE = 3;
+	public static final int MOD = 4;
 	
 	
 	//comparison type

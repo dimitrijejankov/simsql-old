@@ -131,6 +131,10 @@ public class MPNGenerator {
 					case FinalVariable.DIVIDE:
 						result += "/";
 						break;
+
+					case FinalVariable.MOD:
+						result += "%";
+						break;
 						
 					default:
 						throw new RuntimeException("wrong operator type in MPNGenerator");
@@ -217,6 +221,10 @@ public class MPNGenerator {
 						
 					case FinalVariable.DIVIDE:
 						value /= initializeTime(expression, indices);
+						break;
+
+					case FinalVariable.MOD:
+						value %= initializeTime(expression, indices);
 						break;
 						
 					default:

@@ -45,7 +45,7 @@ public class UDWrapper {
             // allocate buffers
             System.out.println("Allocating buffer only once!!!!");
             System.out.flush();
-            int bufferSize = Integer.MAX_VALUE;
+            int bufferSize = Integer.MAX_VALUE/10;
 
             // declare the output position buffer.
             ByteBuffer pbo = ByteBuffer.allocateDirect(bufferSize / 10);
