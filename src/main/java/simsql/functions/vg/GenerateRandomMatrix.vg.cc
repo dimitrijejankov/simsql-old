@@ -162,4 +162,3 @@ VGFunction *create() {
 void destroy(VGFunction *vgFunction) {
   delete (GenerateRandomMatrix *)vgFunction;
 }
-
