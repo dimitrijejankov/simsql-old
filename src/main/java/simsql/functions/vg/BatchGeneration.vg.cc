@@ -115,7 +115,7 @@ public:
   }
 
   VGSchema inputSchema() {
-    return (VGSchema){1, {"matrix[][]"}, {"data"}};
+    return (VGSchema){2, {"integer", "matrix[][]"}, {"dataID", "data"}};
   }
 
   VGSchema outputSchema() {

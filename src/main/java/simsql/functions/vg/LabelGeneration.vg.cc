@@ -99,11 +99,11 @@ public:
   }
 
   VGSchema inputSchema() {
-    return (VGSchema){1, {"integer"}, {"data"}};
+    return (VGSchema){2, {"integer", "integer"}, {"dataID", "data"}};
   }
 
   VGSchema outputSchema() {
-    return (VGSchema){1, {"vector[]"}, {"x"}};
+    return (VGSchema){1, {"vector[a]"}, {"x"}};
   }
 
   const char *getName() {
