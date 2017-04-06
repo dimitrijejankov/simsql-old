@@ -31,7 +31,7 @@ struct RecordIn {
 };
 
 struct RecordOut {
-    Matrix *x;
+    Vector *x;
 };
 
 class LabelGeneration : public VGFunction {
@@ -80,10 +80,9 @@ public:
         return 0;
     }
 
-    out.x = (Matrix*)malloc(sizeof(Matrix));
+    out.x = (Vector*)malloc(sizeof(Vector));
 
-    out.x->numRow = inputs.size();
-    out.x->numCol = 1;
+    out.x->length = inputs.size();
     out.x->value = (double*) calloc (inputs.size(), sizeof(double));
 
     for(int i = 0; i < inputs.size(); i++) {
@@ -100,7 +99,7 @@ public:
   }
 
   VGSchema outputSchema() {
-    return (VGSchema){1, {"matrix[][]"}, {"x"}};
+    return (VGSchema){1, {"vector[]"}, {"x"}};
   }
 
   const char *getName() {
