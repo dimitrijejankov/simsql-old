@@ -27,7 +27,7 @@ RM = rm -f
 SRCS = $(wildcard *.vg.cc)
 FUNC = $(patsubst %.vg.cc,%,$(SRCS))
 
-CCFLAGS = -c -fPIC -O3
+CCFLAGS = -std=c++11 -c -fPIC -O3
 CLFLAGS = -lgsl -lgslcblas -ldl -shared -rdynamic
 
 

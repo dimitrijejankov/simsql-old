@@ -21,12 +21,13 @@
 #include "VGFunction.h"
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
-#include <vector>
+#include <map>
 #include <cstring>
 
 using namespace std;
 
 struct RecordIn {
+    long *dataID;
     Matrix *data;
 };
 
@@ -42,7 +43,7 @@ private:
 
     long data;
 
-    vector<gsl_matrix*> inputs;
+    map<long, gsl_matrix*> inputs;
 
 public:
 
@@ -78,12 +79,12 @@ public:
   void takeParams(RecordIn &input) {
 
     // check if we have input parameters...
-    if(input.data == NULL) {
+    if(input.data == NULL || input.dataID == NULL) {
        return;
     }
 
     // copy the input
-    inputs.push_back(getMatrix(input.data));
+    inputs.insert(std::make_pair(*input.dataID, getMatrix(input.data)));
   }
 
   int outputVals(RecordOut &out) {
@@ -95,11 +96,17 @@ public:
     out.x = (Matrix*)malloc(sizeof(Matrix));
 
     out.x->numRow = inputs.size();
-    out.x->numCol = inputs.front()->size2;
-    out.x->value = (double*) calloc (inputs.size() * inputs.front()->size2, sizeof(double));
+    out.x->numCol = (inputs.begin()->second)->size2;
+    out.x->value = (double*) calloc (inputs.size() * (inputs.begin()->second)->size2, sizeof(double));
 
-    for(int i = 0; i < inputs.size(); i++) {
-        memcpy(&out.x->value[inputs.front()->size2 * i], inputs[i]->data, sizeof(double) * inputs.front()->size2);
+    int i = 0;
+
+    for (auto it = inputs.begin(); it != inputs.end(); ++it) {
+        // copy the memory
+        memcpy(&out.x->value[it->second->size2 * i], it->second->data, sizeof(double) * it->second->size2);
+
+        // increase the counter...
+        i++;
     }
 
     finished = true;

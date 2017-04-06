@@ -21,12 +21,13 @@
 #include "VGFunction.h"
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
-#include <vector>
+#include <map>
 #include <cstring>
 
 using namespace std;
 
 struct RecordIn {
+    long *dataID;
     long *data;
 };
 
@@ -41,7 +42,7 @@ private:
     bool finished;
     long data;
 
-    vector<long> inputs;
+    map<long, long> inputs;
 
 public:
 
@@ -66,12 +67,12 @@ public:
   void takeParams(RecordIn &input) {
 
     // check if we have input parameters...
-    if(input.data == NULL) {
+    if(input.data == NULL || input.dataID == NULL) {
        return;
     }
 
     // copy the input
-    inputs.push_back(*input.data);
+    inputs.insert(std::make_pair(*input.dataID, *input.data));
   }
 
   int outputVals(RecordOut &out) {
@@ -85,8 +86,11 @@ public:
     out.x->length = inputs.size();
     out.x->value = (double*) calloc (inputs.size(), sizeof(double));
 
-    for(int i = 0; i < inputs.size(); i++) {
-        out.x->value[i] = inputs[i];
+    int i = 0;
+
+    for (auto it = inputs.begin(); it != inputs.end(); ++it) {
+        out.x->value[i] = it->second;
+        i++;
     }
 
     finished = true;

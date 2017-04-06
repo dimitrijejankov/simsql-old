@@ -18,6 +18,7 @@
 
 
 #include <stdio.h>
+#include <map>
 #include "VGFunction.h"
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
