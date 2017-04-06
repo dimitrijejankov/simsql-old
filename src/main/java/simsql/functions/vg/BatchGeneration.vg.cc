@@ -40,8 +40,6 @@ private:
 
     bool finished;
 
-    long num_col;
-    long num_row;
     long data;
 
     vector<gsl_matrix*> inputs;
@@ -53,7 +51,13 @@ public:
     finished = false;
   }
 
-  ~BatchGeneration() {}
+  ~BatchGeneration() {
+    for(int i = 0; i < inputs.size(); i++) {
+        if(inputs[i] != NULL)
+            gsl_matrix_free(inputs[i]);
+        inputs[i] = NULL;
+    }
+  }
 
   void finalizeTrial() {
     finished = false;
@@ -63,6 +67,12 @@ public:
 
   void clearParams() {
     finished = false;
+    for(int i = 0; i < inputs.size(); i++) {
+        if(inputs[i] != NULL)
+        	gsl_matrix_free(inputs[i]);
+        inputs[i] = NULL;
+    }
+    inputs.clear();
   }
 
   void takeParams(RecordIn &input) {

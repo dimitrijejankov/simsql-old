@@ -26,23 +26,17 @@
 using namespace std;
 
 struct RecordIn {
-    long *col_num;
     long *row_num;
-    long *col_id;
-    long *row_id;
+    long *col_num;
 };
 
 struct RecordOut {
-    long *row_id;
-    long *col_id;
     Matrix *w;
 };
 
 struct input_node {
-    long col_num;
     long row_num;
-    long col_id;
-    long row_id;
+    long col_num;
 };
 
 class GenerateRandomMatrix : public VGFunction {
@@ -51,10 +45,8 @@ private:
 
     bool active;
 
-    long col_num;
     long row_num;
-    long col_id;
-    long row_id;
+    long col_num;
 
     gsl_rng *rng;
 
@@ -94,16 +86,14 @@ public:
   void takeParams(RecordIn &input) {
 
     // check if we have input parameters...
-    if(input.col_num == NULL || input.row_num == NULL || input.col_id == NULL || input.row_id == NULL) {
+    if(input.row_num == NULL || input.col_num == NULL) {
        return;
     }
 
     input_node tmp;
 
+    tmp.row_num = *input.row_num;
     tmp.col_num = *input.col_num;
-    tmp.row_num =  *input.row_num;
-    tmp.col_id = *input.col_id;
-    tmp.row_id = *input.row_id;
 
     inputs.push_back(tmp);
   }
@@ -114,13 +104,6 @@ public:
     if (inputs.empty()) {
         return 0;
     }
-
-    // allocating the output
-    out.row_id = (long*)malloc(sizeof(long));
-    out.col_id = (long*)malloc(sizeof(long));
-
-    (*out.row_id) = inputs.back().row_id;
-    (*out.col_id) = inputs.back().col_id;
 
     out.w = (Matrix*)malloc(sizeof(Matrix));
 
@@ -142,11 +125,11 @@ public:
   }
 
   VGSchema inputSchema() {
-    return (VGSchema){4, {"integer", "integer", "integer", "integer"}, {"col_num", "row_num", "col_id", "row_id"}};
+    return (VGSchema){2, {"integer", "integer"}, {"row_num", "col_num"}};
   }
 
   VGSchema outputSchema() {
-    return (VGSchema){3, {"integer","integer", "matrix[a][b]"}, {"row_id" ,"col_id", "w"}};
+    return (VGSchema){1, {"matrix[a][b]"}, {"w"}};
   }
 
   const char *getName() {
