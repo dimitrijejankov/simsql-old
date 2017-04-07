@@ -44,6 +44,7 @@ public class Topologic
 	private ArrayList<Operator> operatorList;
 	private HashMap<Operator, String> randomTableMap;
 
+	private HashMap<String, HashSet<String>> forwardEdge;
 	private HashMap<String, HashSet<String>> backwardEdge;
 	
 	public Topologic(ArrayList<Operator> operatorList, HashMap<Operator, String> randomTableMap)
@@ -54,6 +55,7 @@ public class Topologic
 		this.backwardEdge = new HashMap<String, HashSet<String>>();	
 		
 		generateBackwardEdges();
+//		generateForwardEdges();
 	}
 
 	/**
@@ -130,6 +132,32 @@ public class Topologic
 			}
 		}
 		return resultList;
+	}
+
+	public void generateForwardEdges()
+	{
+		for(Object o: backwardEdge.keySet())
+		{
+			String table = (String)o;
+
+			HashSet<String> referencedTableSet = backwardEdge.get(o);
+			for(String referencedTable: referencedTableSet)
+			{
+				HashSet<String> forwardSet;
+				if(forwardEdge.containsKey(referencedTable))
+				{
+					forwardSet = forwardEdge.get(referencedTable);
+				}
+				else
+				{
+					forwardSet = new HashSet<String>();
+					forwardEdge.put(referencedTable, forwardSet);
+				}
+
+				forwardSet.add(table);
+			}
+		}
+
 	}
 	
 	public void generateBackwardEdges()
