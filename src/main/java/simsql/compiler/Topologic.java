@@ -156,8 +156,9 @@ public class Topologic
 			if(table.matches("^[^\\[\\]]+\\[i-[0-9]+:i]")) {
 
 				int offset = table.indexOf("[");
-				String expression = table.substring(offset);
-				expression = table.substring(offset + 1, expression.length() - 1);
+//				String expression = table.substring(offset);
+//				expression = table.substring(offset + 1, expression.length() - 1);
+				String expression = table.substring(offset + 1, table.length() - 1);
 
 				int value = Integer.parseInt(expression.split(":")[0].substring(2));
                 String prefix = table.substring(0, offset);
