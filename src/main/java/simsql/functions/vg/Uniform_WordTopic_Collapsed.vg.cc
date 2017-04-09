@@ -196,11 +196,15 @@ public:
     // document.
     if (input.document != NULL) {
 
+      // zero the counts
+      for (int i=0;i<DICTIONARY;i++) {
+        wordCounts[i] = 0;
+      }
       docLen = 0;
 
       // make a pass through the document, counting the words and elements.
       for (int i=0;i<input.document->length;i++) {
-        unsigned int pos = (unsigned int)(input.document->value[i]);
+        long pos = (long)(input.document->value[i]);
         if (wordCounts[pos] == 0) {
           doc[docLen] = pos;
           docLen++;
@@ -238,8 +242,12 @@ public:
 
       for (int i=0;i<docLen;i++) {
         
+	// clear the count first
+	for (int j = 0; j < topicNumber; j++)
+		outputCounts[i][j] = 0;
+	
         // now, sample from the uniform distribution.
-	for (int j = 0; j < wordCounts[i]; j++)
+	for (int j = 0; j < wordCounts[doc[i]]; j++)
 		outputCounts[i][gsl_rng_uniform_int(rng, topicNumber)]++;
       }
 
