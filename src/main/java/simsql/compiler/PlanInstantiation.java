@@ -85,6 +85,12 @@ public class PlanInstantiation {
     public ArrayList<Operator> generatePlan(int start_index, int end_index) throws Exception {
         ArrayList<String> tpList = chain.getTopologicalList(start_index, end_index);
 
+        System.out.print(start_index + ": ");
+        for (String table : tpList) {
+            System.out.print(table + " ");
+        }
+        System.out.println();
+
         if (tpList.size() == 0) {
             throw new RuntimeException("The generated plan should not be null");
         }
