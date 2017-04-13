@@ -501,10 +501,10 @@ public abstract class RelOp {
         for (String s : getFunctions()) {
 
             if(isScalarFunction(s)) {
-                outStr += "public static simsql.functions.scalar." + s + " func_" + s + " = new simsql.functions.scalar." + s + "();\n  ";
+                outStr += "simsql.functions.scalar." + s + " func_" + s + " = new simsql.functions.scalar." + s + "();\n  ";
             }
             else if(isUDFunction(s)) {
-                outStr += "public static simsql.functions.ud." + s + " func_" + s + " = new simsql.functions.ud." + s + "();\n  ";
+                outStr += "simsql.functions.ud." + s + " func_" + s + " = new simsql.functions.ud." + s + "();\n  ";
             }
             else {
                 throw new RuntimeException(s + " is not a scalar nor a ud function!");
