@@ -71,7 +71,7 @@ public class ChainGeneration
 	private void instantiateChain()
 	{
 
-        TableDependencyGraph dependencyGraph = new TableDependencyGraph(requiredTables, topologic.getBackwardEdges());
+        TableDependencyGraph dependencyGraph = new TableDependencyGraph(requiredTables, topologic.getBackwardEdges(), topologic.getTableCosts());
 
         /*
 		 * 1. ruleMap

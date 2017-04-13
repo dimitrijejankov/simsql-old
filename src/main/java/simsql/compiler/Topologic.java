@@ -46,6 +46,8 @@ public class Topologic
 
 	private HashMap<String, HashSet<String>> forwardEdge;
 	private HashMap<String, HashSet<String>> backwardEdge;
+
+	private HashMap<String, Double> tableCosts;
 	
 	public Topologic(ArrayList<Operator> operatorList, HashMap<Operator, String> randomTableMap)
 	{
@@ -53,7 +55,9 @@ public class Topologic
 		this.randomTableMap = randomTableMap;
 
 		this.backwardEdge = new HashMap<String, HashSet<String>>();	
-		
+
+		this.tableCosts = new HashMap<String, Double>();
+
 		generateBackwardEdges();
 //		generateForwardEdges();
 	}
@@ -167,7 +171,7 @@ public class Topologic
 			String tableName = randomTableMap.get(operator);
 			tableName = getTableName(tableName);
 
-			HashSet<String> referencedTables = getReferencedRandomTables(operator);
+			HashSet<String> referencedTables = getReferencedRandomTables(operator, tableName);
             referencedTables = findRangeTables(referencedTables);
 			backwardEdge.put(tableName, referencedTables);
 		}
@@ -326,7 +330,7 @@ public class Topologic
 		return resultList;
 	}
 	
-	private HashSet<String> getReferencedRandomTables(Operator sink)
+	private HashSet<String> getReferencedRandomTables(Operator sink, String sinkName)
 	{
 		HashSet<String> resultSet = new HashSet<String>();
 		
@@ -343,11 +347,12 @@ public class Topologic
 		if(firstUnionViewOperator == null)
 		{
 			ArrayList<Operator> topLogicalList = topologicalSort(allOperators);
-			
+
+			double sumCost = 0.0;
 			for(int i = 0; i < topLogicalList.size(); i++)
 			{
 				Operator operator = topLogicalList.get(i);
-				
+
 				if(operator instanceof TableScan)
 				{
 					TableScan tableScan = (TableScan)operator;
@@ -380,8 +385,27 @@ public class Topologic
 							resultSet.add(tableName);
 						}
 					}
+				} else if (operator instanceof Aggregate || operator instanceof DuplicateRemove || operator instanceof Seed) {
+					sumCost += 1.0;
+				} else if (operator instanceof Selection) {
+					sumCost += 0.0;
+				} else if (operator instanceof VGWrapper) {
+//					ArrayList<Operator> projections = operator.getChildren();
+//					for (Operator c : projections) {
+//						if (c.getChildren().get(0) instanceof Join &&
+//								((Join) c.getChildren().get(0)).getBooleanOperator() != null) {
+//							sumCost += 0.5;
+//							break;
+//						}
+//					}
+					sumCost += 0.5;
+				} else if (operator instanceof Join) {
+//					ArrayList<Operator> children = o.getChildren();
+//					// Estimate children statistics through TableScan?
+					sumCost += 0.5;
 				}
 			}
+			tableCosts.put(sinkName, sumCost);
 		}
 		else
 		{
@@ -412,6 +436,7 @@ public class Topologic
 							+ "]");
 				}
 			}
+			tableCosts.put(sinkName, 0.0);
 		}
 		
 		return resultSet;
@@ -436,6 +461,14 @@ public class Topologic
 
 	public HashMap<String, HashSet<String>> getBackwardEdges() {
 		return backwardEdge;
+	}
+
+	public HashMap<String, HashSet<String>> getForwardEdges() {
+		return forwardEdge;
+	}
+
+	public HashMap<String, Double> getTableCosts() {
+		return tableCosts;
 	}
 	
 	public static UnionView findUnionVIew(ArrayList<Operator> topLogicalList)
