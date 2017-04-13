@@ -23,7 +23,8 @@
 package simsql.runtime;
 
 import javax.tools.JavaCompiler; 
-import javax.tools.ToolProvider; 
+import javax.tools.ToolProvider;
+import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector; 
 import javax.tools.JavaFileObject; 
 import javax.tools.StandardJavaFileManager; 
@@ -171,8 +172,13 @@ class Compiler {
 	// run the compiler
 	try {
 	    boolean success = task.call();
-	    if (!success)
-		throw new RuntimeException("Error.");
+	    if (!success) {
+			for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+				// read error dertails from the diagnostic object
+				System.out.println(diagnostic.getMessage(null));
+			}
+			throw new RuntimeException("Error.");
+		}
 	} catch (Exception e) {
             e.printStackTrace ();
 	    throw new RuntimeException("I could not compile the java source I created.", e);
