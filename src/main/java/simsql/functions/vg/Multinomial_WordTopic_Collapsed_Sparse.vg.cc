@@ -111,11 +111,17 @@ private:
   // wordTopicCounts.
   long topicCapacity;
 
-  // topic-word counts
+  // word-topic counts
   long **wordTopicCounts;
+
+  // word-topic probabilities
+  double **wordTopicProbs;
 
   // word-topic counts from the last iteration
   long **lastWordTopicCounts;
+
+  // word-topic counts aggrating on words
+  long *totalWordTopicCounts;
 
   // word counts.
   long *wordCount;
@@ -343,6 +349,7 @@ public:
     topicCounts = (long *)malloc(topicCapacity * sizeof(long));
     wordCount = (long *)malloc(wordCapacity * sizeof(long));
     wordTopicCounts = (long **)malloc(wordCapacity * sizeof(long *));
+  //  wordTopicProbs = (double **)malloc(wordCapacity * sizeof(double *));
     lastWordTopicCounts = (long **)malloc(wordCapacity * sizeof(long *));
     wordToIndex = (long *)malloc(indexCapacity * sizeof(long));
     indexToWord = (long *)malloc(wordCapacity * sizeof(long));
@@ -352,6 +359,7 @@ public:
 
     for (long i=0;i<wordCapacity;i++) {
       wordTopicCounts[i] = (long *)malloc(topicCapacity * sizeof(long));
+//      wordTopicProbs[i] = (double *)malloc(topicCapacity * sizeof(double));
       lastWordTopicCounts[i] = (long *)malloc(topicCapacity * sizeof(long));
       outputCounts[i] = (unsigned int *)malloc(topicCapacity * sizeof(unsigned int));
       indexToWord[i] = -1;
@@ -382,6 +390,7 @@ public:
 
     for (long i=0;i<wordCapacity;i++) {
       free(wordTopicCounts[i]);
+//      free(wordTopicProbs[i]);
       free(lastWordTopicCounts[i]);
       free(outputCounts[i]);
       wordTopicCounts[i] = NULL;
@@ -390,6 +399,7 @@ public:
     }
 
     free(wordTopicCounts);    
+//    free(wordTopicProbs);    
     free(lastWordTopicCounts);    
     free(outputCounts);
   }
@@ -430,6 +440,7 @@ public:
     for (long i=0;i<wordCapacity;i++) {
       for (long j=0;j<topicCapacity;j++) {
 	wordTopicCounts[i][j] = 0;
+//	wordTopicProbs[i][j] = 0.0;
 	lastWordTopicCounts[i][j] = 0;
       }
 
@@ -525,43 +536,94 @@ public:
       return 0;
     }
 
-	long tmp = 0;
-        output.out_word_id = &tmp;
-        output.out_topic_id = &tmp;
-	tmp = 1;
-        output.out_count = &tmp;
-	active = false;
-	return 1;
-    
-    /*
     // is this the first sample?
     if (currentWord == 0 && currentTopic == 0) {
 
-      // if so, then we'll sample everything at once.
+      // first, give enough space for wordTopicProbs
+      wordTopicProbs = (double **)malloc(numWords * sizeof(double *)); 
+      for (long i=0;i<numWords;i++) {
+	      wordTopicProbs[i] = (double *)malloc(numTopics * sizeof(double));
+      }
+
+      // second, we calculate some common statistics for sampling
+
+      // n[m, (.)] --> topicCounts
+      
+      // n[(.), v]
+      totalWordTopicCounts = (long *)calloc(numWords, sizeof(long));
+      long sumWordTopicCounts = 0;
+      for (long i=0; i<numWords; i++) {
+      	for (long j=0; j<numTopics; j++) {
+		totalWordTopicCounts[i] += wordTopicCounts[i][j]; 
+		sumWordTopicCounts += wordTopicCounts[i][j]; 
+	}
+      
+      }
+
+      // temporary output
+      unsigned int* tmpOutput = (unsigned int *)malloc(numTopics * sizeof(unsigned int));
+
+      // we'll sample everything at once.
       for (long i=0;i<numWords;i++) {
 
-	// update the word probabilities with the topics.
-	if (!normalized) {
-	  for (long j=0;j<numTopics;j++) {
-	    wordTopicCounts[i][j] *= topicCounts[j];
-	  }
+	// update the word probabilities according to the formula for collapsed lda
+	// we need to sample the topic for each word one by one from a categorical distribution
+	for (long j=0;j<numTopics;j++) {
+		for (long m=0; m<lastWordTopicCounts[i][j]; m++) {
+			for (long k=0;k<numTopics;k++) {
+				if (k == j) {
+					wordTopicProbs[i][k] = (topicCounts[k] - 1 + alpha) *
+								(totalWordTopicCounts[i] - 1 + beta) / 
+								(sumWordTopicCounts - 1 + numWords * beta);
+				}
+				else {
+					wordTopicProbs[i][k] = (topicCounts[k] + alpha) *
+								(totalWordTopicCounts[i] + beta) / 
+								(sumWordTopicCounts - 1 + numWords * beta);
+			
+				}
 
-	  normalized = true;
+			}
+
+			// call the multinomial!
+			runningError = -1;
+			gsl_error_handler_t *oldhandler = gsl_set_error_handler(&handler);
+			gsl_ran_multinomial(rng, numTopics, 1, wordTopicProbs[i], tmpOutput);
+			gsl_set_error_handler(oldhandler);
+
+			// if we've got an error, bail out.
+			if (runningError != -1) {
+			  active = false;
+			  normalized = false;
+			  free(totalWordTopicCounts);
+			  for (long n=0;n<numWords;n++) {
+			      free(wordTopicProbs[n]);
+			  }
+			  free(wordTopicProbs); 
+			  free(tmpOutput);
+			  return 0;
+			}
+
+		      	for (int ii=0;ii<numTopics;ii++) {
+				if (tmpOutput[ii] > 0) {
+					if (ii != j) {
+						lastWordTopicCounts[i][ii]++;
+						lastWordTopicCounts[i][j]--;
+					}
+			  		break;
+				}
+		      	}
+
+		} // sample for each word
 	}
-
-	// call the multinomial!
-	runningError = -1;
-	gsl_error_handler_t *oldhandler = gsl_set_error_handler(&handler);
-	gsl_ran_multinomial(rng, numTopics, wordCount[i], wordTopicCounts[i], outputCounts[i]);
-	gsl_set_error_handler(oldhandler);
-
-	// if we've got an error, bail out.
-	if (runningError != -1) {
-	  active = false;
-	  normalized = false;
-	  return 0;
-	}
+	
       }
+      free(totalWordTopicCounts);
+      for (long i=0;i<numWords;i++) {
+      	free(wordTopicProbs[i]);
+      }
+      free(wordTopicProbs); 
+      free(tmpOutput);
     }
 
     // now that everything is sampled, we will output values.
@@ -584,12 +646,12 @@ public:
       }
 
       // have a non-zero topic count?
-      if (outputCounts[currentWord][currentTopic] > 0) {
+      if (lastWordTopicCounts[currentWord][currentTopic] > 0) {
 
 	// then we have an output tuple!
 	tempWordID = indexToWord[currentWord];
 	tempTopicID = currentTopic;
-	tempOutCount = outputCounts[currentWord][currentTopic];
+	tempOutCount = lastWordTopicCounts[currentWord][currentTopic];
 	
 	output.out_word_id = &tempWordID;
 	output.out_topic_id = &tempTopicID;
@@ -606,7 +668,7 @@ public:
       // looping.
       currentTopic++;
     }
-    */
+    
   }
 
   /** Schema information methods -- DO NOT MODIFY */
@@ -637,3 +699,4 @@ VGFunction *create() {
 void destroy(VGFunction *vgFunction) {
   delete (Multinomial_WordTopic_Collapsed_Sparse *)vgFunction;
 }
+
