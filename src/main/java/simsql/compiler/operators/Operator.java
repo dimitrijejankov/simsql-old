@@ -16,26 +16,50 @@
  *                                                                           *
  *****************************************************************************/
 
-package simsql.compiler.operators; // package mcdb.compiler.logicPlan.logicOperator.relationOperator;
+package simsql.compiler.operators;
 
 import simsql.compiler.CopyHelper;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
 
+/**
+ * The class that represents the Operator in the logical query plan
+ */
 public abstract class Operator {
+
+	/**
+	 * the name of the node in the logical query plan
+	 */
 	private String nodeName;
+
+	/**
+	 * the children of the operators in the logical query plan
+	 */
 	private ArrayList<Operator> children;
-	private ArrayList<Operator> parents; 
-	
-	/*
-	 * Additional data structure
+
+	/**
+	 * the parents of the operators in the logical query plan
+	 */
+	private ArrayList<Operator> parents;
+
+
+	/**
+	 * used to replace the names of the attributes
 	 */
 	private HashMap<String, String> nameMap;
+
+	/**
+	 * TODO figure out what this thing is.... (something related to attribute renaming)
+	 */
 	private HashSet<String> mapSpaceNameSet;
-	
+
+    /**
+     * @param nodeName the name of the operator
+     * @param children the children of the operator
+     * @param parents the parent operators
+     */
 	public Operator(String nodeName, 
 					ArrayList<Operator> children,
 	                ArrayList<Operator> parents)
@@ -43,23 +67,20 @@ public abstract class Operator {
 		this.nodeName = nodeName;
 		this.children = children;
 		this.parents = parents;
-		
-		/*
-		 * Initialization of nameMap
-		 */
+
+		// Initialization of nameMap
 		nameMap = new HashMap<String, String>();
 		mapSpaceNameSet = new HashSet<String>();
 	}
-	
-	
-	
-	/**
-	 * @param nodeName
-	 * @param children
-	 * @param parents
-	 * @param nameMap
-	 * @param mapSpaceNameSet
-	 */
+
+
+    /**
+     * @param nodeName the name of the operator
+     * @param children the children of the operator
+     * @param parents the parent operators
+     * @param nameMap the name map to be used
+     * @param mapSpaceNameSet the map space name set to be used...
+     */
 	public Operator(String nodeName, ArrayList<Operator> children,
 			ArrayList<Operator> parents, HashMap<String, String> nameMap,
 			HashSet<String> mapSpaceNameSet) {
@@ -72,41 +93,74 @@ public abstract class Operator {
 	}
 
 
-
-	public String getNodeName() {
+    /**
+     * @return gets the node name
+     */
+    public String getNodeName() {
 		return nodeName;
 	}
 
-	public void setNodeName(String nodeName) {
+    /**
+     * @param nodeName sets the node name
+     */
+    public void setNodeName(String nodeName) {
 		this.nodeName = nodeName;
 	}
 
-	public ArrayList<Operator> getChildren() {
+    /**
+     * @return returns the list of children associated with this node
+     */
+    public ArrayList<Operator> getChildren() {
 		return children;
 	}
 
-	public void setChildren(ArrayList<Operator> children) {
+    /**
+     * @param children sets the list of children associated with this node
+     */
+    public void setChildren(ArrayList<Operator> children) {
 		this.children = children;
 	}
 
-	public ArrayList<Operator> getParents() {
+    /**
+     * @return gets the list of parents associated with this node
+     */
+    public ArrayList<Operator> getParents() {
 		return parents;
 	}
 
+    /**
+     *
+     * @param parents sets the list of parents associated with this node
+     */
 	public void setParents(ArrayList<Operator> parents) {
 		this.parents = parents;
 	}
-	
+
+    /**
+     *
+     * @param operator adds a new parent
+     */
 	public void addParent(Operator operator)
 	{
 		parents.add(operator);
 	}
-	
+
+    /**
+     * Adds a new child at a certain position
+     * @param index the position of child in the list of children
+     * @param operator the child operator
+     */
 	public void addChild(int index, Operator operator)
 	{
 		children.add(index, operator);
 	}
-	
+
+
+    /**
+     * Replaces a child operator in the child list with the given operator
+     * @param op1 the child operator to be replaced
+     * @param op2 the new child operator
+     */
 	public void replaceChild(Operator op1, Operator op2)
 	{
 		int index = children.indexOf(op1);
@@ -120,43 +174,66 @@ public abstract class Operator {
 			children.add(op2);
 		}
 	}
-	
-	public void addChild(Operator operator)
+
+    /**
+     * Adds a child operator to the children list
+     * @param operator the new operator
+     */
+    public void addChild(Operator operator)
 	{
 		children.add(operator);
 	}
-	
+
+    /**
+     * remove a parent from the list of parent operators
+     * @param operator the parent operator to be removed
+     */
 	public void removeParent(Operator operator)
 	{
 		parents.remove(operator);
 	}
-	
+
+    /**
+     * remove a child from the child operator list
+     * @param operator the child to be removed
+     */
 	public void removeChild(Operator operator)
 	{
 		children.remove(operator);
 	}
-	
+
+    /**
+     * removes all the parents and children from this node
+     */
 	public void clearLinks()
 	{
 		parents.clear();
 		children.clear();
 	}
-	
+
+    /**
+     *
+     * @return the string that has the node structure
+     */
 	public String getNodeStructureString()
 	{
 		String result = "";
 		ArrayList<Operator> temp = getChildren();
 		if(temp != null)
 		{
-			for(int i = 0; i < temp.size(); i++)
-			{
-				result += "parent(" + getNodeName() + ", " + temp.get(i).getNodeName() + ").\r\n";
-			}
+            for (Operator aTemp : temp) {
+                result += "parent(" + getNodeName() + ", " + aTemp.getNodeName() + ").\r\n";
+            }
 		}
 		return result;
 	}
-	
-	public String getListString(ArrayList<String> list)
+
+    /**
+     *
+     * @param list
+     * @return
+     */
+	String getListString(ArrayList<String> list)
 	{
 		String result = "[";
 		for(int i = 0; i < list.size(); i++)
@@ -172,42 +249,77 @@ public abstract class Operator {
 		result += "]";
 		return result;
 	}
-	
+
+    /**
+     *
+     * @param s
+     * @return
+     */
 	public boolean isMapped(String s)
 	{
 		return nameMap.containsKey(s);
 	}
-	
+
+    /**
+     *
+     * @param s1
+     * @param s2
+     */
 	public void putNameMap(String s1, String s2)
 	{
 		nameMap.put(s1, s2);
 		mapSpaceNameSet.add(s2);
 	}
-	
+
+    /**
+     *
+     * @param s2
+     * @return
+     */
 	public boolean isSpaceNamein(String s2)
 	{
 		return mapSpaceNameSet.contains(s2);
 	}
-	
+
+    /**
+     *
+     * @return
+     */
 	public HashMap<String, String> getNameMap() {
 		return nameMap;
 	}
 
+    /**
+     *
+     * @param nameMap
+     */
 	public void setNameMap(HashMap<String, String> nameMap) {
 		this.nameMap = nameMap;
 	}
 
+    /**
+     *
+     * @return
+     */
 	public HashSet<String> getMapSpaceNameSet() {
 		return mapSpaceNameSet;
 	}
 
+    /**
+     *
+     * @param mapSpaceNameSet
+     */
 	public void setMapSpaceNameSet(HashSet<String> mapSpaceNameSet) {
 		this.mapSpaceNameSet = mapSpaceNameSet;
 	}
-	
+
+    /**
+     *
+     * @return
+     */
 	public String toString()
 	{
-		String result = "";
+		String result;
 		try{
 			result = nodeName + ".\r\n" + visitNode();
 		}
@@ -218,24 +330,42 @@ public abstract class Operator {
 		
 		return result;
 	}
-	
-	public void clearRenamingInfo()
+
+    /**
+     *
+     */
+    public void clearRenamingInfo()
 	{
 		clearNameMap();
 		clearMapSpaceNameSet();
 	}
-	
-	public void clearNameMap()
+
+    /**
+     *
+     */
+	void clearNameMap()
 	{
 		nameMap.clear();
 	}
-	
-	public void clearMapSpaceNameSet()
+
+    /**
+     *
+     */
+	void clearMapSpaceNameSet()
 	{
 		mapSpaceNameSet.clear();
 	}
 
+    /**
+     * @return returns the string file representation of this operator
+     */
 	public abstract String visitNode() throws Exception;
+
+    /**
+     * @param copyHelper an instance of the copy helper class
+     * @return the deep copy of an operator
+     * @throws Exception if the operation fails
+     */
 	public abstract Operator copy(CopyHelper copyHelper) throws Exception;
 	
 }
