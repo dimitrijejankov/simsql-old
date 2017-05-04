@@ -1,5 +1,3 @@
-
-
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -18,37 +16,41 @@
  *                                                                           *
  *****************************************************************************/
 
+package simsql.compiler.operators; // package mcdb.compiler.logicPlan.logicOperator.relationOperator;
 
-/**
- * 
- */
-package simsql.compiler; // package mcdb.compiler.logicPlan.logicOperator.relationOperator;
+import simsql.compiler.CommonContent;
+import simsql.compiler.CopyHelper;
 
 import java.util.ArrayList;
 
 
-// import mcdb.compiler.logicPlan.logicOperator.CommonContent;
-// import mcdb.compiler.logicPlan.logicOperator.CopyHelper;
-
 /**
- * @author Bamboo
- *
+ * The class that represents the Projection in the logical query plan
  */
-public class Projection extends Operator{
-	
-	private ArrayList<String> projectedNameList;
+public class Projection extends Operator {
+
+
 	/**
-	 * @param nodeName
-	 * @param translatedStatement
-	 * @param children
-	 * @param parents
+	 * Names of the projected attributes
+	 */
+	private ArrayList<String> projectedNameList;
+
+	/**
+	 * @param nodeName the name of the operator
+	 * @param children the children of the operator
+	 * @param parents the parent operators
 	 */
 	public Projection(String nodeName,
 			ArrayList<Operator> children, ArrayList<Operator> parents) {
 		super(nodeName, children, parents);
 	}
-	
-	
+
+	/**
+	 * @param nodeName the name of the operator
+	 * @param children the children of the operator
+	 * @param parents the parent operators
+	 * @param projectedNameList the list of the projected attributes..
+	 */
 	public Projection(String nodeName, 
 			ArrayList<Operator> children, 
 			ArrayList<Operator> parents,
@@ -58,18 +60,24 @@ public class Projection extends Operator{
 	}
 
 
+	/**
+	 * @return the list of projected attributes
+	 */
 	public ArrayList<String> getProjectedNameList() {
 		return projectedNameList;
 	}
 
 
+	/**
+	 * @param projectedNameList sets the list of projected attributes
+	 */
 	public void setProjectedNameList(ArrayList<String> projectedNameList) {
 		this.projectedNameList = projectedNameList;
 	}
 
 
-	/* (non-Javadoc)
-	 * @see logicOperator.relationOperator.Operator#visitNode()
+	/**
+	 * @return returns the string file representation of this operator
 	 */
 	@Override
 	public String visitNode() {
@@ -98,7 +106,12 @@ public class Projection extends Operator{
 		
 		return result;
 	}
-	
+
+	/**
+	 * @param copyHelper an instance of the copy helper class
+	 * @return the deep copy of an operator
+	 * @throws Exception if the operation fails
+	 */
 	public Operator copy(CopyHelper copyHelper) throws Exception
 	{
 		if(copyHelper.getCopiedMap().containsKey(getNodeName()))
@@ -126,9 +139,8 @@ public class Projection extends Operator{
 		ArrayList<Operator> children = projection.getChildren();
 		if(children != null)
 		{
-			for(int i = 0; i < children.size(); i++)
-			{
-				children.get(i).addParent(projection);
+			for (Operator aChildren : children) {
+				aChildren.addParent(projection);
 			}
 		}
 		return projection;

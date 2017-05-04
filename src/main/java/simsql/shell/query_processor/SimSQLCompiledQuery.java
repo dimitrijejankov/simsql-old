@@ -26,9 +26,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import simsql.compiler.Projection;
-import simsql.compiler.FrameOutput;
-import simsql.compiler.Operator;
+import simsql.compiler.operators.Projection;
+import simsql.compiler.operators.FrameOutput;
+import simsql.compiler.operators.Operator;
 import simsql.compiler.timetable.TimeTableNode;
 import simsql.shell.CompiledQuery;
 

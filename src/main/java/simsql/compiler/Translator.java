@@ -31,6 +31,7 @@ package simsql.compiler; // package mcdb.compiler.logicPlan.translator;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import simsql.compiler.operators.*;
 import simsql.runtime.DataType;
 
 /**
@@ -508,10 +509,8 @@ public class Translator {
 
 
     /**
-     * @param typechecker
      * @param wherePredicate
-     * @param translatedElement
-     * @return
+     * @param originalOperator
      * @throws Exception
      */
     private Operator translateBooleanScalarFunction(BooleanPredicate wherePredicate,
@@ -1740,7 +1739,7 @@ public class Translator {
                     children,
                     parents,
                     aggregateName);
-            aggregate.setGroupbyList(groupbyList);
+            aggregate.setGroupByList(groupbyList);
             aggregate.setAggregateExpressionList(aggregateExpressionList);
             aggregate.setColumnListMap(columnListMap);
             aggregate.setOutputMap(outputMap);

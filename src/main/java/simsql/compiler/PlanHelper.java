@@ -21,6 +21,8 @@
 
 package simsql.compiler;
 
+import simsql.compiler.operators.Operator;
+import simsql.compiler.operators.TableScan;
 import simsql.compiler.timetable.TimeTableNode;
 
 import java.util.ArrayList;

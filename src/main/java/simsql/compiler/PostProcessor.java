@@ -24,6 +24,8 @@
  */
 package simsql.compiler; // package mcdb.compiler.logicPlan.postProcessor;
 
+import simsql.compiler.operators.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1321,7 +1323,7 @@ public void selfJoinmerge(ArrayList<RenameNode> addedNodeList)
 		 * A. This node is root.
 		 * B. The attribute does not appear in the parents.
 		 */
-		ArrayList<String> groupbyList = ((Aggregate)element).getGroupbyList();
+		ArrayList<String> groupbyList = ((Aggregate)element).getGroupByList();
 		ArrayList<String> outputList = element.getGeneratedNameList();
 		if(groupbyList.contains(originalName) ||
 				outputList.contains(originalName))

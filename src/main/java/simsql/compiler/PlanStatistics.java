@@ -27,6 +27,8 @@ package simsql.compiler; // package mcdb.compiler.logicPlan;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+
+import simsql.compiler.operators.*;
 import simsql.runtime.DataType;
 import simsql.runtime.SeedType;
 
@@ -242,7 +244,6 @@ public class PlanStatistics {
 	
 	/**
 	 * @param element
-	 * @param resultList
 	 * @param attributeTypeMap
 	 */
 	private void getAttributeFromUnionView(UnionView element,
@@ -280,7 +281,6 @@ public class PlanStatistics {
 
 	/**
 	 * @param element
-	 * @param resultList
 	 * @param attributeTypeMap
 	 */
 	private void getAttributeFromTableScan(TableScan element,
@@ -311,7 +311,6 @@ public class PlanStatistics {
 
 	/**
 	 * @param element
-	 * @param resultList
 	 * @param attributeTypeMap
 	 */
 	private void getAttributeFromSelection(Selection element,
@@ -323,7 +322,6 @@ public class PlanStatistics {
 
 	/**
 	 * @param element
-	 * @param resultList
 	 * @param attributeTypeMap
 	 */
 	private void getAttributeFromSeed(Seed element,
@@ -334,7 +332,6 @@ public class PlanStatistics {
 
 	/**
 	 * @param element
-	 * @param resultList
 	 * @param attributeTypeMap
 	 */
 	private void getAttributeFromScalarFunction(ScalarFunction element,
@@ -368,7 +365,6 @@ public class PlanStatistics {
 
 	/**
 	 * @param element
-	 * @param resultList
 	 * @param attributeTypeMap
 	 */
 	private void getAttributeFromProjection(Projection element,
@@ -380,7 +376,6 @@ public class PlanStatistics {
 
 	/**
 	 * @param element
-	 * @param resultList
 	 * @param attributeTypeMap
 	 */
 	private void getAttributeFromJoin(Join element,
@@ -392,7 +387,6 @@ public class PlanStatistics {
 
 	/**
 	 * @param element
-	 * @param resultList
 	 * @param attributeTypeMap
 	 */
 	private void getAttributeFromDuplicateRemove(DuplicateRemove element,
@@ -404,7 +398,6 @@ public class PlanStatistics {
 
 	/**
 	 * @param element
-	 * @param resultList
 	 * @param attributeTypeMap
 	 */
 	private void getAttributeFromAggregate(Aggregate element,

@@ -1,5 +1,3 @@
-
-
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -18,23 +16,15 @@
  *                                                                           *
  *****************************************************************************/
 
+package simsql.compiler.operators; // package mcdb.compiler.logicPlan.logicOperator.relationOperator;
 
-/**
- * 
- */
-package simsql.compiler; // package mcdb.compiler.logicPlan.logicOperator.relationOperator;
+import simsql.compiler.CopyHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
 
-// import mcdb.compiler.logicPlan.logicOperator.CopyHelper;
-
-/**
- * @author Bamboo
- *
- */
 public abstract class Operator {
 	private String nodeName;
 	private ArrayList<Operator> children;

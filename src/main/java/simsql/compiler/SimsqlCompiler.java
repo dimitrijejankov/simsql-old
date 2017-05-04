@@ -32,6 +32,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
+import simsql.compiler.operators.FrameOutput;
+import simsql.compiler.operators.Operator;
+import simsql.compiler.operators.TableScan;
 import simsql.compiler.timetable.TimeTableNode;
 import simsql.shell.Compiler;
 import simsql.shell.query_processor.SimSQLCompiledQuery;

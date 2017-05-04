@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import simsql.compiler.operators.*;
 import simsql.runtime.DataType;
 
 /**
@@ -454,11 +455,11 @@ public class PlanInstantiation {
 			/*
 			 * 2.2 Fill the tranlsatedResult.
 			 */
-            for (int i = 0; i < new_attributeNameList.size(); i++) {
-				/*
+            for (String aNew_attributeNameList : new_attributeNameList) {
+                /*
 				 * 2.3 Fill the projectedNameList
 				 */
-                projectedNameList.add(new_attributeNameList.get(i));
+                projectedNameList.add(aNew_attributeNameList);
             }
 
 			/*

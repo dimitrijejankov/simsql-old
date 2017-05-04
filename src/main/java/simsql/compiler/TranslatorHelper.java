@@ -24,6 +24,8 @@
  */
 package simsql.compiler; // package mcdb.compiler.logicPlan.translator;
 
+import simsql.compiler.operators.Operator;
+
 import java.util.HashMap;
 
 

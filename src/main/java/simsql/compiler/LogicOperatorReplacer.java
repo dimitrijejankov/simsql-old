@@ -24,16 +24,11 @@
  */
 package simsql.compiler; // package mcdb.compiler.logicPlan.postProcessor;
 
+import simsql.compiler.operators.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
-
-
-
-
-
 
 
 // import mcdb.compiler.logicPlan.logicOperator.booleanOperator.BooleanOperator;
@@ -100,7 +95,7 @@ public class LogicOperatorReplacer
 	
 	public static void replaceAttributeInAggregate(Aggregate element)
 	{
-		ArrayList<String> groupbyList = element.getGroupbyList();
+		ArrayList<String> groupbyList = element.getGroupByList();
 		ArrayList<MathOperator> aggregateExpressionList = element.getAggregateExpressionList();
 		HashMap<MathOperator, ArrayList<String>> columnListMap = element.getColumnListMap();
 		HashMap<MathOperator, String> outputMap = element.getOutputMap();
@@ -367,7 +362,7 @@ public class LogicOperatorReplacer
 		switch(PostProcessorHelper.getNodeType(element))
 		{
 			case PostProcessorHelper.AGGREGATE:
-				ArrayList<String> groupbyList = ((Aggregate) element).getGroupbyList();
+				ArrayList<String> groupbyList = ((Aggregate) element).getGroupByList();
 				ArrayList<String> outputList = ((Aggregate) element).getGeneratedNameList();
 				if (groupbyList.contains(originalName) || outputList.contains(originalName)) {
 					renameAttributeForSelfJoin(element, element.getParents(), originalName, mappedName, nodeSet);
@@ -475,7 +470,7 @@ public class LogicOperatorReplacer
 	
 	public static void replaceAttributeInAggregateForSelfJoin(Aggregate element, String originalName, String mappedName)
 	{
-		ArrayList<String> groupbyList = element.getGroupbyList();
+		ArrayList<String> groupbyList = element.getGroupByList();
 		ArrayList<MathOperator> aggregateExpressionList = element.getAggregateExpressionList();
 		HashMap<MathOperator, ArrayList<String>> columnListMap = element.getColumnListMap();
 		HashMap<MathOperator, String> outputMap = element.getOutputMap();

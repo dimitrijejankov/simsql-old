@@ -1,5 +1,3 @@
-
-
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -18,42 +16,49 @@
  *                                                                           *
  *****************************************************************************/
 
+package simsql.compiler.operators; // package mcdb.compiler.logicPlan.logicOperator.relationOperator;
 
-/**
- * 
- */
-package simsql.compiler; // package mcdb.compiler.logicPlan.logicOperator.relationOperator;
+import simsql.compiler.CommonContent;
+import simsql.compiler.CopyHelper;
 
 import java.util.ArrayList;
 
 
-// import mcdb.compiler.logicPlan.logicOperator.CommonContent;
-// import mcdb.compiler.logicPlan.logicOperator.CopyHelper;
-// import mcdb.compiler.logicPlan.logicOperator.mathOperator.MathOperator;
-
 /**
- * @author Bamboo
- *
+ * The class that represents the Seed in the logical query plan
  */
-public class Seed extends Operator{
+public class Seed extends Operator {
 
-	private String seedAttributeName;
-	private String tableName;
 	/**
-	 * @param nodeName
-	 * @param translatedStatement
-	 * @param children
-	 * @param parents
+	 * the name of the seed attribute in the logical query plan
+	 */
+	private String seedAttributeName;
+
+	/**
+	 * the name of the table
+	 */
+	private String tableName;
+
+	/**
+	 * @param nodeName the name of the operator
+	 * @param children the children of the operator
+	 * @param parents  the parent operators
 	 */
 	public Seed(String nodeName, ArrayList<Operator> children, ArrayList<Operator> parents) {
 		super(nodeName, children, parents);
-		
-	}
-	
-	
-	public Seed(String nodeName, 
+    }
+
+    /**
+     *
+     * @param nodeName the name of the operator
+     * @param tableName the name of the table
+     * @param children the children of the operator
+     * @param parents the parents of the operator
+     * @param seedAttributeName the name of the seed attribute
+     */
+	public Seed(String nodeName,
 				String tableName,
-				ArrayList<Operator> children, 
+				ArrayList<Operator> children,
 				ArrayList<Operator> parents,
 				String seedAttributeName) 
 	{
@@ -61,24 +66,36 @@ public class Seed extends Operator{
 		this.tableName = tableName;
 		this.seedAttributeName = seedAttributeName;
 	}
-	
-	
-	public String getTableName()
+
+
+    /**
+     * @return gets the name of the table
+     */
+    public String getTableName()
 	{
 		return tableName;
 	}
 
-	public String getSeedAttributeName() {
+    /**
+     *
+     * @return returns the name of the seed attribute
+     */
+    public String getSeedAttributeName() {
 		return seedAttributeName;
 	}
+
+    /**
+     *
+     * @param seedAttributeName sets the name of the seed attribute
+     */
 	public void setSeedAttributeName(String seedAttributeName) {
 		this.seedAttributeName = seedAttributeName;
 	}
 
 
-	/* (non-Javadoc)
-	 * @see logicOperator.relationOperator.Operator#visitNode()
-	 */
+    /**
+     * @return returns the string file representation of this operator
+     */
 	@Override
 	public String visitNode() {
 		String result = "";
@@ -99,7 +116,12 @@ public class Seed extends Operator{
 		resultList.add(seedAttributeName);
 		return resultList;
 	}
-	
+
+    /**
+     * @param copyHelper an instance of the copy helper class
+     * @return the deep copy of an operator
+     * @throws Exception if the operation fails
+     */
 	public Operator copy(CopyHelper copyHelper) throws Exception
 	{
 		if(copyHelper.getCopiedMap().containsKey(getNodeName()))
@@ -123,10 +145,9 @@ public class Seed extends Operator{
 		ArrayList<Operator> children = seed.getChildren();
 		if(children != null)
 		{
-			for(int i = 0; i < children.size(); i++)
-			{
-				children.get(i).addParent(seed);
-			}
+            for (Operator aChildren : children) {
+                aChildren.addParent(seed);
+            }
 		}
 		
 		return seed;

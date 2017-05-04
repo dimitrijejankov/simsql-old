@@ -22,9 +22,9 @@
 
 package simsql.optimizer;
 import simsql.compiler.FileOperation;
-import simsql.compiler.Operator;
+import simsql.compiler.operators.Operator;
 import simsql.compiler.PreviousTable;
-import simsql.compiler.Projection;
+import simsql.compiler.operators.Projection;
 import simsql.shell.Optimizer;
 import simsql.shell.query_processor.SimSQLCompiledQuery;
 import simsql.shell.RuntimeParameter;

@@ -23,6 +23,9 @@
  * 
  */
 package simsql.compiler;
+import simsql.compiler.operators.Operator;
+import simsql.compiler.operators.TableScan;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

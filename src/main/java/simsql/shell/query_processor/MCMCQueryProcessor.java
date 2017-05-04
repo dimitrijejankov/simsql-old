@@ -22,6 +22,9 @@
 package simsql.shell.query_processor;
 
 import simsql.compiler.*;
+import simsql.compiler.operators.FrameOutput;
+import simsql.compiler.operators.Operator;
+import simsql.compiler.operators.TableScan;
 import simsql.optimizer.CompiledOptimizer;
 import simsql.optimizer.SimSQLOptimizedQuery;
 import simsql.code_generator.WrappedTranslator;
