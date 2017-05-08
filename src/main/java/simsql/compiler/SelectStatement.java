@@ -26,6 +26,8 @@ package simsql.compiler; // package mcdb.compiler.parser.expression.sqlExpressio
  *  This class corresponds to the select..from..where query
  */
 
+import simsql.compiler.expressions.ColumnExpression;
+
 import java.util.ArrayList;
 
 

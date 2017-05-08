@@ -18,7 +18,10 @@
 
 package simsql.compiler.operators;
 
+import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.*;
+import simsql.compiler.boolean_operator.AndOperator;
+import simsql.compiler.boolean_operator.BooleanOperator;
 
 import java.util.ArrayList;
 
@@ -31,22 +34,27 @@ public class Selection extends Operator {
     /**
      * the boolean operator of the selection
      */
+    @JsonProperty("boolean-operator")
     private BooleanOperator booleanOperator;
 
     /**
+     * This is used for JSON deserialization
+     *
      * @param nodeName the name of the operator
      * @param children the children of the operator
      * @param parents  the parent operators
      */
-    public Selection(String nodeName,
-                     ArrayList<Operator> children, ArrayList<Operator> parents) {
+    @JsonCreator
+    public Selection(@JsonProperty("node-name") String nodeName,
+                     @JsonProperty("children") ArrayList<Operator> children,
+                     @JsonProperty("parents") ArrayList<Operator> parents) {
         super(nodeName, children, parents);
     }
 
     /**
-     * @param nodeName the name of the operator
-     * @param children the children of the operator
-     * @param parents the parent operators
+     * @param nodeName        the name of the operator
+     * @param children        the children of the operator
+     * @param parents         the parent operators
      * @param booleanOperator the boolean operator of the selection
      */
     public Selection(String nodeName, ArrayList<Operator> children, ArrayList<Operator> parents, BooleanOperator booleanOperator) {
@@ -55,7 +63,6 @@ public class Selection extends Operator {
     }
 
     /**
-     *
      * @return returns the boolean operator of the selection
      */
     public BooleanOperator getBooleanOperator() {
@@ -63,7 +70,6 @@ public class Selection extends Operator {
     }
 
     /**
-     *
      * @param booleanOperator sets the boolean operator of the selection
      */
     public void setBooleanOperator(BooleanOperator booleanOperator) {
@@ -102,7 +108,7 @@ public class Selection extends Operator {
         result += "]).\r\n";
 
         if (booleanOperator instanceof AndOperator) {
-			/*
+            /*
 			 * case 4.1: AndOperator
 			 */
             ArrayList<BooleanOperator> andList = ((AndOperator) booleanOperator).getOperatorList();

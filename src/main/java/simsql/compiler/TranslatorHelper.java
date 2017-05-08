@@ -24,6 +24,7 @@
  */
 package simsql.compiler; // package mcdb.compiler.logicPlan.translator;
 
+import simsql.compiler.expressions.MathExpression;
 import simsql.compiler.operators.Operator;
 
 import java.util.HashMap;
@@ -52,6 +53,7 @@ public class TranslatorHelper {
 	private int scalarAttributeNameIndex;
 	private int tempAttributeIndex;
 	private int vgWrapperIndex;
+
 	public HashMap<String, Operator> viewPlanMap;
 	
 	/*

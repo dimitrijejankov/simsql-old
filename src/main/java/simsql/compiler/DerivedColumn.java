@@ -29,6 +29,8 @@ package simsql.compiler; // package mcdb.compiler.parser.expression.sqlExpressio
 // import mcdb.compiler.parser.astVisitor.ASTVisitor;
 // import mcdb.compiler.parser.expression.mathExpression.*;
 
+import simsql.compiler.expressions.MathExpression;
+
 /**
  * @author Bamboo
  *

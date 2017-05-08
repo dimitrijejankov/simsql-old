@@ -17,10 +17,10 @@
  *****************************************************************************/
 package simsql.compiler.operators;
 
+import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.CommonContent;
 import simsql.compiler.CopyHelper;
-import simsql.compiler.MathOperator;
-
+import simsql.compiler.math_operators.MathOperator;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -34,35 +34,42 @@ public class Aggregate extends Operator {
     /**
      * The name of this operation in the graph
      */
+    @JsonProperty("aggregate-name")
     private String aggregateName;
 
 
     /**
      * The group by list of the aggregate
      */
+    @JsonProperty("group-by-list")
     private ArrayList<String> groupByList;
 
 
     /**
      * The expression list of the aggregate operation
      */
+    @JsonProperty("aggregate-expression-list")
     private ArrayList<MathOperator> aggregateExpressionList;
 
     /**
      * The list of columns associated with it's math operator
      */
+    @JsonIgnore
     private HashMap<MathOperator, ArrayList<String>> columnListMap;
 
-
+    /**
+     * TODO figure out what this is...
+     */
+    @JsonIgnore
     private HashMap<MathOperator, String> outputMap;
-
 
     /**
      * @param nodeName the name of the operator
      * @param children the children of the operator
      * @param parents the parent operators
      */
-    public Aggregate(String nodeName, ArrayList<Operator> children, ArrayList<Operator> parents) {
+    @JsonCreator
+    public Aggregate(@JsonProperty("node-name") String nodeName, @JsonProperty("children") ArrayList<Operator> children, @JsonProperty("parents") ArrayList<Operator> parents) {
         super(nodeName, children, parents);
     }
 
@@ -139,6 +146,38 @@ public class Aggregate extends Operator {
     }
 
     /**
+     * Returns the array list of column lists  - used for serialization
+     * @return the array list column lists
+     */
+    @JsonGetter("column-lists")
+    public ArrayList<ColumnList> getColumnLists() {
+
+        ArrayList<ColumnList> ret = new ArrayList<ColumnList>();
+
+        // convert to array list
+        for(MathOperator m : columnListMap.keySet()) {
+            ret.add(new ColumnList(m, columnListMap.get(m)));
+        }
+
+        return ret;
+    }
+
+    /**
+     * Sets the column map from it's inverted form - used for serialization
+     * @param invertedColumnMap the inverted column map
+     */
+    @JsonSetter("column-lists")
+    public void setColumnLists(ArrayList<ColumnList> invertedColumnMap) {
+
+        columnListMap = new HashMap<MathOperator, ArrayList<String>>();
+
+        // invert the map and add it to to the empty output map
+        for(ColumnList c : invertedColumnMap) {
+            columnListMap.put(c.operator, c.columns);
+        }
+    }
+
+    /**
      *
      * @return returns the output map
      */
@@ -150,6 +189,38 @@ public class Aggregate extends Operator {
         this.outputMap = outputMap;
     }
 
+
+    /**
+     * Returns the inverted output map - used for serialization
+     * @return the inverted outputMap
+     */
+    @JsonGetter("inverted-output-map")
+    public HashMap<String, MathOperator> getInvertedOutputMap() {
+
+        HashMap<String, MathOperator> ret = new HashMap<String, MathOperator>();
+
+        // invert the map
+        for(MathOperator m : outputMap.keySet()) {
+            ret.put(outputMap.get(m), m);
+        }
+
+        return ret;
+    }
+
+    /**
+     * Sets the output map from it's inverted form - used for serialization
+     * @param invertedOutputMap the inverted output map
+     */
+    @JsonSetter("inverted-output-map")
+    public void setInvertedOutputMap(HashMap<String, MathOperator> invertedOutputMap) {
+
+        outputMap = new HashMap<MathOperator, String>();
+
+        // invert the map and add it to to the empty output map
+        for(String m : invertedOutputMap.keySet()) {
+            outputMap.put(invertedOutputMap.get(m), m);
+        }
+    }
 
     /**
      *
@@ -228,7 +299,7 @@ public class Aggregate extends Operator {
         return result;
     }
 
-
+    @JsonIgnore
     public ArrayList<String> getGeneratedNameList() {
         ArrayList<String> resultList = new ArrayList<String>();
 

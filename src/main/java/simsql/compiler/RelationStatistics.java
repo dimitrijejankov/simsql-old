@@ -1,5 +1,3 @@
-
-
 /**
  * *
  * Copyright 2014 Rice University                                           *
@@ -18,35 +16,48 @@
  * *
  */
 
-
-/**
- *
- */
-package simsql.compiler; // package mcdb.compiler.logicPlan.logicOperator.statisticsOperator;
+package simsql.compiler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import simsql.compiler.expressions.DateExpression;
+import simsql.compiler.expressions.MathExpression;
+import simsql.compiler.expressions.NumericExpression;
+import simsql.compiler.expressions.StringExpression;
 import simsql.runtime.DataType;
 
+
 /**
- * @author Bamboo
  *
  */
 public class RelationStatistics implements StatisticsOperator {
+
+    @JsonProperty("relation")
     private String relation;
+
+    @JsonProperty("directory")
     private String directory;
+
+    @JsonProperty("attribute-list")
     private ArrayList<String> attributeList;
 
+    @JsonProperty("index-strings")
     private HashMap<String, Integer> indexStrings;
+
+    @JsonProperty("type")
     private int type;
 
+    @JsonProperty("table-info")
     private PreviousTable tableInfo;
 
-    public RelationStatistics(String relation,
-                              String directory,
-                              ArrayList<String> attributeList,
-                              int type) {
+    @JsonCreator
+    public RelationStatistics(@JsonProperty("relation") String relation,
+                              @JsonProperty("directory") String directory,
+                              @JsonProperty("attribute-list") ArrayList<String> attributeList,
+                              @JsonProperty("type") int type) {
         super();
         this.relation = relation;
         this.directory = directory;

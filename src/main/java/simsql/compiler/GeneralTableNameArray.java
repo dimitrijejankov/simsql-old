@@ -22,6 +22,8 @@
 package simsql.compiler;
 
 
+import simsql.compiler.expressions.MathExpression;
+
 public class GeneralTableNameArray extends SQLExpression{
 
 	private String name;

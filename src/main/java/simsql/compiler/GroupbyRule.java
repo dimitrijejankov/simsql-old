@@ -24,9 +24,10 @@
  */
 package simsql.compiler; // package mcdb.compiler.parser.astVisitor.rule;
 
+import simsql.compiler.expressions.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
-import simsql.compiler.TypeChecker;
 
 // import mcdb.catalog.Attribute;
 // import mcdb.catalog.Catalog;

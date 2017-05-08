@@ -18,6 +18,7 @@
 
 package simsql.compiler.operators; // package mcdb.compiler.logicPlan.logicOperator.relationOperator;
 
+import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.CommonContent;
 import simsql.compiler.CopyHelper;
 
@@ -32,21 +33,28 @@ public class Seed extends Operator {
 	/**
 	 * the name of the seed attribute in the logical query plan
 	 */
+	@JsonProperty("seed-attribute-name")
 	private String seedAttributeName;
 
 	/**
 	 * the name of the table
 	 */
+	@JsonProperty("table-name")
 	private String tableName;
 
 	/**
+	 * This is used for JSON deserialization
+	 *
 	 * @param nodeName the name of the operator
 	 * @param children the children of the operator
 	 * @param parents  the parent operators
 	 */
-	public Seed(String nodeName, ArrayList<Operator> children, ArrayList<Operator> parents) {
+	@JsonCreator
+	public Seed(@JsonProperty("node-name") String nodeName,
+				@JsonProperty("children") ArrayList<Operator> children,
+				@JsonProperty("parents") ArrayList<Operator> parents) {
 		super(nodeName, children, parents);
-    }
+	}
 
     /**
      *
@@ -109,6 +117,7 @@ public class Seed extends Operator {
 		return result;
 	}
 
+	@JsonIgnore
 	public ArrayList<String> getGeneratedNameList()
 	{
 		ArrayList<String> resultList = new ArrayList<String>();

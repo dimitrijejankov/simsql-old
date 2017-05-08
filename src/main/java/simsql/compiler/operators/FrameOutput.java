@@ -18,6 +18,7 @@
 
 package simsql.compiler.operators;
 
+import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.CommonContent;
 import simsql.compiler.CopyHelper;
 
@@ -33,12 +34,27 @@ public class FrameOutput extends Operator {
     /**
      * A list of tables that
      */
+    @JsonProperty("table-list")
     private ArrayList<String> tableList;
+
+    /**
+     * This is used for JSON deserialization
+     * @param nodeName the name of the operator
+     * @param children the children of the operator
+     * @param parents  the parent operators
+     */
+    @JsonCreator
+    public FrameOutput(@JsonProperty("node-name") String nodeName,
+                       @JsonProperty("children") ArrayList<Operator> children,
+                       @JsonProperty("parents") ArrayList<Operator> parents) {
+        super(nodeName, children, parents);
+    }
 
     /**
      * @param nodeName the name of the operator
      * @param children the children of the operator
      * @param parents  the parent operators
+     * @param tableList list of table that are at the frame output
      */
     public FrameOutput(String nodeName,
                        ArrayList<Operator> children,

@@ -23,6 +23,7 @@
  * 
  */
 package simsql.compiler;
+import simsql.compiler.expressions.MathExpression;
 import simsql.compiler.operators.Operator;
 import simsql.compiler.operators.TableScan;
 

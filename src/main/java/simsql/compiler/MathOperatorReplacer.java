@@ -24,6 +24,8 @@
  */
 package simsql.compiler; // package mcdb.compiler.logicPlan.postProcessor;
 
+import simsql.compiler.boolean_operator.BooleanOperator;
+import simsql.compiler.math_operators.*;
 import simsql.compiler.operators.Operator;
 
 import java.util.ArrayList;
@@ -117,7 +119,7 @@ public class MathOperatorReplacer {
 	 */
 	private void replaceAttributeInSetOperator(SetOperator element) 
 	{
-		ArrayList<MathOperator> elementList = element.getElmentList();
+		ArrayList<MathOperator> elementList = element.getElementList();
 		for(int i = 0; i < elementList.size(); i++)
 		{
 			replaceAttributeInMathOperator(elementList.get(i));

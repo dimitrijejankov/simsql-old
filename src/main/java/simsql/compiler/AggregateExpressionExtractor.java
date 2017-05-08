@@ -24,6 +24,8 @@
  */
 package simsql.compiler; // package mcdb.compiler.parser.expression.util;
 
+import simsql.compiler.expressions.*;
+
 import java.util.ArrayList;
 
 

@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import simsql.compiler.*;
+import simsql.compiler.expressions.*;
 }
 
 @lexer::header {

@@ -24,6 +24,8 @@
  */
 package simsql.compiler; // package mcdb.compiler.logicPlan.postProcessor;
 
+import simsql.compiler.math_operators.EFunction;
+import simsql.compiler.math_operators.MathOperator;
 import simsql.compiler.operators.*;
 
 import java.util.ArrayList;

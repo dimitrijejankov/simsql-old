@@ -24,6 +24,10 @@
  */
 package simsql.compiler; // package mcdb.compiler.logicPlan.translator;
 
+import simsql.compiler.boolean_operator.BooleanOperator;
+import simsql.compiler.expressions.*;
+import simsql.compiler.math_operators.*;
+
 import java.util.ArrayList;
 
 
@@ -309,7 +313,7 @@ public class MathExpressionTranslator {
 			  ArrayList<MathOperator> mathOperatorList)
 	{
 		double value = numericExpression.value;
-		mathOperatorList.add(new NumberOperator(value, numericExpression.type));
+		mathOperatorList.add(new NumberOperator(value, numericExpression.getType()));
 		return numericExpression.toString();
 	}
 	
@@ -318,7 +322,7 @@ public class MathExpressionTranslator {
 			ArrayList<String> resultList,
 			ArrayList<MathOperator> mathOperatorList)
 	{
-		mathOperatorList.add(new GeneralTableIndexOperator(generalIndexExpression.type, generalIndexExpression.identifier));
+		mathOperatorList.add(new GeneralTableIndexOperator(generalIndexExpression.getType(), generalIndexExpression.identifier));
 		return "GeneralIndex";
 	}
 	

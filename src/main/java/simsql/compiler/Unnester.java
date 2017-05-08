@@ -24,6 +24,8 @@
  */
 package simsql.compiler; // package mcdb.compiler.parser.unnester;
 
+import simsql.compiler.expressions.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -384,7 +386,7 @@ public class Unnester {
 	 * 5. StringExpression
 	 */
 	
-	public MathExpression unnestArithmeticExpression(ArithmeticExpression arithmeticExpression) throws Exception 
+	public MathExpression unnestArithmeticExpression(ArithmeticExpression arithmeticExpression) throws Exception
 	{
 		
 		ArrayList<MathExpression> operandList = arithmeticExpression.operandList;

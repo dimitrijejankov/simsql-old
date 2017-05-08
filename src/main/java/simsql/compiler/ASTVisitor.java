@@ -1,5 +1,3 @@
-
-
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -18,24 +16,13 @@
  *                                                                           *
  *****************************************************************************/
 
+package simsql.compiler;
 
-package simsql.compiler; // package mcdb.compiler.parser.astVisitor;
-
-/*
- * @Author: Bamboo
- *  Date: 09/02/2010
- *  This class corresponds to the super class of typer checker
- */
 
 import java.util.ArrayList;
+
+import simsql.compiler.expressions.*;
 import simsql.runtime.DataType;
-
-
-
-// import mcdb.compiler.parser.expression.boolExpression.*;
-// import mcdb.compiler.parser.expression.mathExpression.*;
-// import mcdb.compiler.parser.expression.sqlExpression.*;
-// import mcdb.compiler.parser.expression.sqlType.DropElement;
 
 
 public abstract class ASTVisitor {
@@ -51,7 +38,7 @@ public abstract class ASTVisitor {
 	 public abstract ArrayList<DataType> visitSubqueryExpression(SubqueryExpression subqueryExpression) throws Exception;
 	 public abstract ArrayList<DataType> visitDateExpression(DateExpression dateExpression) throws Exception;
 	 public abstract ArrayList<DataType> visitAsteriskExpression(AsteriskExpression asteriskExpression) throws Exception;
-	 public abstract ArrayList<DataType> visitPredicateWrapper(PredicateWrapper predicateWrapper) throws Exception;	
+	 public abstract ArrayList<DataType> visitPredicateWrapper(PredicateWrapper predicateWrapper) throws Exception;
 	 public abstract ArrayList<DataType> visitGeneralTableIndexExpression(GeneralTableIndex generalTableIndex);
 		
      // visiting boolean predicates

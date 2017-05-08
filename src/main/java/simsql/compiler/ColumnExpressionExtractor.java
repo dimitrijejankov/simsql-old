@@ -24,6 +24,8 @@
  */
 package simsql.compiler; // package mcdb.compiler.parser.expression.util;
 
+import simsql.compiler.expressions.*;
+
 import java.util.ArrayList;
 
 
@@ -57,7 +59,7 @@ public class ColumnExpressionExtractor {
 	 */
 	
 	public static void getColumnInArithmeticExpression(ArithmeticExpression arithmeticExpression,
-			                                              ArrayList<ColumnExpression> expressionList) 
+			                                              ArrayList<ColumnExpression> expressionList)
 	{
 		ArrayList<MathExpression> operandList = arithmeticExpression.operandList;
 		for(int i = 0; i < operandList.size(); i++)

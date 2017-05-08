@@ -21,7 +21,7 @@ package simsql.runtime;
 
 import java.util.Map;
 
-public class MatrixType extends AbstractDataType {
+public class MatrixType extends DataType {
 	
 	
 	private int firstDim = -1;

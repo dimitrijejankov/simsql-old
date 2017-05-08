@@ -21,6 +21,8 @@
 
 package simsql.compiler; // package mcdb.compiler.parser.expression.sqlExpression;
 
+import simsql.compiler.expressions.MathExpression;
+
 import static simsql.compiler.MultidimensionalSchemaIndices.labelingOrder;
 import static simsql.compiler.MultidimensionalTableSchema.getQualifiedTableNameFromIndices;
 import static simsql.compiler.MultidimensionalTableSchema.getGeneralIndexTableNameFromExpressions;

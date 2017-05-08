@@ -31,6 +31,8 @@ import java.util.HashMap;
 
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
+import simsql.compiler.math_operators.EFunction;
+import simsql.compiler.math_operators.MathOperator;
 import simsql.compiler.operators.Operator;
 import simsql.compiler.operators.Projection;
 import simsql.compiler.operators.ScalarFunction;

@@ -21,6 +21,8 @@
 
 package simsql.compiler;
 
+import simsql.compiler.expressions.*;
+
 import java.util.ArrayList;
 
 

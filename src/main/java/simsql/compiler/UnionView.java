@@ -23,6 +23,8 @@ package simsql.compiler;
 
 import java.util.ArrayList;
 
+import simsql.compiler.expressions.MathExpression;
+import simsql.compiler.math_operators.MathOperator;
 import simsql.compiler.operators.Operator;
 import simsql.compiler.operators.VGWrapper;
 import simsql.runtime.DataType;

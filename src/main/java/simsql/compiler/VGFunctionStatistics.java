@@ -1,5 +1,3 @@
-
-
 /**
  * *
  * Copyright 2014 Rice University                                           *
@@ -18,30 +16,36 @@
  * *
  */
 
-
-/**
- *
- */
 package simsql.compiler; // package mcdb.compiler.logicPlan.logicOperator.statisticsOperator;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 
 /**
  * @author Bamboo
- *
  */
 public class VGFunctionStatistics implements StatisticsOperator {
+
+    @JsonProperty("vg-function-name")
     private String vgFunctionName;
+
+    @JsonProperty("directory")
     private String directory;
+
+    @JsonProperty("bundles-per-tuple")
     private int bundlesPerTuple;
+
+    @JsonProperty("input-attributes")
     private ArrayList<String> inputAttributes;
+
+    @JsonProperty("output-attributes")
     private ArrayList<String> outputAttributes;
 
-    public VGFunctionStatistics(String vgFunctionName,
-                                String directory,
-                                int bundlesPerTuple,
-                                ArrayList<String> inputAttributes,
-                                ArrayList<String> outputAttributes) {
+    public VGFunctionStatistics(@JsonProperty("vg-function-name") String vgFunctionName,
+                                @JsonProperty("directory") String directory,
+                                @JsonProperty("bundles-per-tuple") int bundlesPerTuple,
+                                @JsonProperty("input-attributes") ArrayList<String> inputAttributes,
+                                @JsonProperty("output-attributes") ArrayList<String> outputAttributes) {
         this.vgFunctionName = vgFunctionName;
         this.directory = directory;
         this.bundlesPerTuple = bundlesPerTuple;

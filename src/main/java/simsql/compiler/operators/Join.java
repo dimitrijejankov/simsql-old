@@ -18,7 +18,10 @@
 
 package simsql.compiler.operators;
 
+import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.*;
+import simsql.compiler.boolean_operator.AndOperator;
+import simsql.compiler.boolean_operator.BooleanOperator;
 
 import java.util.ArrayList;
 
@@ -38,34 +41,40 @@ public class Join extends Operator {
      * 2. SEMIJOIN
      * 3. ANTIJOIN
      */
+    @JsonProperty("type")
     private int type;
 
     /**
      * The name of the left table
      */
+    @JsonProperty("left-table")
     private String leftTable;
 
     /**
      * The boolean operator of the join
      */
+    @JsonProperty("boolean-operator")
     private BooleanOperator booleanOperator;
 
     /**
+     * This is used for JSON deserialization
      * @param nodeName the name of the operator
      * @param children the children of the operator
-     * @param parents the parent operators
+     * @param parents  the parent operators
      */
-    public Join(String nodeName,
-                ArrayList<Operator> children, ArrayList<Operator> parents) {
+    @JsonCreator
+    public Join(@JsonProperty("node-name") String nodeName,
+                @JsonProperty("children") ArrayList<Operator> children,
+                @JsonProperty("parents") ArrayList<Operator> parents) {
         super(nodeName, children, parents);
     }
 
     /**
-     * @param nodeName the name of the operator
-     * @param children the children of the operator
-     * @param parents the parent operators
-     * @param type the type of the join (join, semi-join, anti-join)
-     * @param leftTable the left table name
+     * @param nodeName        the name of the operator
+     * @param children        the children of the operator
+     * @param parents         the parent operators
+     * @param type            the type of the join (join, semi-join, anti-join)
+     * @param leftTable       the left table name
      * @param booleanOperator the boolean operator
      */
     public Join(String nodeName,
@@ -81,7 +90,6 @@ public class Join extends Operator {
     }
 
     /**
-     *
      * @return returns the type of the join
      */
     public int getType() {
@@ -89,7 +97,6 @@ public class Join extends Operator {
     }
 
     /**
-     *
      * @param type the new type of the join
      */
     public void setType(int type) {
@@ -97,7 +104,6 @@ public class Join extends Operator {
     }
 
     /**
-     *
      * @return the left table name
      */
     public String getLeftTable() {
@@ -105,7 +111,6 @@ public class Join extends Operator {
     }
 
     /**
-     *
      * @param leftTable sets the left table name
      */
     public void setLeftTable(String leftTable) {
@@ -113,7 +118,6 @@ public class Join extends Operator {
     }
 
     /**
-     *
      * @return returns the boolean operator
      */
     public BooleanOperator getBooleanOperator() {
@@ -121,7 +125,6 @@ public class Join extends Operator {
     }
 
     /**
-     *
      * @param booleanOperator sets the boolean operator
      */
     public void setBooleanOperator(BooleanOperator booleanOperator) {

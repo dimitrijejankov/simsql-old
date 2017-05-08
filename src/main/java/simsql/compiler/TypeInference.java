@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import simsql.compiler.math_operators.*;
 import simsql.runtime.DataType;
 import simsql.runtime.VersType;
 import simsql.runtime.IntType;
@@ -144,7 +145,7 @@ public class TypeInference {
 	 * @return
 	 */
 	private DataType getTypeInSetOperator(SetOperator mathOperator)  throws Exception{
-		ArrayList<MathOperator> elementList = mathOperator.getElmentList();
+		ArrayList<MathOperator> elementList = mathOperator.getElementList();
 		DataType[] elementTypes = new DataType[elementList.size()];
 		
 		for(int i = 0; i < elementList.size(); i++)
@@ -160,7 +161,7 @@ public class TypeInference {
 	 * @return
 	 */
 	private DataType getTypeInNumberOperator(NumberOperator mathOperator) {
-		return mathOperator.type;
+		return mathOperator.getType();
 	}
 
 	/**

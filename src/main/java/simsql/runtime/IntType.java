@@ -20,7 +20,7 @@ package simsql.runtime;
 
 import java.util.Map;
 
-public class IntType extends AbstractDataType {
+public class IntType extends DataType {
 	
 	
 	// this takes the DataType, written as a string, and parses it to get any additional info

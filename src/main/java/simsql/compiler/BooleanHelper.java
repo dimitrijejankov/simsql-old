@@ -24,9 +24,10 @@
  */
 package simsql.compiler; // package mcdb.compiler.parser.unnester;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import simsql.compiler.expressions.ColumnExpression;
+import simsql.compiler.expressions.SubqueryExpression;
 
+import java.util.ArrayList;
 
 
 // import mcdb.compiler.parser.astVisitor.TypeChecker;

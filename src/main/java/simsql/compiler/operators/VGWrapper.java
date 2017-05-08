@@ -19,11 +19,10 @@
 
 package simsql.compiler.operators;
 
+import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.*;
-
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+
 
 /**
  * The class that represents the VGWrapper in the logical query plan
@@ -33,57 +32,69 @@ public class VGWrapper extends Operator {
     /**
      * The name of the vg wrapper
      */
+    @JsonProperty("vg-wrapper-name")
     protected String vgWrapperName;
 
     /**
      * The name of the vg function
      */
+    @JsonProperty("relation-statistics")
     protected String vgFunctionName;
 
     /**
      * The name of the input seed attribute
      */
+    @JsonProperty("input-seed-attribute-name")
     protected String inputSeedAttributeName;
 
     /**
      * List of input attributes
      */
+    @JsonProperty("input-attribute-name-list")
     protected ArrayList<String> inputAttributeNameList;
 
     /**
      * List of the output attributes
      */
+    @JsonProperty("output-attribute-name-list")
     protected ArrayList<String> outputAttributeNameList;
 
     /**
      * The name of the output seed attribute
      */
+    @JsonProperty("output-seed-attribute-name")
     protected String outputSeedAttributeName;
 
     /**
      * Outer relation operator
      */
+    @JsonProperty("outer-relation-operator")
     protected Operator outerRelationOperator;
 
     /**
      * Here vgStatistics share the inputAttributeNameList and outputAttributeNameList
      */
+    @JsonProperty("vg-statistics")
     protected VGFunctionStatistics vgStatistics;
 
     /**
      * A reference to the catalog
      */
-    transient protected Catalog catalog = SimsqlCompiler.catalog;
+    @JsonIgnore
+    protected Catalog catalog = SimsqlCompiler.catalog;
 
     /**
      * @param nodeName the name of the operator
      * @param children the children of the operator
      * @param parents  the parent operators
      */
-    public VGWrapper(String nodeName,
-                     ArrayList<Operator> children, ArrayList<Operator> parents) {
+    @JsonCreator
+    public VGWrapper(@JsonProperty("node-name") String nodeName,
+                     @JsonProperty("children") ArrayList<Operator> children,
+                     @JsonProperty("parents") ArrayList<Operator> parents) {
         super(nodeName, children, parents);
     }
+
 
     /**
      * @param nodeName                the name of the operator
@@ -117,7 +128,6 @@ public class VGWrapper extends Operator {
     }
 
     /**
-     *
      * @ return the name of the VG Wrapper
      */
     public String getVgWrapperName() {
@@ -125,7 +135,6 @@ public class VGWrapper extends Operator {
     }
 
     /**
-     *
      * @param vgWrapperName sets the name of the vg wrapper
      */
     public void setVgWrapperName(String vgWrapperName) {
@@ -133,7 +142,6 @@ public class VGWrapper extends Operator {
     }
 
     /**
-     *
      * @return the name of the vg function name
      */
     public String getVgFunctionName() {
@@ -141,7 +149,6 @@ public class VGWrapper extends Operator {
     }
 
     /**
-     *
      * @param vgFunctionName sets the vg function name
      */
     public void setVgFunctionName(String vgFunctionName) {
@@ -221,6 +228,7 @@ public class VGWrapper extends Operator {
     /**
      * @return returns all the output attributes wit the addition of the output seed attribute
      */
+    @JsonIgnore
     public ArrayList<String> getGeneratedNameList() {
         ArrayList<String> resultList = new ArrayList<String>();
 
@@ -235,7 +243,6 @@ public class VGWrapper extends Operator {
     }
 
     /**
-     *
      * @return returns the vg function statistics
      */
     public VGFunctionStatistics getVgStatistics() {
@@ -243,7 +250,6 @@ public class VGWrapper extends Operator {
     }
 
     /**
-     *
      * @param vgStatistics sets the vg function statistics
      */
     public void setVgStatistics(VGFunctionStatistics vgStatistics) {
@@ -323,7 +329,7 @@ public class VGWrapper extends Operator {
         result += ").\r\n";
 
 		/*
-		 * ------------------------vgWrapper properties----------------------------
+         * ------------------------vgWrapper properties----------------------------
 		 */
         result += "vgwrapperproperties(";
         result += vgWrapperName;

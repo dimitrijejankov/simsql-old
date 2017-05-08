@@ -21,6 +21,9 @@
 
 package simsql.compiler;
 
+import simsql.compiler.expressions.AggregateExpression;
+import simsql.compiler.expressions.MathExpression;
+
 import java.util.ArrayList;
 
 public class AggregationRule {

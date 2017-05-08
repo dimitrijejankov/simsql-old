@@ -24,6 +24,8 @@
  */
 package simsql.compiler; // package mcdb.compiler.parser.expression.util;
 
+import simsql.compiler.expressions.*;
+
 import java.util.ArrayList;
 
 
@@ -169,7 +171,7 @@ public class CheckSubquery {
 	 * 5. StringExpression
 	 */
 	
-	private void checkSubqueryInArithmeticExpression(ArithmeticExpression arithmeticExpression) 
+	private void checkSubqueryInArithmeticExpression(ArithmeticExpression arithmeticExpression)
 	{
 		
 		ArrayList<MathExpression> operandList = arithmeticExpression.operandList;
@@ -203,7 +205,7 @@ public class CheckSubquery {
 	/*
 	 * check the aggregate function(non-Javadoc)
 	 */
-	private void checkSubqueryInAggregateExpression(AggregateExpression aggregateExpression) 
+	private void checkSubqueryInAggregateExpression(AggregateExpression aggregateExpression)
 	{
 		MathExpression expression = aggregateExpression.expression;
 		checkSubqueryInMathExpression(expression);

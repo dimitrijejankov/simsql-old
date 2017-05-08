@@ -21,6 +21,9 @@
 
 package simsql.compiler;
 
+import simsql.compiler.boolean_operator.*;
+import simsql.compiler.math_operators.MathOperator;
+
 import java.util.ArrayList;
 
 public class BooleanOperatorReplacerForSelfJoin {
@@ -52,23 +55,23 @@ public class BooleanOperatorReplacerForSelfJoin {
 	
 	public void replaceAttributeInBooleanOperator(BooleanOperator element) 
 	{
-		if (element instanceof AndOperator) 
+		if (element instanceof AndOperator)
 		{
 			replaceAttributeInAndOperator((AndOperator) element);
 		} 
-		else if (element instanceof AtomOperator) 
+		else if (element instanceof AtomOperator)
 		{
 			replaceAttributeInAtomOperator((AtomOperator) element);
 		} 
-		else if (element instanceof CompOperator )
+		else if (element instanceof CompOperator)
 		{
 			replaceAttributeInCompOperator((CompOperator) element);
 		} 
-		else if (element instanceof NotOperator ) 
+		else if (element instanceof NotOperator)
 		{
 			replaceAttributeInNotOperator((NotOperator) element);
 		} 
-		else if (element instanceof OrOperator) 
+		else if (element instanceof OrOperator)
 		{
 			replaceAttributeInOrOperator((OrOperator) element);
 		} 

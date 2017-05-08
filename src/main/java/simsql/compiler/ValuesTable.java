@@ -26,6 +26,11 @@ package simsql.compiler; // package mcdb.compiler.parser.grammar;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+
+import simsql.compiler.expressions.DateExpression;
+import simsql.compiler.expressions.MathExpression;
+import simsql.compiler.expressions.NumericExpression;
+import simsql.compiler.expressions.StringExpression;
 import simsql.runtime.DataType;
 import simsql.runtime.StringType;
 

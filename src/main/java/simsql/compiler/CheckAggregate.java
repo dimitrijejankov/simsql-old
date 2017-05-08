@@ -24,6 +24,8 @@
  */
 package simsql.compiler; // package mcdb.compiler.parser.expression.util;
 
+import simsql.compiler.expressions.*;
+
 import java.util.ArrayList;
 
 
@@ -185,7 +187,7 @@ public class CheckAggregate {
 	 * 5. StringExpression
 	 */
 	
-	public static boolean directAggregateInArithmeticExpression(ArithmeticExpression arithmeticExpression) 
+	public static boolean directAggregateInArithmeticExpression(ArithmeticExpression arithmeticExpression)
 	{
 		
 		ArrayList<MathExpression> operandList = arithmeticExpression.operandList;

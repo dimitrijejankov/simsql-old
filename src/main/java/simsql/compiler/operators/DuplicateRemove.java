@@ -18,6 +18,8 @@
 
 package simsql.compiler.operators;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import simsql.compiler.CommonContent;
 import simsql.compiler.CopyHelper;
 
@@ -30,15 +32,18 @@ import java.util.ArrayList;
 public class DuplicateRemove extends Operator {
 
     /**
+     * This is used for JSON deserialization
+     *
      * @param nodeName the name of the operator
      * @param children the children of the operator
      * @param parents  the parent operators
      */
-    public DuplicateRemove(String nodeName,
-                           ArrayList<Operator> children, ArrayList<Operator> parents) {
+    @JsonCreator
+    public DuplicateRemove(@JsonProperty("node-name") String nodeName,
+                           @JsonProperty("children") ArrayList<Operator> children,
+                           @JsonProperty("parents") ArrayList<Operator> parents) {
         super(nodeName, children, parents);
     }
-
 
     /**
      * @return returns the string file representation of this operator

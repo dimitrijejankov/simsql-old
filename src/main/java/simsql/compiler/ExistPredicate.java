@@ -30,6 +30,8 @@ package simsql.compiler; // package mcdb.compiler.parser.expression.boolExpressi
 // import mcdb.compiler.parser.expression.mathExpression.MathExpression;
 
 
+import simsql.compiler.expressions.MathExpression;
+
 /**
  * @author zai
  *

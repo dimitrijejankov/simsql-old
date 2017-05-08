@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import simsql.compiler.boolean_operator.BooleanOperator;
+import simsql.compiler.math_operators.MathOperator;
 import simsql.compiler.operators.Operator;
 import simsql.runtime.TypeMachine;
 import simsql.runtime.DataType;

@@ -21,7 +21,7 @@ package simsql.runtime;
 
 import java.util.Map;
 
-public class VectorType extends AbstractDataType {
+public class VectorType extends DataType {
 	
 	private int mySize = -1;
 	private String mySizeVar = null;

@@ -21,6 +21,9 @@
 
 package simsql.compiler;
 
+import simsql.compiler.boolean_operator.BooleanOperator;
+import simsql.compiler.math_operators.*;
+
 import java.util.ArrayList;
 
 
@@ -121,7 +124,7 @@ public class MathOperatorReplacerForSelfJoin {
 	 */
 	private void replaceAttributeInSetOperator(SetOperator element) 
 	{
-		ArrayList<MathOperator> elementList = element.getElmentList();
+		ArrayList<MathOperator> elementList = element.getElementList();
 		for(int i = 0; i < elementList.size(); i++)
 		{
 			replaceAttributeInMathOperator(elementList.get(i));

@@ -1,5 +1,3 @@
-
-
 /**
  * *
  * Copyright 2014 Rice University                                           *
@@ -18,10 +16,6 @@
  * *
  */
 
-
-/**
- *
- */
 package simsql.compiler;
 
 import java.util.ArrayList;
@@ -30,13 +24,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import simsql.compiler.boolean_operator.*;
+import simsql.compiler.expressions.MathExpression;
+import simsql.compiler.math_operators.*;
 import simsql.compiler.operators.*;
 import simsql.runtime.DataType;
 
-/**
- * @author Bamboo
- *
- */
 public class PlanInstantiation {
     /* randomTablePlanMap records all the plans for the Random tables. */
     private HashMap<String, Operator> randomTablePlanMap;
@@ -153,12 +146,10 @@ public class PlanInstantiation {
         tpMap.addAll(tpList);
 
         HashMap<Integer, TableByTime> simulateTableMap = chain.getSimulateTableMap();
-        HashMap<String, HashSet<String>> generatedListMap = new HashMap<String, HashSet<String>>();
         for (int i = start_index; i < end_index; i++) {
             TableByTime tempTableByTime = simulateTableMap.get(i);
             if (tempTableByTime != null) {
                 HashMap<String, HashSet<String>> timeMap = tempTableByTime.getTimeMap();
-                generatedListMap.putAll(timeMap);
             }
         }
 
@@ -344,10 +335,10 @@ public class PlanInstantiation {
             newOperator = changeAttributeName(linkedOperator, old_attributeList, new_attributeList);
 
             ArrayList<Operator> parentList = tableScan.getParents();
-            for (int i = 0; i < parentList.size(); i++) {
-                newOperator.addParent(parentList.get(i));
+            for (Operator aParentList : parentList) {
+                newOperator.addParent(aParentList);
 
-                parentList.get(i).replaceChild(tableScan, newOperator);
+                aParentList.replaceChild(tableScan, newOperator);
             }
 
             tableScan.clearLinks();
@@ -368,7 +359,7 @@ public class PlanInstantiation {
 		/*
 		 * Scalar function followed by projection
 		 */
-        if (old_attributeNameList != null && old_attributeNameList.size() != 0) {
+        if (old_attributeNameList.size() != 0) {
 			/*
 			 * 1. Scalar function on the new defined attribute due to the
 			 * definition of the schema.
@@ -429,8 +420,7 @@ public class PlanInstantiation {
 			/*
 			 * 1.6 Create the current scalar function node.
 			 */
-            ScalarFunction scalarFunction = new ScalarFunction(nodeName,
-                    children, parents, translatorHelper);
+            ScalarFunction scalarFunction = new ScalarFunction(nodeName, children, parents, translatorHelper);
             scalarFunction.setScalarExpressionList(scalarExpressionList);
             scalarFunction.setColumnListMap(columnListMap);
             scalarFunction.setOutputMap(outputMap);
@@ -677,7 +667,7 @@ public class PlanInstantiation {
             String name = "arithExp" + translatorHelper.getArithExpIndex();
             ((SetOperator) operator).setName(name);
 
-            ArrayList<MathOperator> elementList = ((SetOperator) operator).getElmentList();
+            ArrayList<MathOperator> elementList = ((SetOperator) operator).getElementList();
             for (MathOperator tempOperator : elementList) {
                 changeMathOperatorProperty(tempOperator, indices);
             }
@@ -777,7 +767,7 @@ public class PlanInstantiation {
         return resultList;
     }
 
-    public static ArrayList<Operator> copyOperatorList(ArrayList<Operator> list) {
+    private static ArrayList<Operator> copyOperatorList(ArrayList<Operator> list) {
         ArrayList<Operator> c_list = new ArrayList<Operator>(list.size());
         for (Operator aList : list) {
             c_list.add(aList);
@@ -785,7 +775,7 @@ public class PlanInstantiation {
         return c_list;
     }
 
-    public static ArrayList<String> copyStringList(ArrayList<String> list) {
+    private static ArrayList<String> copyStringList(ArrayList<String> list) {
         ArrayList<String> c_list = new ArrayList<String>(list.size());
         for (String aList : list) {
             c_list.add(aList);

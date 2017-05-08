@@ -24,6 +24,12 @@
  */
 package simsql.compiler; // package mcdb.compiler.logicPlan.translator;
 
+import simsql.compiler.boolean_operator.*;
+import simsql.compiler.expressions.ColumnExpression;
+import simsql.compiler.expressions.MathExpression;
+import simsql.compiler.expressions.SubqueryExpression;
+import simsql.compiler.math_operators.MathOperator;
+
 import java.util.ArrayList;
 
 

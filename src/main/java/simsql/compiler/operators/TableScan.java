@@ -16,9 +16,11 @@
  *                                                                           *
  *****************************************************************************/
 
-package simsql.compiler.operators; // package mcdb.compiler.logicPlan.logicOperator.relationOperator;
+package simsql.compiler.operators;
 
+import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.*;
+import simsql.compiler.expressions.MathExpression;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,42 +33,50 @@ public class TableScan extends Operator {
     /**
      * the name of the table
      */
+    @JsonProperty("table_name")
     private String tableName;
 
     /**
      * the list of attributes
      */
+    @JsonProperty("attribute_list")
     private ArrayList<String> attributeList;
 
     /**
      * Here vgStatistics share the inputAttributeNameList and outputAttributeNameList
      */
+    @JsonProperty("relation_statistics")
     private RelationStatistics relationStatistics;
 
     /**
      * a reference of the catalog
      */
+    @JsonIgnore
     private Catalog catalog;
 
     /**
      * the hash map of (index, value) pairs
      */
+    @JsonProperty("index-strings")
     private HashMap<String, Integer> indexStrings;
 
     /**
      * the hash map of (index, expression pairs)
      */
+    @JsonProperty("index-math-expressions")
     private HashMap<String, MathExpression> indexMathExpressions;
 
     /**
      * the type of the table scan it can be : COMMON_TABLE, CONSTANT_INDEX_TABLE,
      * GENERAL_INDEX_TABLE, MULTIDIMENSIONAL_CONSTANT_INDEX_TABLE, MULTIDIMENSIONAL_GENERAL_INDEX_TABLE
      */
+    @JsonProperty("type")
     private int type;
 
     /**
      * Add a data structure here for supporting simulation.
      */
+    @JsonProperty("table-info")
     private PreviousTable tableInfo;
 
     /**
@@ -74,9 +84,10 @@ public class TableScan extends Operator {
      * @param children the children of the operator
      * @param parents  the parent operators
      */
-    public TableScan(String nodeName,
-                     ArrayList<Operator> children,
-                     ArrayList<Operator> parents) {
+    @JsonCreator
+    public TableScan(@JsonProperty("node-name") String nodeName,
+                     @JsonProperty("children") ArrayList<Operator> children,
+                     @JsonProperty("parents") ArrayList<Operator> parents) {
         super(nodeName, children, parents);
         this.type = TableReference.COMMON_TABLE;
         this.tableInfo = null;
@@ -85,12 +96,12 @@ public class TableScan extends Operator {
     }
 
     /**
-     * @param nodeName the name of the operator
-     * @param children the children of the operator
-     * @param parents  the parent operators
-     * @param attributeList the list of attributes for the table scan
-     * @param relationStatistics the relationship statistics
-     * @param type the type of the table scan
+     * @param nodeName             the name of the operator
+     * @param children             the children of the operator
+     * @param parents              the parent operators
+     * @param attributeList        the list of attributes for the table scan
+     * @param relationStatistics   the relationship statistics
+     * @param type                 the type of the table scan
      * @param indexMathExpressions the index map expression pairs
      */
     public TableScan(String nodeName,
@@ -113,13 +124,13 @@ public class TableScan extends Operator {
     }
 
     /**
-     * @param nodeName the name of the operator
-     * @param children the children of the operator
-     * @param parents  the parent operators
-     * @param tableName the name of the table
-     * @param attributeList the list of attributes for the table scan
-     * @param relationStatistics the relationship statistics
-     * @param type the type of the table scan
+     * @param nodeName             the name of the operator
+     * @param children             the children of the operator
+     * @param parents              the parent operators
+     * @param tableName            the name of the table
+     * @param attributeList        the list of attributes for the table scan
+     * @param relationStatistics   the relationship statistics
+     * @param type                 the type of the table scan
      * @param indexMathExpressions the index map expression pairs
      */
     public TableScan(String nodeName,
@@ -143,7 +154,6 @@ public class TableScan extends Operator {
     }
 
     /**
-     *
      * @return returns the name of the table
      */
     public String getTableName() {
@@ -151,7 +161,6 @@ public class TableScan extends Operator {
     }
 
     /**
-     *
      * @param tableName sets the table name
      */
     public void setTableName(String tableName) {
@@ -166,7 +175,6 @@ public class TableScan extends Operator {
     }
 
     /**
-     *
      * @param attributeList sets the attribute list
      */
     public void setAttributeList(ArrayList<String> attributeList) {
@@ -174,7 +182,6 @@ public class TableScan extends Operator {
     }
 
     /**
-     *
      * @return returns the type
      */
     public int getType() {
@@ -183,7 +190,6 @@ public class TableScan extends Operator {
 
 
     /**
-     *
      * @param type sets the type of the table scan
      */
     public void setType(int type) {
@@ -191,7 +197,6 @@ public class TableScan extends Operator {
     }
 
     /**
-     *
      * @return returns the index value pairs of the table
      */
     public HashMap<String, Integer> getIndexStrings() {
@@ -199,7 +204,6 @@ public class TableScan extends Operator {
     }
 
     /**
-     *
      * @param indexStrings sets the index value pairs of the table
      */
     public void setIndexStrings(HashMap<String, Integer> indexStrings) {
@@ -207,7 +211,6 @@ public class TableScan extends Operator {
     }
 
     /**
-     *
      * @return returns the index expression pairs of the table (if the table is a general index table)
      */
     public HashMap<String, MathExpression> getIndexMathExpressions() {
@@ -215,7 +218,6 @@ public class TableScan extends Operator {
     }
 
     /**
-     *
      * @param indexMathExpressions sets the index expression pairs
      */
     public void setIndexMathExpressions(HashMap<String, MathExpression> indexMathExpressions) {
@@ -223,9 +225,9 @@ public class TableScan extends Operator {
     }
 
     /**
-     *
      * @return returns expression for the first index.. (used to support the legacy general index table)
      */
+    @JsonIgnore
     public MathExpression getIndexMathExp() {
         return indexMathExpressions.get("i");
     }
@@ -233,6 +235,7 @@ public class TableScan extends Operator {
     /**
      * @return the tableInfo
      */
+    @JsonIgnore
     public PreviousTable getTableInfo() {
         return tableInfo;
     }
@@ -245,7 +248,6 @@ public class TableScan extends Operator {
     }
 
     /**
-     *
      * @param a left value
      * @param b right value
      * @return minimum of both values
@@ -257,6 +259,7 @@ public class TableScan extends Operator {
             return b;
     }
 
+    @JsonIgnore
     public ArrayList<String> getGeneratedNameList() {
         ArrayList<String> resultList = new ArrayList<String>();
 

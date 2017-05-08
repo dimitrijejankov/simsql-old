@@ -26,6 +26,11 @@ package simsql.compiler; // package mcdb.compiler.parser.astVisitor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import simsql.compiler.expressions.ColumnExpression;
+import simsql.compiler.expressions.GeneralFunctionExpression;
+import simsql.compiler.expressions.MathExpression;
+import simsql.compiler.expressions.SubqueryExpression;
 import simsql.runtime.DataType;
 
 /**

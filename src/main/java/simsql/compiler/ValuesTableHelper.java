@@ -25,6 +25,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 //import simsql.compiler.ValuesTable;
+import simsql.compiler.expressions.MathExpression;
+import simsql.compiler.expressions.NumericExpression;
+import simsql.compiler.expressions.StringExpression;
 import simsql.runtime.DataType;
 import simsql.runtime.Compatibility;
 import simsql.runtime.DoubleType;

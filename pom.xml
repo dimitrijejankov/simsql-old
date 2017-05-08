@@ -12,6 +12,28 @@
 
     <dependencies>
 
+        <!-- Jackson begin -->
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.9.0.pr3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.9.0.pr3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.0.pr3</version>
+        </dependency>
+
+        <!-- Jackson end -->
+
         <!-- JLine begin -->
 
         <dependency>
@@ -110,6 +132,7 @@
                                 <argument>VGFunction.jni.Makefile</argument>
                                 <argument>CC=/usr/bin/g++</argument>
                                 <argument>INCLUDE=/usr/java/default/include</argument>
+                                <!--<argument>INCLUDE=/usr/lib/jvm/java-1.8.0-openjdk-amd64/include</argument>-->
                                 <argument>OUTDIR=${basedir}/src/generated/resources/simsql/runtime</argument>
                             </arguments>
                         </configuration>

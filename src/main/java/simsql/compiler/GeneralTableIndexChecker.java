@@ -24,6 +24,8 @@
  */
 package simsql.compiler; // package mcdb.compiler.parser.expression.util;
 
+import simsql.compiler.expressions.*;
+
 import java.util.ArrayList;
 
 
@@ -71,7 +73,7 @@ public class GeneralTableIndexChecker {
 	 * 11. GeneralIndexTable
 	 */
 	
-	public static boolean checkInArithmeticExpression(ArithmeticExpression arithmeticExpression) 
+	public static boolean checkInArithmeticExpression(ArithmeticExpression arithmeticExpression)
 	{
 		
 		ArrayList<MathExpression> operandList = arithmeticExpression.operandList;

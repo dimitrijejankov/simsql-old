@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import simsql.compiler.expressions.*;
 import simsql.runtime.TypeMachine;
 import simsql.runtime.DataType;
 import simsql.runtime.IntType;
@@ -666,9 +667,9 @@ public class TypeChecker extends ASTVisitor {
         MathExpression sql = fromSubquery.expression;
         //In the from clause, a subquery does not need parent typechecker
         if (this.parent == null)
-            ((SubqueryExpression) sql).setNeedparent(false);
+            ((SubqueryExpression) sql).setNeedParent(false);
         else
-            ((SubqueryExpression) sql).setNeedparent(true);
+            ((SubqueryExpression) sql).setNeedParent(true);
         ArrayList<DataType> typeList = sql.acceptVisitor(this);
         boolean subcheck = (typeList != null);
         return subcheck;
@@ -1333,9 +1334,9 @@ public class TypeChecker extends ASTVisitor {
 		 * Where clause, Having Clause, With Clause .
 		 */
         if (checkState < WHERESTAGE && this.parent == null) {
-            subqueryExpression.setNeedparent(false);
+            subqueryExpression.setNeedParent(false);
         } else {
-            subqueryExpression.setNeedparent(true);
+            subqueryExpression.setNeedParent(true);
         }
 
         SelectStatement statement = subqueryExpression.value;
@@ -1821,8 +1822,8 @@ public class TypeChecker extends ASTVisitor {
             return null;
 
         ArrayList<DataType> subType = new ArrayList<DataType>(expressionList.size());
-        for (int i = 0; i < expressionList.size(); i++) {
-            ArrayList<DataType> subTypeList = expressionList.get(i).acceptVisitor(this);
+        for (MathExpression anExpressionList : expressionList) {
+            ArrayList<DataType> subTypeList = anExpressionList.acceptVisitor(this);
 
             if (subTypeList == null) {
                 System.err.println("The set expression is wrong in type checker!");

@@ -24,6 +24,8 @@
  */
 package simsql.compiler; // package mcdb.compiler.parser.expression.util;
 
+import simsql.compiler.expressions.*;
+
 import java.util.ArrayList;
 
 
@@ -225,7 +227,7 @@ public class Simplifier {
 	 * 6. GeneralTableIndex
 	 */
 	
-	public static MathExpression simplifyArithmeticExpression(ArithmeticExpression arithmeticExpression) throws Exception 
+	public static MathExpression simplifyArithmeticExpression(ArithmeticExpression arithmeticExpression) throws Exception
 	{
 		
 		ArrayList<MathExpression> operandList = arithmeticExpression.operandList;

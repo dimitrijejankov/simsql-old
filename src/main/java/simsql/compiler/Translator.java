@@ -31,6 +31,11 @@ package simsql.compiler; // package mcdb.compiler.logicPlan.translator;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import simsql.compiler.boolean_operator.AndOperator;
+import simsql.compiler.boolean_operator.BooleanOperator;
+import simsql.compiler.expressions.*;
+import simsql.compiler.math_operators.EFunction;
+import simsql.compiler.math_operators.MathOperator;
 import simsql.compiler.operators.*;
 import simsql.runtime.DataType;
 
@@ -859,14 +864,13 @@ public class Translator {
 		 * CNF, such subqueries can overlap in the same predicate.
 		 */
 
-        for (int i = 0; i < childrenView.size(); i++) {
-            UnnestedSelectStatementJoin tempElement = childrenView.get(i);
+        for (UnnestedSelectStatementJoin tempElement : childrenView) {
             ArrayList<UnnestedSelectStatement> viewList = tempElement.viewList;
             boolean semi_join = tempElement.semi_join;
             BooleanPredicate predicate = tempElement.predicate;
 
             HashMap<String, Operator> viewPlanMap = translatorHelper.viewPlanMap;
-			
+
 			/*
 			 * (constant or not Q1 or not Q2) => not(not constant and (Q1 and Q2)
 			 * => anti_join(left, join(Q1, Q2)) on not constant.
@@ -874,8 +878,7 @@ public class Translator {
 			 * 1.1 Translate each temporary view
 			 */
             ArrayList<Operator> innerJoin = new ArrayList<Operator>();
-            for (int j = 0; j < viewList.size(); j++) {
-                UnnestedSelectStatement joinElement = viewList.get(j);
+            for (UnnestedSelectStatement joinElement : viewList) {
                 String temporyViewName = joinElement.getViewName();
                 Operator tempInnerElement;
                 if (viewPlanMap.containsKey(temporyViewName)) {
@@ -911,8 +914,7 @@ public class Translator {
 
     public boolean aggregateInSelect(SelectStatement selectStatement) {
         ArrayList<SQLExpression> selectList = selectStatement.selectList;
-        for (int i = 0; i < selectList.size(); i++) {
-            SQLExpression expression = selectList.get(i);
+        for (SQLExpression expression : selectList) {
             if (expression instanceof DerivedColumn) {
                 MathExpression mExpression = ((DerivedColumn) expression).expression;
                 if (CheckAggregate.directAggregateInMathExpression(mExpression)) {

@@ -16,8 +16,9 @@
  *                                                                           *
  *****************************************************************************/
 
-package simsql.compiler.operators; // package mcdb.compiler.logicPlan.logicOperator.relationOperator;
+package simsql.compiler.operators;
 
+import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.CommonContent;
 import simsql.compiler.CopyHelper;
 
@@ -30,119 +31,118 @@ import java.util.ArrayList;
 public class Projection extends Operator {
 
 
-	/**
-	 * Names of the projected attributes
-	 */
-	private ArrayList<String> projectedNameList;
+    /**
+     * Names of the projected attributes
+     */
+    @JsonProperty("projected-name-list")
+    private ArrayList<String> projectedNameList;
 
-	/**
-	 * @param nodeName the name of the operator
-	 * @param children the children of the operator
-	 * @param parents the parent operators
-	 */
-	public Projection(String nodeName,
-			ArrayList<Operator> children, ArrayList<Operator> parents) {
-		super(nodeName, children, parents);
-	}
+    /**
+     * This is used for JSON deserialization
+     *
+     * @param nodeName the name of the operator
+     * @param children the children of the operator
+     * @param parents  the parent operators
+     */
+    @JsonCreator
+    public Projection(@JsonProperty("node-name") String nodeName,
+                      @JsonProperty("children") ArrayList<Operator> children,
+                      @JsonProperty("parents") ArrayList<Operator> parents) {
+        super(nodeName, children, parents);
+    }
 
-	/**
-	 * @param nodeName the name of the operator
-	 * @param children the children of the operator
-	 * @param parents the parent operators
-	 * @param projectedNameList the list of the projected attributes..
-	 */
-	public Projection(String nodeName, 
-			ArrayList<Operator> children, 
-			ArrayList<Operator> parents,
-			ArrayList<String> projectedNameList) {
-		super(nodeName, children, parents);
-		this.projectedNameList = projectedNameList;
-	}
-
-
-	/**
-	 * @return the list of projected attributes
-	 */
-	public ArrayList<String> getProjectedNameList() {
-		return projectedNameList;
-	}
+    /**
+     * @param nodeName          the name of the operator
+     * @param children          the children of the operator
+     * @param parents           the parent operators
+     * @param projectedNameList the list of the projected attributes..
+     */
+    public Projection(String nodeName,
+                      ArrayList<Operator> children,
+                      ArrayList<Operator> parents,
+                      ArrayList<String> projectedNameList) {
+        super(nodeName, children, parents);
+        this.projectedNameList = projectedNameList;
+    }
 
 
-	/**
-	 * @param projectedNameList sets the list of projected attributes
-	 */
-	public void setProjectedNameList(ArrayList<String> projectedNameList) {
-		this.projectedNameList = projectedNameList;
-	}
+    /**
+     * @return the list of projected attributes
+     */
+    public ArrayList<String> getProjectedNameList() {
+        return projectedNameList;
+    }
 
 
-	/**
-	 * @return returns the string file representation of this operator
-	 */
-	@Override
-	public String visitNode() {
-		String result = "";
-		
-		result += this.getNodeStructureString(); 
-		
-		result += "projection(" + this.getNodeName();
-		result += ", [";
-		
-		if(projectedNameList != null)
-		{
-			for(int i = 0; i < projectedNameList.size(); i ++)
-			{
-				result += projectedNameList.get(i);
-				
-				if(i != projectedNameList.size()-1)
-				{
-					result += ", ";
-				}
-			}
-		}
-		
-		result += "]";
-		result += ").\r\n";
-		
-		return result;
-	}
+    /**
+     * @param projectedNameList sets the list of projected attributes
+     */
+    public void setProjectedNameList(ArrayList<String> projectedNameList) {
+        this.projectedNameList = projectedNameList;
+    }
 
-	/**
-	 * @param copyHelper an instance of the copy helper class
-	 * @return the deep copy of an operator
-	 * @throws Exception if the operation fails
-	 */
-	public Operator copy(CopyHelper copyHelper) throws Exception
-	{
-		if(copyHelper.getCopiedMap().containsKey(getNodeName()))
-		{
-			return copyHelper.getCopiedMap().get(getNodeName());
-		}
-		
-		CommonContent commonContent = copyHelper.copyBasicOperator(this);
-		ArrayList<String>  c_projectedNameList = copyHelper.copyStringList(this.projectedNameList);
-		
-		String c_nodeName = commonContent.nodeName;
-		ArrayList<Operator> c_children = commonContent.children;
-		ArrayList<Operator> c_parents = commonContent.parents;
-		
-		Projection projection = new Projection(c_nodeName, 
-				c_children, 
-				c_parents,
-				c_projectedNameList);
-		
-		projection.setNameMap(commonContent.nameMap);
-		projection.setMapSpaceNameSet(commonContent.mapSpaceNameSet);
-		
-		copyHelper.getCopiedMap().put(getNodeName(), projection);
-		
-		ArrayList<Operator> children = projection.getChildren();
-		if(children != null)
-		{
-			for (Operator aChildren : children) {
-				aChildren.addParent(projection);
-			}
-		}
-		return projection;
-	}
+
+    /**
+     * @return returns the string file representation of this operator
+     */
+    @Override
+    public String visitNode() {
+        String result = "";
+
+        result += this.getNodeStructureString();
+
+        result += "projection(" + this.getNodeName();
+        result += ", [";
+
+        if (projectedNameList != null) {
+            for (int i = 0; i < projectedNameList.size(); i++) {
+                result += projectedNameList.get(i);
+
+                if (i != projectedNameList.size() - 1) {
+                    result += ", ";
+                }
+            }
+        }
+
+        result += "]";
+        result += ").\r\n";
+
+        return result;
+    }
+
+    /**
+     * @param copyHelper an instance of the copy helper class
+     * @return the deep copy of an operator
+     * @throws Exception if the operation fails
+     */
+    public Operator copy(CopyHelper copyHelper) throws Exception {
+        if (copyHelper.getCopiedMap().containsKey(getNodeName())) {
+            return copyHelper.getCopiedMap().get(getNodeName());
+        }
+
+        CommonContent commonContent = copyHelper.copyBasicOperator(this);
+        ArrayList<String> c_projectedNameList = copyHelper.copyStringList(this.projectedNameList);
+
+        String c_nodeName = commonContent.nodeName;
+        ArrayList<Operator> c_children = commonContent.children;
+        ArrayList<Operator> c_parents = commonContent.parents;
+
+        Projection projection = new Projection(c_nodeName,
+                c_children,
+                c_parents,
+                c_projectedNameList);
+
+        projection.setNameMap(commonContent.nameMap);
+        projection.setMapSpaceNameSet(commonContent.mapSpaceNameSet);
+
+        copyHelper.getCopiedMap().put(getNodeName(), projection);
+
+        ArrayList<Operator> children = projection.getChildren();
+        if (children != null) {
+            for (Operator aChildren : children) {
+                aChildren.addParent(projection);
+            }
+        }
+        return projection;
+    }
 }

@@ -18,7 +18,12 @@
 
 package simsql.compiler.operators;
 
+import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.*;
+import simsql.compiler.math_operators.DateOperator;
+import simsql.compiler.math_operators.MathOperator;
+import simsql.compiler.math_operators.NumberOperator;
+import simsql.compiler.math_operators.StringOperator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,15 +34,49 @@ import java.util.HashMap;
  */
 public class ScalarFunction extends Operator {
 
+    /**
+     * List of scalar expressions
+     */
+    @JsonProperty("scalar-expression-list")
     private ArrayList<MathOperator> scalarExpressionList;
+
+    /**
+     *
+     */
+    @JsonIgnore
     private HashMap<MathOperator, ArrayList<String>> columnListMap;
+
+    /**
+     *
+     */
+    @JsonIgnore
     private HashMap<MathOperator, String> outputMap;
+
+    /**
+     * an instance of the translator helper function
+     */
+    @JsonIgnore
     private TranslatorHelper translatorHelper;
 
     /**
+     * This is used for JSON deserialization
+     *
      * @param nodeName the name of the operator
      * @param children the children of the operator
      * @param parents  the parent operators
+     */
+    @JsonCreator
+    public ScalarFunction(@JsonProperty("node-name") String nodeName,
+                          @JsonProperty("children") ArrayList<Operator> children,
+                          @JsonProperty("parents") ArrayList<Operator> parents) {
+        super(nodeName, children, parents);
+    }
+
+    /**
+     * @param nodeName         the name of the operator
+     * @param children         the children of the operator
+     * @param parents          the parent operators
+     * @param translatorHelper an instance of the translator helper class
      */
     public ScalarFunction(String nodeName,
                           ArrayList<Operator> children,
@@ -56,7 +95,6 @@ public class ScalarFunction extends Operator {
     }
 
     /**
-     *
      * @param scalarExpressionList sets the scalar expression list
      */
     public void setScalarExpressionList(ArrayList<MathOperator> scalarExpressionList) {
@@ -64,7 +102,6 @@ public class ScalarFunction extends Operator {
     }
 
     /**
-     *
      * @return returns the column list map
      */
     public HashMap<MathOperator, ArrayList<String>> getColumnListMap() {
@@ -72,7 +109,6 @@ public class ScalarFunction extends Operator {
     }
 
     /**
-     *
      * @param columnListMap sets the column list map
      */
     public void setColumnListMap(
@@ -81,7 +117,6 @@ public class ScalarFunction extends Operator {
     }
 
     /**
-     *
      * @return gets the output map
      */
     public HashMap<MathOperator, String> getOutputMap() {
@@ -89,7 +124,6 @@ public class ScalarFunction extends Operator {
     }
 
     /**
-     *
      * @param outputMap sets the output map
      */
     public void setOutputMap(HashMap<MathOperator, String> outputMap) {
@@ -181,6 +215,7 @@ public class ScalarFunction extends Operator {
         return result;
     }
 
+    @JsonIgnore
     public ArrayList<String> getGeneratedNameList() {
         ArrayList<String> resultList = new ArrayList<String>();
 
@@ -190,6 +225,74 @@ public class ScalarFunction extends Operator {
             }
         }
         return resultList;
+    }
+
+    /**
+     * Returns the array list of column lists  - used for serialization
+     *
+     * @return the array list column lists
+     */
+    @JsonGetter("column-lists")
+    public ArrayList<ColumnList> getColumnLists() {
+
+        ArrayList<ColumnList> ret = new ArrayList<ColumnList>();
+
+        // convert to array list
+        for (MathOperator m : columnListMap.keySet()) {
+            ret.add(new ColumnList(m, columnListMap.get(m)));
+        }
+
+        return ret;
+    }
+
+    /**
+     * Sets the column map from it's inverted form - used for serialization
+     *
+     * @param invertedColumnMap the inverted column map
+     */
+    @JsonSetter("column-lists")
+    public void setColumnLists(ArrayList<ColumnList> invertedColumnMap) {
+
+        columnListMap = new HashMap<MathOperator, ArrayList<String>>();
+
+        // invert the map and add it to to the empty output map
+        for (ColumnList c : invertedColumnMap) {
+            columnListMap.put(c.operator, c.columns);
+        }
+    }
+
+    /**
+     * Returns the inverted output map - used for serialization
+     *
+     * @return the inverted outputMap
+     */
+    @JsonGetter("inverted-output-map")
+    public HashMap<String, MathOperator> getInvertedOutputMap() {
+
+        HashMap<String, MathOperator> ret = new HashMap<String, MathOperator>();
+
+        // invert the map
+        for (MathOperator m : outputMap.keySet()) {
+            ret.put(outputMap.get(m), m);
+        }
+
+        return ret;
+    }
+
+    /**
+     * Sets the output map from it's inverted form - used for serialization
+     *
+     * @param invertedOutputMap the inverted output map
+     */
+    @JsonSetter("inverted-output-map")
+    public void setInvertedOutputMap(HashMap<String, MathOperator> invertedOutputMap) {
+
+        outputMap = new HashMap<MathOperator, String>();
+
+        // invert the map and add it to to the empty output map
+        for (String m : invertedOutputMap.keySet()) {
+            outputMap.put(invertedOutputMap.get(m), m);
+        }
     }
 
     /**

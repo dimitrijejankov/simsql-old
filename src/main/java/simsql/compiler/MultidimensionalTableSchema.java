@@ -1,5 +1,7 @@
 package simsql.compiler;
 
+import simsql.compiler.expressions.MathExpression;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 

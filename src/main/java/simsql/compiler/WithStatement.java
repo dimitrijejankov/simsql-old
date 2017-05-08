@@ -30,6 +30,8 @@ package simsql.compiler; // package mcdb.compiler.parser.expression.sqlExpressio
 // import mcdb.compiler.parser.expression.mathExpression.GeneralFunctionExpression;
 
 
+import simsql.compiler.expressions.GeneralFunctionExpression;
+
 /**
  * @author Bamboo
  *

@@ -24,6 +24,8 @@
  */
 package simsql.compiler;
 
+import simsql.compiler.operators.Operator;
+import simsql.compiler.timetable.BipartiteGraph;
 import simsql.compiler.timetable.TableDependencyGraph;
 import simsql.compiler.timetable.TimeTableNode;
 
@@ -51,7 +53,7 @@ public class ChainGeneration
 	private int startTimeTick;
     private LinkedList<TimeTableNode> requiredTables;
 	
-	public ChainGeneration(Topologic topologic, LinkedList<TimeTableNode> requiredTables)
+	public ChainGeneration(Topologic topologic, LinkedList<TimeTableNode> requiredTables, HashMap<Operator, String> planTableMap)
 	{
         this.topologic = topologic;
         this.requiredTables = requiredTables;
@@ -59,6 +61,8 @@ public class ChainGeneration
 		this.ruleMap = new HashMap<String, HashSet<String>>();
         this.simulateTableMap = new HashMap<Integer, TableByTime>();
         this.startPointList = new ArrayList<String>();
+
+		BipartiteGraph bp = new BipartiteGraph(requiredTables, topologic.getBackwardEdges(), planTableMap);
 
 		instantiateChain();
 	}

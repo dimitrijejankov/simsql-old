@@ -218,7 +218,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
                 Topologic topologic = new Topologic(sinkList, planTableMap);
 
-                ChainGeneration chain = new ChainGeneration(topologic, parseResult.requiredTables);
+                ChainGeneration chain = new ChainGeneration(topologic, parseResult.requiredTables, planTableMap);
                 maxLoop = chain.getMaxLoop();
 
                 TranslatorHelper translatorHelper = myParser.getTranslatorHelper();
