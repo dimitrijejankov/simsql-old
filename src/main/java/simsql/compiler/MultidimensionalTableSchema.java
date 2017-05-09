@@ -188,6 +188,11 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
         return newIndices;
     }
 
+    /**
+     * Converts the brackets table name into a qualified table name
+     * @param bracketsName brackets table name ex. table[1][2][3] or table[i+1][j+5]
+     * @return qualified table name like ex. table_1_2_3 or table_i+1_j+5
+     */
     public static String getQualifiedTableNameFromBracketsTableName(String bracketsName) {
         bracketsName = bracketsName.replace("][", "_");
         bracketsName = bracketsName.replace("[", "_");
@@ -221,5 +226,14 @@ public class MultidimensionalTableSchema extends DefinedTableSchema {
         }
 
         return ret;
+    }
+
+    /**
+     * Checks if the table with the name provided is a general index table ex. "tablename_i_j_k"
+     * @param table the table name
+     * @return true if it is false otherwise
+     */
+    public static boolean isGeneralTable(String table) {
+        return table.matches("^[^_]+(_[a-z])+$") || table.matches("^[^_]+(\\[[a-z]])+$");
     }
 }

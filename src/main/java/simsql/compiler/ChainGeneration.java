@@ -62,7 +62,7 @@ public class ChainGeneration
         this.simulateTableMap = new HashMap<Integer, TableByTime>();
         this.startPointList = new ArrayList<String>();
 
-		BipartiteGraph bp = new BipartiteGraph(requiredTables, topologic.getBackwardEdges(), planTableMap);
+		//BipartiteGraph bp = new BipartiteGraph(requiredTables, topologic.getBackwardEdges(), planTableMap);
 
 		instantiateChain();
 	}

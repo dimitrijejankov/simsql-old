@@ -22,6 +22,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import simsql.compiler.CopyHelper;
 import simsql.compiler.FinalVariable;
+import simsql.compiler.TranslatorHelper;
+
+import java.util.HashMap;
 
 /**
  * represents the aggregate math operator
@@ -185,6 +188,18 @@ public class AggregateOperator implements MathOperator {
     @Override
     public String getNodeName() {
         return name;
+    }
+
+    /**
+     * @see simsql.compiler.math_operators.MathOperator#changeProperty(HashMap, TranslatorHelper)
+     */
+    @Override
+    public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+        // set the name
+        this.setName("arithExp" + translatorHelper.getArithExpIndex());
+
+        // change it's property
+        childOperator.changeProperty(indices, translatorHelper);
     }
 
     /**

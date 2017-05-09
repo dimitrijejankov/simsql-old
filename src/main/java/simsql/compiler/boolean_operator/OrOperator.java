@@ -20,8 +20,10 @@ package simsql.compiler.boolean_operator;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import simsql.compiler.CopyHelper;
+import simsql.compiler.TranslatorHelper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * the or boolean operator
@@ -90,6 +92,19 @@ public class OrOperator extends BooleanOperator {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * @see simsql.compiler.boolean_operator.BooleanOperator#changeProperty(HashMap, TranslatorHelper)
+	 */
+	@Override
+	public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+		super.changeProperty(indices, translatorHelper);
+
+		// change the properties of the operator list
+		for (BooleanOperator subPredicate : operatorList) {
+			subPredicate.changeProperty(indices, translatorHelper);
+		}
 	}
 
 	/**

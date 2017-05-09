@@ -127,6 +127,7 @@ public class PlanInstantiation {
                     String tableName = tableScan.getTableName();
                     String bracketsName = MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(tableName);
 
+                    // TODO not sure why this is done makes no sense
                     if (chain.getTickForTable(bracketsName) >= start_index) {
                         Operator linkedOperator = generatedPlanMap.get(MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(tableName));
                         integratePlan(tableScan, linkedOperator);
@@ -144,14 +145,6 @@ public class PlanInstantiation {
 		 */
         HashSet<String> tpMap = new HashSet<String>();
         tpMap.addAll(tpList);
-
-        HashMap<Integer, TableByTime> simulateTableMap = chain.getSimulateTableMap();
-        for (int i = start_index; i < end_index; i++) {
-            TableByTime tempTableByTime = simulateTableMap.get(i);
-            if (tempTableByTime != null) {
-                HashMap<String, HashSet<String>> timeMap = tempTableByTime.getTimeMap();
-            }
-        }
 
         ArrayList<String> sinkTableList = getFutureUsedTable(tpMap, end_index);
         if (sinkTableList == null || sinkTableList.size() == 0) {

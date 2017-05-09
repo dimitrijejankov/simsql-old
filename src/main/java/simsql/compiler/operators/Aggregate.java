@@ -20,6 +20,7 @@ package simsql.compiler.operators;
 import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.CommonContent;
 import simsql.compiler.CopyHelper;
+import simsql.compiler.TranslatorHelper;
 import simsql.compiler.math_operators.MathOperator;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -311,6 +312,20 @@ public class Aggregate extends Operator {
         return resultList;
     }
 
+    /**
+     * @see simsql.compiler.operators.Operator#changeNodeProperty(HashMap, TranslatorHelper)
+     */
+    public void changeNodeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+        super.changeNodeProperty(indices, translatorHelper);
+
+        // set the name of the aggregate
+        setAggregateName("agg" + translatorHelper.getAggregateIndex());
+
+        // replace the indices with their respective values for each expression
+        for (MathOperator tempOperator : aggregateExpressionList) {
+            tempOperator.changeProperty(indices, translatorHelper);
+        }
+    }
 
     /**
      * @param copyHelper an instance of the copy helper class

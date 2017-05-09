@@ -22,6 +22,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import simsql.compiler.CopyHelper;
+import simsql.compiler.TranslatorHelper;
+
+import java.util.HashMap;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -47,6 +50,13 @@ public interface MathOperator {
 
     @JsonIgnore
     String getNodeName();
+
+    /**
+     * Assign names to math operators and update their sub operators and predicates
+     * @param indices the indices to be used
+     * @param translatorHelper an instance of the translator helper class
+     */
+    void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper);
 
     MathOperator copy(CopyHelper copyHelper);
 }

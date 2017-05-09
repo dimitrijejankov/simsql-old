@@ -22,6 +22,7 @@ package simsql.compiler.operators;
 import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 /**
@@ -409,6 +410,16 @@ public class VGWrapper extends Operator {
         }
 
         return result;
+    }
+
+    /**
+     * @see simsql.compiler.operators.Operator#changeNodeProperty(HashMap, TranslatorHelper)
+     */
+    public void changeNodeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+        super.changeNodeProperty(indices, translatorHelper);
+
+        // set the name for the vg wrapper
+        setVgWrapperName("vgwrapper" + translatorHelper.getVgWrapperIndex());
     }
 
     /**

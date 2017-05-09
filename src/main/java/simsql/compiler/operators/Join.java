@@ -22,8 +22,10 @@ import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.*;
 import simsql.compiler.boolean_operator.AndOperator;
 import simsql.compiler.boolean_operator.BooleanOperator;
+import simsql.compiler.math_operators.MathOperator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 /**
@@ -226,6 +228,16 @@ public class Join extends Operator {
         }
 
         return result;
+    }
+
+    /**
+     * @see simsql.compiler.operators.Operator#changeNodeProperty(HashMap, TranslatorHelper)
+     */
+    public void changeNodeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+        super.changeNodeProperty(indices, translatorHelper);
+
+        // replace the indices in it...
+        booleanOperator.changeProperty(indices, translatorHelper);
     }
 
     /**

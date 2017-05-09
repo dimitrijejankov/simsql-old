@@ -596,6 +596,24 @@ public class TableScan extends Operator {
     }
 
     /**
+     * @see simsql.compiler.operators.Operator#changeNodeProperty(HashMap, TranslatorHelper)
+     */
+    public void changeNodeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+        super.changeNodeProperty(indices, translatorHelper);
+
+        // if this table scan is a general table
+        if (MultidimensionalTableSchema.isGeneralTable(tableName)) {
+
+
+            // grab the prefix from it's name
+            String prefix = MultidimensionalTableSchema.getTablePrefixFromQualifiedName(tableName);
+
+            // update the relation statistics
+            relationStatistics.setRelation(MultidimensionalTableSchema.getQualifiedTableNameFromEvaluatedExpressions(prefix, indexMathExpressions, indices));
+        }
+    }
+
+    /**
      * @param copyHelper an instance of the copy helper class
      * @return the deep copy of an operator
      * @throws Exception if the operation fails

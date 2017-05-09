@@ -21,6 +21,9 @@ package simsql.compiler.boolean_operator;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import simsql.compiler.CopyHelper;
+import simsql.compiler.TranslatorHelper;
+
+import java.util.HashMap;
 
 /**
  * The not boolean operator
@@ -72,6 +75,17 @@ public class NotOperator extends BooleanOperator {
 		result += booleanOperator.visitNode();
 		
 		return result;
+	}
+
+	/**
+	 * @see simsql.compiler.boolean_operator.BooleanOperator#changeProperty(HashMap, TranslatorHelper)
+	 */
+	@Override
+	public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+		super.changeProperty(indices, translatorHelper);
+
+		// change the properties the inner predicate
+		booleanOperator.changeProperty(indices, translatorHelper);
 	}
 
 	/**

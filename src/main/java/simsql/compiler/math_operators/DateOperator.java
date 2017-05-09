@@ -21,6 +21,9 @@ package simsql.compiler.math_operators;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import simsql.compiler.CopyHelper;
+import simsql.compiler.TranslatorHelper;
+
+import java.util.HashMap;
 
 /**
  * Represents the date math operator
@@ -54,6 +57,14 @@ public class DateOperator implements MathOperator {
 	public void setDateString(String string) {
 		this.string = string;
 	}
+
+	/**
+	 * Does nothing
+	 * @param indices the indices to be used
+	 * @param translatorHelper an instance of the translator helper class
+	 */
+	@Override
+	public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {}
 
 	/**
      * Such atomic operator should return "". Since it only provides

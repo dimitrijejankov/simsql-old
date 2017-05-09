@@ -22,6 +22,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import simsql.compiler.CopyHelper;
 import simsql.compiler.FinalVariable;
+import simsql.compiler.TranslatorHelper;
+
+import java.util.HashMap;
 
 /**
  * Represents an arithmetic math operator
@@ -211,6 +214,21 @@ public class ArithmeticOperator implements MathOperator {
         }
 
         return result;
+    }
+
+    /**
+     * @see simsql.compiler.math_operators.MathOperator#changeProperty(HashMap, TranslatorHelper)
+     */
+    @Override
+    public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+        // set the name
+        this.setName("arithExp" + translatorHelper.getArithExpIndex());
+
+        // change the properties of the left side
+        left.changeProperty(indices, translatorHelper);
+
+        // change the properties of the right side
+        right.changeProperty(indices, translatorHelper);
     }
 
     /**

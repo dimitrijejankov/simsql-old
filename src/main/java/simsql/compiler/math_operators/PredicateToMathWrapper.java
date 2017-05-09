@@ -21,8 +21,11 @@ package simsql.compiler.math_operators;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import simsql.compiler.TranslatorHelper;
 import simsql.compiler.boolean_operator.BooleanOperator;
 import simsql.compiler.CopyHelper;
+
+import java.util.HashMap;
 
 
 /**
@@ -41,6 +44,20 @@ public class PredicateToMathWrapper implements MathOperator {
         this.operator = operator;
     }
 
+    /**
+     * @see simsql.compiler.math_operators.MathOperator#changeProperty(HashMap, TranslatorHelper)
+     */
+    @Override
+    public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+
+        // if by any chance the operator is null
+        if(operator == null) {
+            return;
+        }
+
+        // change the property of the operator
+        operator.changeProperty(indices, translatorHelper);
+    }
 
     /**
      * returns the boolean operator string representation for relationship statistics

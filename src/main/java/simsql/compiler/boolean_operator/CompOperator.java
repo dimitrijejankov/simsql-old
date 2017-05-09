@@ -22,7 +22,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import simsql.compiler.CopyHelper;
 import simsql.compiler.FinalVariable;
+import simsql.compiler.TranslatorHelper;
 import simsql.compiler.math_operators.MathOperator;
+
+import java.util.HashMap;
 
 /**
  * The comparator operator
@@ -231,6 +234,20 @@ public class CompOperator extends BooleanOperator {
         result += right.visitNode();
 
         return result;
+    }
+
+    /**
+     * @see simsql.compiler.boolean_operator.BooleanOperator#changeProperty(HashMap, TranslatorHelper)
+     */
+    @Override
+    public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+        super.changeProperty(indices, translatorHelper);
+
+        // change the property of the lift side
+        left.changeProperty(indices, translatorHelper);
+
+        // change the property of the right side
+        right.changeProperty(indices, translatorHelper);
     }
 
     /**

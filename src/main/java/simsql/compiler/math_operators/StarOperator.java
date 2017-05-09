@@ -20,6 +20,9 @@ package simsql.compiler.math_operators;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import simsql.compiler.CopyHelper;
+import simsql.compiler.TranslatorHelper;
+
+import java.util.HashMap;
 
 /**
  * The star math operator
@@ -28,6 +31,14 @@ public class StarOperator implements MathOperator {
 
 	@JsonCreator
 	public StarOperator() {}
+
+	/**
+	 * Does nothing
+	 * @param indices the indices to be used
+	 * @param translatorHelper an instance of the translator helper class
+	 */
+	@Override
+	public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {}
 
 	/**
      * Such atomic operator should return "". Since it only provides

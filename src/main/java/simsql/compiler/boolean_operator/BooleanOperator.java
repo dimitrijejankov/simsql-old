@@ -22,6 +22,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import simsql.compiler.CopyHelper;
+import simsql.compiler.TranslatorHelper;
+
+import java.util.HashMap;
 
 /**
  * Represents the boolean operator
@@ -68,6 +71,15 @@ public abstract class BooleanOperator {
 	 * @return the string
 	 */
 	public abstract String visitNode();
+
+	/**
+	 * Changes the name of this operator and also initializes it's sub predicates with the indices
+	 * @param indices the indices to be used (i, value), (j, value)....
+	 * @param translatorHelper an instance of the translator helper
+	 */
+	public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+		setName("predicate" + translatorHelper.getPredicateIndex());
+	}
 
     /**
      * Copies this operator

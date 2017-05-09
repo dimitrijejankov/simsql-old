@@ -19,6 +19,9 @@
 package simsql.compiler.math_operators;
 
 import simsql.compiler.CopyHelper;
+import simsql.compiler.TranslatorHelper;
+
+import java.util.HashMap;
 
 /**
  * This function plays as the role of "y = x". So this function can 
@@ -49,6 +52,16 @@ public class EFunction implements MathOperator {
 	@Override
 	public String getNodeName() {
 		return "-";
+	}
+
+	/**
+	 * Does nothing
+	 * @param indices the indices to be used
+	 * @param translatorHelper an instance of the translator helper class
+	 */
+	@Override
+	public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+
 	}
 
 	/**

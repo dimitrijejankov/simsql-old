@@ -1,10 +1,9 @@
 [
    {
-      "tableName":"weights",
-      "indexStrings":{
+      "table-name":"weights",
+      "index-strings":{
          "j":3,
          "i":2
-      },
-      "bracketsTableName":"weights[2][3]"
+      }
    }
 ]

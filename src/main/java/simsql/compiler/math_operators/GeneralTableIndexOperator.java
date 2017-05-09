@@ -21,7 +21,11 @@ package simsql.compiler.math_operators;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import simsql.compiler.CopyHelper;
+import simsql.compiler.TranslatorHelper;
+import simsql.compiler.boolean_operator.BooleanOperator;
 import simsql.runtime.DataType;
+
+import java.util.HashMap;
 
 
 /**
@@ -112,6 +116,15 @@ public class GeneralTableIndexOperator implements MathOperator {
 			return identifier;
 		else
 			return value.toString();
+	}
+
+	/**
+	 * @see simsql.compiler.boolean_operator.BooleanOperator#changeProperty(HashMap, TranslatorHelper)
+	 */
+	@Override
+	public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+		// assign the value for its identifier (i, j, k)....
+		setValue(indices.get(getIdentifier()));
 	}
 
 	/**

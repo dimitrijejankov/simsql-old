@@ -21,6 +21,7 @@ package simsql.compiler.operators;
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import simsql.compiler.CopyHelper;
+import simsql.compiler.TranslatorHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -368,6 +369,18 @@ public abstract class Operator {
      * @return returns the string file representation of this operator
      */
     public abstract String visitNode() throws Exception;
+
+
+    /**
+     * Changes the node based on the type and the provided indices. Basically it evaluates the predicates,
+     * arithmetic expressions and sets the names of some operators and updates the relation statistics
+     * @param indices
+     * @param translatorHelper
+     */
+    public void changeNodeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+        // sets a new name for the node
+        setNodeName("node_" + translatorHelper.getInstantiateNodeIndex());
+    }
 
     /**
      * @param copyHelper an instance of the copy helper class

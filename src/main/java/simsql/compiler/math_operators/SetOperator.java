@@ -21,7 +21,10 @@ package simsql.compiler.math_operators;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import simsql.compiler.CopyHelper;
+import simsql.compiler.TranslatorHelper;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 /**
@@ -78,6 +81,20 @@ public class SetOperator implements MathOperator {
 	 */
 	public void setElementList(ArrayList<MathOperator> elementList) {
 		this.elementList = elementList;
+	}
+
+	/**
+	 * @see simsql.compiler.math_operators.MathOperator#changeProperty(HashMap, TranslatorHelper)
+	 */
+	@Override
+	public void changeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
+		// set the name
+		this.setName("arithExp" + translatorHelper.getArithExpIndex());
+
+		// change their properties
+		for (MathOperator tempOperator : elementList) {
+			tempOperator.changeProperty(indices, translatorHelper);
+		}
 	}
 
 	/**
