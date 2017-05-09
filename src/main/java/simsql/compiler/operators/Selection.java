@@ -132,6 +132,11 @@ public class Selection extends Operator {
     public void changeNodeProperty(HashMap<String, Integer> indices, TranslatorHelper translatorHelper) {
         super.changeNodeProperty(indices, translatorHelper);
 
+        // if by any chance the operator is null
+        if(booleanOperator == null) {
+            return;
+        }
+
         // replace the indices in it...
         booleanOperator.changeProperty(indices, translatorHelper);
     }

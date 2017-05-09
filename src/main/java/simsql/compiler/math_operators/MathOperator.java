@@ -18,9 +18,7 @@
 
 package simsql.compiler.math_operators;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.*;
 import simsql.compiler.CopyHelper;
 import simsql.compiler.TranslatorHelper;
 
@@ -44,6 +42,7 @@ import java.util.HashMap;
         @JsonSubTypes.Type(value = StarOperator.class, name = "star-operator"),
         @JsonSubTypes.Type(value = StringOperator.class, name = "string-operator")
 })
+@JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "math-op-id")
 public interface MathOperator {
 
     String visitNode();

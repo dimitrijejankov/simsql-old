@@ -1,9 +1,7 @@
 package simsql.compiler.timetable;
 
 import simsql.compiler.*;
-import simsql.compiler.boolean_operator.*;
 import simsql.compiler.expressions.MathExpression;
-import simsql.compiler.math_operators.*;
 import simsql.compiler.operators.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -159,7 +157,10 @@ public class BipartiteGraph {
         while(!this.nodes.isEmpty()) {
 
             // find a leaf node
-            String table = getLeafNode();
+            TimeTableNode node = getLeafNode();
+
+            // grab the qualified table name
+            String table = MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(node.getBracketsTableName());
 
             Operator operator;
 
@@ -177,20 +178,37 @@ public class BipartiteGraph {
 
             HashMap<String, Integer> indices = MultidimensionalTableSchema.getIndicesFromBracketsName(table);
             instantiateOperator(table, operator, indices, generatedPlanMap, replacedPlanMap);
-        }
 
+            // remove node from graph
+            updateTableGraph(node);
+        }
+    }
+
+    /**
+     * Removes the node from the graph and updates the dependencies
+     * @param node the node to be removed
+     */
+    private void updateTableGraph(TimeTableNode node) {
+
+        // remove the node from the graph
+        nodes.remove(node);
+
+        // remove the dependency to this node from every node
+        for(HashSet<TimeTableNode> n : nodes.values()) {
+            n.remove(node);
+        }
     }
 
     /**
      * Extracts a leaf node from the table graph
      * @return a leaf node name
      */
-    private String getLeafNode() {
+    private TimeTableNode getLeafNode() {
 
         // go through the graph and find a node
         for(TimeTableNode table : nodes.keySet()) {
             if(nodes.get(table).isEmpty()) {
-                return MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(table.getBracketsTableName());
+                return table;
             }
         }
 
@@ -288,13 +306,13 @@ public class BipartiteGraph {
 
     private String findMatchingGeneralIndexTable(String table) {
 
-        if(table.matches("^[^_]+((\\[[0-9]+])+){2,}$")) {
-            String prefix = MultidimensionalTableSchema.getPrefixFromBracketsTableName(table);
+        if(table.matches("^[^_]+(_[0-9]+){2,}$")) {
+            String prefix = MultidimensionalTableSchema.getTablePrefixFromQualifiedName(table);
             HashMap<String, Integer> indices = MultidimensionalTableSchema.getIndicesFromBracketsName(table);
 
             for(String randomTable : tableOperationMap.keySet()) {
                 if(randomTable.startsWith(prefix)) {
-                    MultidimensionalSchemaIndices indexSpecification = new MultidimensionalSchemaIndices(MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(randomTable));
+                    MultidimensionalSchemaIndices indexSpecification = new MultidimensionalSchemaIndices(randomTable);
 
                     if (indexSpecification.areIndicesForThisTable(indices)){
                         return randomTable;
@@ -305,7 +323,7 @@ public class BipartiteGraph {
             throw new RuntimeException("Could not match the table " + MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(table) + "to a table schema");
         }
 
-        String randomTableName = getTablePrefix(table) + "[i]";
+        String randomTableName = getTablePrefix(table) + "_i";
 
         if(!tableOperationMap.containsKey(randomTableName)) {
             throw new RuntimeException("Could not match the table " + MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(table) + "to a table schema");

@@ -196,6 +196,7 @@ public class Aggregate extends Operator {
      * @return the inverted outputMap
      */
     @JsonGetter("inverted-output-map")
+    @JsonIdentityReference(alwaysAsId = true)
     public HashMap<String, MathOperator> getInvertedOutputMap() {
 
         HashMap<String, MathOperator> ret = new HashMap<String, MathOperator>();

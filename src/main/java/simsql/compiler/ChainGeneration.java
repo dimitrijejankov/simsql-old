@@ -24,6 +24,8 @@
  */
 package simsql.compiler;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import simsql.compiler.operators.Operator;
 import simsql.compiler.timetable.BipartiteGraph;
 import simsql.compiler.timetable.TableDependencyGraph;
@@ -62,6 +64,21 @@ public class ChainGeneration
         this.simulateTableMap = new HashMap<Integer, TableByTime>();
         this.startPointList = new ArrayList<String>();
 
+		HashMap<String, Operator> tableOperationMap = new HashMap<String, Operator>();
+
+        for(Operator o : planTableMap.keySet()) {
+        	tableOperationMap.put(planTableMap.get(o), o);
+		}
+
+		// JSON object loader
+		ObjectMapper mapper = new ObjectMapper();
+
+        try {
+        	String x = mapper.writerFor(new TypeReference<HashMap<String, Operator>>() {}).writeValueAsString(tableOperationMap);
+		}
+		catch (Exception e) {
+
+		}
 		//BipartiteGraph bp = new BipartiteGraph(requiredTables, topologic.getBackwardEdges(), planTableMap);
 
 		instantiateChain();

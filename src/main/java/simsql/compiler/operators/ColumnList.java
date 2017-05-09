@@ -1,6 +1,7 @@
 package simsql.compiler.operators;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import simsql.compiler.math_operators.MathOperator;
 
@@ -15,6 +16,7 @@ public class ColumnList {
      * The math operator
      */
     @JsonProperty("operator")
+    @JsonIdentityReference(alwaysAsId = true)
     public MathOperator operator;
 
     /**
