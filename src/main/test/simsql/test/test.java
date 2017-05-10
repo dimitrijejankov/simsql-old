@@ -9,6 +9,7 @@ import simsql.compiler.timetable.TimeTableNode;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -41,8 +42,14 @@ public class test {
         // deserialize the backward edges
         HashMap<String, HashSet<String>> backwardEdges = mapper.readValue(backwardEdgesFile, new TypeReference<HashMap<String, HashSet<String>>>() {});
 
+        // open the required tables file
+        File queriesFile = new File(classLoader.getResource("simsql/test/queries.json").getFile());
 
-        BipartiteGraph bp = new BipartiteGraph(requiredTables, backwardEdges, tableOperationMap);
+        // queries
+        ArrayList<Operator> queries = mapper.readValue(queriesFile, new TypeReference<ArrayList<Operator>>() {});
+
+        //
+        BipartiteGraph bp = new BipartiteGraph(requiredTables, backwardEdges, tableOperationMap, queries);
 
     }
 }

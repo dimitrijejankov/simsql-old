@@ -70,15 +70,6 @@ public class ChainGeneration
         	tableOperationMap.put(planTableMap.get(o), o);
 		}
 
-		// JSON object loader
-		ObjectMapper mapper = new ObjectMapper();
-
-        try {
-        	String x = mapper.writerFor(new TypeReference<HashMap<String, Operator>>() {}).writeValueAsString(tableOperationMap);
-		}
-		catch (Exception e) {
-
-		}
 		//BipartiteGraph bp = new BipartiteGraph(requiredTables, topologic.getBackwardEdges(), planTableMap);
 
 		instantiateChain();

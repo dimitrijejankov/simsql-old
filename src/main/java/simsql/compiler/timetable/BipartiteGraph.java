@@ -5,14 +5,15 @@ import simsql.compiler.expressions.MathExpression;
 import simsql.compiler.math_operators.EFunction;
 import simsql.compiler.math_operators.MathOperator;
 import simsql.compiler.operators.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import static simsql.compiler.MultidimensionalTableSchema.getPrefixFromBracketsTableName;
 import static simsql.compiler.MultidimensionalTableSchema.isGeneralTable;
+import static simsql.compiler.MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName;
 
 public class BipartiteGraph {
 
@@ -22,26 +23,19 @@ public class BipartiteGraph {
     private HashMap<String, Operator> tableOperationMap;
 
     /**
-     * The nodes of the table graph
-     */
-    private HashMap<TimeTableNode, HashSet<TimeTableNode>> nodes;
-
-    /**
-     * The the (table, set of dependent tables) pairs in general index form
-     */
-    private HashMap<String, HashSet<String>> backwardEdges;
-
-    /** Each random table (string) corresponds to an operator.
-     *  This map contains the instantiated random operators for the tables they represent.
+     * Each random table (string) corresponds to an operator.
+     * This map contains the instantiated random operators for the tables they represent.
      */
     private HashMap<String, Operator> generatedPlanMap = new HashMap<String, Operator>();
 
-    /** Each random table (string) has a list of tableScan which should be replaced,
-     *  because they should be linked with the rest of the query plan.
+    /**
+     * Each random table (string) has a list of tableScan which should be replaced,
+     * because they should be linked with the rest of the query plan.
      */
     private HashMap<String, ArrayList<TableScan>> replacedPlanMap = new HashMap<String, ArrayList<TableScan>>();
 
-    /** list of tables in order they are removed for the graph
+    /**
+     * list of tables in order they are removed for the graph
      */
     private ArrayList<String> tpList = new ArrayList<String>();
 
@@ -56,145 +50,154 @@ public class BipartiteGraph {
     private ArrayList<Operator> linkedOperatorList = new ArrayList<Operator>();
 
     /**
-     * An instance of the TranslatorHelper class
+     * The final queries
+     */
+    private ArrayList<Operator> queries = new ArrayList<Operator>();
+
+    /**
+     * The tables that are required by the final queries
+     */
+    private LinkedList<String> sinkTableList;
+
+    /**
+     * The operators associated with the required tables
+     */
+    private LinkedList<Operator> sinkListOperators;
+
+    /**
+     * An instance of the TranslatorHelper class - we use that to generate the operator indices
      */
     private TranslatorHelper translatorHelper;
 
     public BipartiteGraph(LinkedList<TimeTableNode> requiredTables,
                           HashMap<String, HashSet<String>> backwardEdges,
-                          HashMap<String, Operator> tableOperationMap) throws Exception {
+                          HashMap<String, Operator> tableOperationMap,
+                          ArrayList<Operator> queries) throws Exception {
 
         // store these values
         this.tableOperationMap = tableOperationMap;
-        this.backwardEdges = backwardEdges;
 
         // init stuff
         this.translatorHelper = new TranslatorHelper();
-        this.nodes = new HashMap<TimeTableNode, HashSet<TimeTableNode>>();
+        this.sinkTableList = new LinkedList<String>();
+        this.sinkListOperators = new LinkedList<Operator>();
+        this.queries = queries;
 
-        // generate the table graph
-        generateTableGraph(requiredTables);
+        // create a new table graph
+        TableGraph tableGraph = new TableGraph(backwardEdges, requiredTables);
 
         // generate the bipartite graph
-        generateBipartiteGraph();
+        generateBipartiteGraph(tableGraph, requiredTables);
     }
 
-
-    /**
-     * Generates the table dependency graph for the tables that are in the final nodes list
-     *
-     * @param finalNodes the list of the final nodes
-     */
-    private void generateTableGraph(LinkedList<TimeTableNode> finalNodes) {
-
-        LinkedList<TimeTableNode> processingList = new LinkedList<TimeTableNode>(finalNodes);
-        HashSet<TimeTableNode> visitedNodes = new HashSet<TimeTableNode>();
-
-        while (processingList.size() != 0) {
-
-            // this is the current table we are processing
-            TimeTableNode activeNode = processingList.iterator().next();
-
-            // find the backward edges for the current table
-            HashSet<String> edges = findBackwardEdge(activeNode);
-
-            // evaluate the indices of the backward edges we just found
-            HashSet<TimeTableNode> tables = evaluateDependentTables(edges, activeNode.getIndexStrings());
-
-            // only adds not previously visited tables to the processing list
-            for (TimeTableNode table : tables) {
-                if (!visitedNodes.contains(table)) {
-                    processingList.add(table);
-                }
-            }
-
-            // adds the dependencies for the table
-            nodes.put(activeNode, tables);
-
-            // remove the current table from the list of unprocessed tables
-            processingList.remove(activeNode);
-
-            // add the current table to the list of visited nodes so we don't check it out twice...
-            visitedNodes.add(activeNode);
-        }
-    }
-
-    /**
-     * For a given set of edges and the specified index strings calculates the index strings of the tables in the set of edges
-     *
-     * @param edges        the set of edges given in brackets general index form with index formulas
-     * @param indexStrings the the index strings
-     * @return the evaluated time table nodes
-     */
-    private HashSet<TimeTableNode> evaluateDependentTables(HashSet<String> edges, HashMap<String, Integer> indexStrings) {
-
-        HashSet<TimeTableNode> retValue = new HashSet<TimeTableNode>();
-
-        for (String edge : edges) {
-
-            String prefix = getPrefixFromBracketsTableName(edge);
-            MultidimensionalSchemaExpressions expressions = new MultidimensionalSchemaExpressions(edge.substring(edge.indexOf("[")));
-            HashMap<String, Integer> edgeIndex = expressions.evaluateExpressions(indexStrings);
-            TimeTableNode node = new TimeTableNode(prefix, edgeIndex);
-
-            retValue.add(node);
-        }
-
-        return retValue;
-    }
-
-    /**
-     * Finds the backward edges for a given table
-     * @param node the table to find the backward edges for
-     * @return the set of backward edges
-     */
-    private HashSet<String> findBackwardEdge(TimeTableNode node) {
-        String tableName = node.getBracketsTableName();
-        String tablePrefix = MultidimensionalTableSchema.getPrefixFromBracketsTableName(tableName);
-
-        if (backwardEdges.containsKey(tableName)) {
-            return backwardEdges.get(tableName);
-        }
-
-        if (backwardEdges.containsKey(tablePrefix + "[i]")) {
-            return backwardEdges.get(tablePrefix + "[i]");
-        }
-
-        for (String edge : backwardEdges.keySet()) {
-
-            if (edge.matches("^[^_]+((\\[[0-9]+to[0-9]])+|(\\[[0-9]+to])|(\\[[0-9]+]))+$")) {
-                MultidimensionalSchemaIndices indices = new MultidimensionalSchemaIndices(MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(edge));
-                String prefix = MultidimensionalTableSchema.getPrefixFromBracketsTableName(edge);
-
-                if (indices.areIndicesForThisTable(node.getIndexStrings()) &&
-                        prefix.equals(node.getTableName())) {
-                    return backwardEdges.get(edge);
-                }
-            }
-        }
-
-        throw new RuntimeException("Failed to find an appropriate edge.");
-    }
 
     /**
      * Generates the bipartite graph used for graph cutting optimization
+     *
+     * @param tableGraph an instance of the table graph so we can tack table dependencies
+     * @param requiredTables tables that are required by the requested queries
      * @throws Exception if the root of any random table query is not a projection!
      */
-    private void generateBipartiteGraph() throws Exception {
+    private void generateBipartiteGraph(TableGraph tableGraph, LinkedList<TimeTableNode> requiredTables) throws Exception {
 
         // makes an operator instance for every table in the table graph (generate partial plans...)
-        instantiateAllOperators();
+        instantiateAllOperators(tableGraph);
 
-        // link the unconnected graphs
+        // link the unconnected graphs (link all the partial plans generated in the previous step)
         linkPartialPlans();
+
+        // figure out the sinks (the tables we need to execute the query)
+        findSinks(requiredTables);
+
+        // link the final queries (the one the user requested)
+        linkFinalQueries();
     }
 
-    private void instantiateAllOperators() throws Exception {
+    /**
+     * Finds all the sinks
+     * @param requiredTables tables that are required by the requested queries
+     */
+    private void findSinks(LinkedList<TimeTableNode> requiredTables) {
+
+        // go through each table in the sink list
+        for(TimeTableNode t : requiredTables) {
+
+            // get the it's qualified table name
+            String tableName = getQualifiedTableNameFromBracketsTableName(t.getBracketsTableName());
+
+            // add it to the sink list operators
+            sinkListOperators.add(generatedPlanMap.get(tableName));
+            sinkTableList.add(tableName);
+        }
+    }
+
+    /**
+     * Link the final queries
+     */
+    private void linkFinalQueries() throws Exception {
+
+        for (int j = 0; j < queries.size(); j++) {
+
+            // grab the first operator
+            Operator tempSink = queries.get(j);
+
+            CopyHelper copyHelper = new CopyHelper();
+
+            // copy the operator
+            tempSink = tempSink.copy(copyHelper);
+
+            // find all referenced tables in this operator
+            ArrayList<TableScan> replacedTableList = PlanHelper.findReferencedRandomTable(tempSink);
+
+            // for each table referenced in the operator
+            for (TableScan tableScan : replacedTableList) {
+
+                // get the name of the referenced table
+                String tableName = tableScan.getTableName();
+
+                // grab the linked operator
+                Operator linkedOperator = generatedPlanMap.get(tableName);
+
+                // if we by any chance can't find the operator we need to link to this query, we have a problem
+                if (linkedOperator == null) {
+                    throw new RuntimeException("The SQL contains " + MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(tableName) + " is not supported");
+                } else {
+                    // link the operator with the query
+                    integratePlan(tableScan, linkedOperator);
+
+                    // if the operator is not in the linked operator list add him
+                    if (!linkedOperatorList.contains(linkedOperator)) {
+                        linkedOperatorList.add(linkedOperator);
+                    }
+                }
+            }
+
+            // check if this is a materialized view
+            if (tempSink instanceof FrameOutput) {
+                ArrayList<Operator> childrenList = tempSink.getChildren();
+                sinkListOperators.addAll(childrenList);
+                sinkTableList.addAll(((FrameOutput) tempSink).getTableList());
+
+                for (Operator aChildrenList : childrenList) {
+                    aChildrenList.removeParent(tempSink);
+                }
+
+                tempSink.clearLinks();
+            }
+            // otherwise it's a select_from_where query
+            else {
+                sinkListOperators.add(tempSink);
+                sinkTableList.add("file_to_print_0_" + j);
+            }
+        }
+    }
+
+    private void instantiateAllOperators(TableGraph tableGraph) throws Exception {
         // while we haven't used up all the tables to instantiate their operators
-        while(!this.nodes.isEmpty()) {
+        while (tableGraph.hasNextTable()) {
 
             // find a leaf node
-            TimeTableNode node = getLeafNode();
+            TimeTableNode node = tableGraph.getNextTable();
 
             // grab the qualified table name
             String table = MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(node.getBracketsTableName());
@@ -222,9 +225,6 @@ public class BipartiteGraph {
 
             // make the random table operator a concrete operator for the given table with the given indices...
             instantiateOperator(table, operator, indices, generatedPlanMap, replacedPlanMap);
-
-            // remove node from graph
-            updateTableGraph(node);
         }
     }
 
@@ -313,7 +313,7 @@ public class BipartiteGraph {
                 old_attributeNameList.size() != new_attributeNameList.size()) {
             throw new Exception("change attribute error!");
         }
-		/*
+        /*
 		 * Scalar function followed by projection
 		 */
         if (old_attributeNameList.size() != 0) {
@@ -429,44 +429,13 @@ public class BipartiteGraph {
         }
     }
 
-    /**
-     * Removes the node from the graph and updates the dependencies
-     * @param node the node to be removed
-     */
-    private void updateTableGraph(TimeTableNode node) {
-
-        // remove the node from the graph
-        nodes.remove(node);
-
-        // remove the dependency to this node from every node
-        for(HashSet<TimeTableNode> n : nodes.values()) {
-            n.remove(node);
-        }
-    }
-
-    /**
-     * Extracts a leaf node from the table graph
-     * @return a leaf node name
-     */
-    private TimeTableNode getLeafNode() {
-
-        // go through the graph and find a node
-        for(TimeTableNode table : nodes.keySet()) {
-            if(nodes.get(table).isEmpty()) {
-                return table;
-            }
-        }
-
-        // something went wrong this should not happen!
-        throw new RuntimeException("Can't find a leaf!");
-    }
 
     /**
      * Instantiates an operator to he specified indices
      * TODO handle union view
      *
      * @param rootTable
-     * @param operator the operator we ant to instantiate
+     * @param operator         the operator we ant to instantiate
      * @param indices
      * @param generatedPlanMap
      * @param replacedPlanMap
@@ -478,7 +447,7 @@ public class BipartiteGraph {
                                          HashMap<String, Operator> generatedPlanMap,
                                          HashMap<String, ArrayList<TableScan>> replacedPlanMap) {
 
-		// the set of all the operators we already have visited
+        // the set of all the operators we already have visited
         HashSet<Operator> finishedQueue = new HashSet<Operator>();
 
         // the list of all the operators that are still unprocessed
@@ -551,15 +520,15 @@ public class BipartiteGraph {
 
     private String findMatchingGeneralIndexTable(String table) {
 
-        if(table.matches("^[^_]+(_[0-9]+){2,}$")) {
+        if (table.matches("^[^_]+(_[0-9]+){2,}$")) {
             String prefix = MultidimensionalTableSchema.getTablePrefixFromQualifiedName(table);
             HashMap<String, Integer> indices = MultidimensionalTableSchema.getIndicesFromBracketsName(table);
 
-            for(String randomTable : tableOperationMap.keySet()) {
-                if(randomTable.startsWith(prefix)) {
+            for (String randomTable : tableOperationMap.keySet()) {
+                if (randomTable.startsWith(prefix)) {
                     MultidimensionalSchemaIndices indexSpecification = new MultidimensionalSchemaIndices(randomTable);
 
-                    if (indexSpecification.areIndicesForThisTable(indices)){
+                    if (indexSpecification.areIndicesForThisTable(indices)) {
                         return randomTable;
                     }
                 }
@@ -570,7 +539,7 @@ public class BipartiteGraph {
 
         String randomTableName = getTablePrefix(table) + "_i";
 
-        if(!tableOperationMap.containsKey(randomTableName)) {
+        if (!tableOperationMap.containsKey(randomTableName)) {
             throw new RuntimeException("Could not match the table " + MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(table) + "to a table schema");
         }
 
@@ -593,6 +562,7 @@ public class BipartiteGraph {
     /**
      * Gets the prefix of the table
      * TODO move this somewhere
+     *
      * @param table the full name of the table in brackets form
      * @return the prefix
      */

@@ -21,6 +21,8 @@
 
 package simsql.shell.query_processor;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import simsql.compiler.*;
 import simsql.compiler.operators.FrameOutput;
 import simsql.compiler.operators.Operator;
@@ -217,6 +219,17 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
                 HashMap<Operator, String> planTableMap = parseResult.definitionMap;
 
                 Topologic topologic = new Topologic(sinkList, planTableMap);
+
+
+                // JSON object loader
+                ObjectMapper mapper = new ObjectMapper();
+
+                try {
+                    String x = mapper.writerFor(new TypeReference<ArrayList<Operator>>() {}).writeValueAsString(queryList);
+                }
+                catch (Exception e) {
+
+                }
 
                 ChainGeneration chain = new ChainGeneration(topologic, parseResult.requiredTables, planTableMap);
                 maxLoop = chain.getMaxLoop();
