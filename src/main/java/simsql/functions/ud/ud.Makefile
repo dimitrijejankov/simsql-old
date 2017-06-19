@@ -14,9 +14,9 @@ CLFLAGS = -lgsl -lgslcblas -ldl -shared -rdynamic
 all: $(FUNC)
 %: %.ud.cc
 	@$(ECHO) "\033[1m\033[31mBuilding UD function '$@'.\033[0m"
-	@$(CC) -I $(INCLUDE) $(CCFLAGS) $@.ud.cc -o $@.ud.o
+	@$(CC) -I $(INCLUDE) -I $(JNI_INCLUDE) $(CCFLAGS) $@.ud.cc -o $@.ud.o
 	@$(CC) -o $(OUTDIR)/$@.ud.so $@.ud.o $(CLFLAGS)
 	@$(RM) $@.ud.o
 
 clean:
-	@$(RM) $(OUTDIR)/*.vg.o
+	@$(RM) $(OUTDIR)/*.ud.o

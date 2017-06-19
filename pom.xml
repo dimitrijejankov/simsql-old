@@ -116,10 +116,10 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
 
-                    <!-- Compile jni begin-->
+                    <!-- Compile vg interface begin-->
 
                     <execution>
-                        <id>jni-compile</id>
+                        <id>vg-jni-compile</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>exec</goal>
@@ -138,8 +138,54 @@
                         </configuration>
                     </execution>
 
-                    <!-- Compile jni end-->
+                    <!-- Compile vg interface end-->
 
+                    <!-- Compile ud interface begin-->
+
+                    <execution>
+                        <id>ud-jni-compile</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>/usr/bin/make</executable>
+                            <workingDirectory>${basedir}/src/main/java/simsql/runtime/</workingDirectory>
+                            <arguments>
+                                <argument>-f</argument>
+                                <argument>UDFunction.jni.Makefile</argument>
+                                <argument>CC=/usr/bin/g++</argument>
+                                <argument>INCLUDE=/usr/java/default/include</argument>
+                                <argument>OUTDIR=${basedir}/src/generated/resources/simsql/runtime</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Compile ud interface end-->
+
+                    <!-- Compile runtime native interface begin-->
+
+                    <execution>
+                        <id>jni-compile</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>/usr/bin/make</executable>
+                            <workingDirectory>${basedir}/src/main/java/simsql/runtime/</workingDirectory>
+                            <arguments>
+                                <argument>-f</argument>
+                                <argument>Native.jni.Makefile</argument>
+                                <argument>CC=/usr/bin/g++</argument>
+                                <argument>INCLUDE=/usr/java/default/include</argument>
+                                <!--<argument>INCLUDE=/usr/lib/jvm/java-1.8.0-openjdk-amd64/include</argument>-->
+                                <argument>OUTDIR=${basedir}/src/generated/resources/simsql/runtime</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Compile runtime native interface end-->
 
                     <!-- Compile VGFunctions begin-->
 
@@ -180,6 +226,7 @@
                                 <argument>ud.Makefile</argument>
                                 <argument>CC=/usr/bin/g++</argument>
                                 <argument>INCLUDE=${basedir}/src/main/java/simsql/runtime</argument>
+                                <argument>JNI_INCLUDE=/usr/java/default/include</argument>
                                 <argument>OUTDIR=${basedir}/src/generated/resources/simsql/runtime</argument>
                             </arguments>
                         </configuration>
@@ -318,8 +365,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
         </plugins>

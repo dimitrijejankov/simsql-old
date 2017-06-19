@@ -1,5 +1,3 @@
-
-
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -19,9 +17,11 @@
  *****************************************************************************/
 
 
-
 package simsql.runtime;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.*;
 import java.lang.*;
 import java.lang.reflect.*;
@@ -35,187 +35,221 @@ import java.lang.reflect.*;
  */
 public abstract class Function {
 
-	// array of parameters
-	protected IntermediateValue[] inParams;
+    // array of parameters
+    protected IntermediateValue[] inParams;
 
-	// number of MCs, for sanity checks
-	protected int numMC;
+    // number of MCs, for sanity checks
+    protected int numMC;
 
-	// current parameter being injected
-	protected int curParam;
+    // current parameter being injected
+    protected int curParam;
 
-	// current isNulls value.
-	protected Bitstring isNull;
+    // current isNulls value.
+    protected Bitstring isNull;
 
-	// input types.
-	protected AttributeType[] inTypes;
+    // input types.
+    protected AttributeType[] inTypes;
 
-	/** Simple constructor, the input represents the output types. */
-	public Function(AttributeType... types) {
+    public static String extractFile(String fileName) {
 
-		// create the parameters array
-		inParams = IntermediateValue.getIntermediates(1, types);
-		inTypes = types;
+        String longFileName = null;
+        try {
+            File fx = File.createTempFile("simsql_", ".so");
 
-		// set the start.
-		numMC = 1;
-		curParam = 0;
-		isNull = BitstringWithSingleValue.FALSE;
-	}
+            // NOTE: commented this because Linux tends to crash if one deletes a loaded .so file!
+            // fx.deleteOnExit();
+            longFileName = fx.getAbsolutePath();
+        } catch (Exception e) {
+            e.printStackTrace();
+            longFileName = new File(fileName.replaceAll("/", "_")).getAbsolutePath() + new Random().nextLong();
+        }
 
-	/** Applies the function to a sequence of attributes, forcing them to inject their contents. */
-	public Attribute apply(Attribute... atts) {
+        // extract the file to the work directory
+        try {
+            FileOutputStream out = new FileOutputStream(longFileName);
+            InputStream in = VGFunction.class.getResourceAsStream(fileName);
+            while (in.available() > 0) {
+                out.write(in.read());
+            }
+            in.close();
+            out.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to extract file.", e);
+        }
 
-		// inject each attribute
-		for (Attribute a: atts) {
-		    a.injectSelf(this);
-		}
+        return longFileName;
+    }
 
-		// evaluate
-		Attribute out = eval();
+    /**
+     * Simple constructor, the input represents the output types.
+     */
+    public Function(AttributeType... types) {
 
-		// reset
-		curParam = 0;
-		numMC = 1;
-		isNull = BitstringWithSingleValue.FALSE;
+        // create the parameters array
+        inParams = IntermediateValue.getIntermediates(1, types);
+        inTypes = types;
 
-		// return
-		return out;
-	}
+        // set the start.
+        numMC = 1;
+        curParam = 0;
+        isNull = BitstringWithSingleValue.FALSE;
+    }
 
-	// Injectors: Attribute classes must use these in their
-	// injectSelf() methods to place their values into the function as
-	// parameters. 
-	public void inject(long val) {
-		inParams[curParam].set(val, 0);
-		curParam++;
-	}
+    /**
+     * Used to construct an empty instance of function
+     */
+    protected Function() {
+    }
 
-	public void inject(long[] val) {
-		inParams[curParam].set(val);
-		curParam++;
+    /**
+     * Applies the function to a sequence of attributes, forcing them to inject their contents.
+     */
+    public Attribute apply(Attribute... atts) {
 
-		if (numMC == 1)
-	    numMC = val.length;
-		else if (numMC != val.length)
-	    throw new RuntimeException("Inconsistent number of MC iterations in parameters.");
-	}
+        // inject each attribute
+        for (Attribute a : atts) {
+            a.injectSelf(this);
+        }
 
-	public void inject(double val) {
-		inParams[curParam].set(val, 0);
-		curParam++;
-	}
+        // evaluate
+        Attribute out = eval();
 
-	public void inject(double[] val) {
-		inParams[curParam].set(val);
-		curParam++;
+        // reset
+        curParam = 0;
+        numMC = 1;
+        isNull = BitstringWithSingleValue.FALSE;
 
-		if (numMC == 1)
-	    numMC = val.length;
-		else if (numMC != val.length)
-	    throw new RuntimeException("Inconsistent number of MC iterations in parameters.");
-	}
+        // return
+        return out;
+    }
 
-	public void inject(String val) {
-		inParams[curParam].set(val, 0);
-		curParam++;
-	}
+    // Injectors: Attribute classes must use these in their
+    // injectSelf() methods to place their values into the function as
+    // parameters.
+    public void inject(long val) {
+        inParams[curParam].set(val, 0);
+        curParam++;
+    }
 
-	public void inject(String[] val) {
-		inParams[curParam].set(val);
-		curParam++;
+    public void inject(long[] val) {
+        inParams[curParam].set(val);
+        curParam++;
 
-		if (numMC == 1)
-	    numMC = val.length;
-		else if (numMC != val.length)
-	    throw new RuntimeException("Inconsistent number of MC iterations in parameters.");
-	}
+        if (numMC == 1)
+            numMC = val.length;
+        else if (numMC != val.length)
+            throw new RuntimeException("Inconsistent number of MC iterations in parameters.");
+    }
 
-	public void inject(double val, int label) {
-		inParams[curParam].set(val, label, 0);
-		curParam++;
-	}
+    public void inject(double val) {
+        inParams[curParam].set(val, 0);
+        curParam++;
+    }
 
-	public void inject(double[] val, int[] label) {
-		inParams[curParam].set(val, label);
-		curParam++;
+    public void inject(double[] val) {
+        inParams[curParam].set(val);
+        curParam++;
 
-		if (numMC == 1)
-	    numMC = val.length;
-		else if (numMC != val.length)
-	    throw new RuntimeException("Inconsistent number of MC iterations in parameters.");
-	}
+        if (numMC == 1)
+            numMC = val.length;
+        else if (numMC != val.length)
+            throw new RuntimeException("Inconsistent number of MC iterations in parameters.");
+    }
 
-	public void inject(double[] val, int label) {
-		inParams[curParam].set(val, label, 0);
-		curParam++;
-	}
+    public void inject(String val) {
+        inParams[curParam].set(val, 0);
+        curParam++;
+    }
 
-	public void inject(double[][] val, int[] label) {
-		inParams[curParam].set(val, label);
-		curParam++;
+    public void inject(String[] val) {
+        inParams[curParam].set(val);
+        curParam++;
 
-		if (numMC == 1)
-	    numMC = val.length;
-		else if (numMC != val.length)
-	    throw new RuntimeException("Inconsistent number of MC iterations in parameters.");
-	}
+        if (numMC == 1)
+            numMC = val.length;
+        else if (numMC != val.length)
+            throw new RuntimeException("Inconsistent number of MC iterations in parameters.");
+    }
 
-	public void inject(double[][] val, boolean ifRow) {
-		inParams[curParam].set(val, ifRow, 0);
-		curParam++;
-	}
+    public void inject(double val, int label) {
+        inParams[curParam].set(val, label, 0);
+        curParam++;
+    }
 
-	public void inject(double[][][] val, boolean[] ifRow) {
-		inParams[curParam].set(val, ifRow);
-		curParam++;
+    public void inject(double[] val, int[] label) {
+        inParams[curParam].set(val, label);
+        curParam++;
 
-		if (numMC == 1)
-	    numMC = val.length;
-		else if (numMC != val.length)
-	    throw new RuntimeException("Inconsistent number of MC iterations in parameters.");
-	}
+        if (numMC == 1)
+            numMC = val.length;
+        else if (numMC != val.length)
+            throw new RuntimeException("Inconsistent number of MC iterations in parameters.");
+    }
 
-	/** This one is used by those attributes that have a bitstring
-	 * associated with them. */
-	public void injectBitstring(Bitstring isNullIn) {
-		isNull = isNull.or(isNullIn);
-	}
+    public void inject(double[] val, int label) {
+        inParams[curParam].set(val, label, 0);
+        curParam++;
+    }
+
+    public void inject(Matrix val) {
+        inParams[curParam].set(val, 0);
+        curParam++;
+    }
+
+    /**
+     * This one is used by those attributes that have a bitstring
+     * associated with them.
+     */
+    public void injectBitstring(Bitstring isNullIn) {
+        isNull = isNull.or(isNullIn);
+    }
 
 
-	/** Returns the number of MC iterations. */
-	protected int getNumMC() {
-		return numMC;
-	}
+    /**
+     * Returns the number of MC iterations.
+     */
+    protected int getNumMC() {
+        return numMC;
+    }
 
-	/** Individual function evaluation method. */
-	protected abstract Attribute eval();
+    /**
+     * Individual function evaluation method.
+     */
+    protected abstract Attribute eval();
 
-	/** Returns the name of this function. */
-	public abstract String getName();
+    /**
+     * Returns the name of this function.
+     */
+    public abstract String getName();
 
-	/** Returns the output type of the function. */
-	public abstract AttributeType getOutputType();
+    /**
+     * Returns the output type of the function.
+     */
+    public abstract AttributeType getOutputType();
 
-	/** Returns the input parameter types of the function. */
-	public AttributeType[] getInputTypes() {
-		return inTypes;
-	}
+    /**
+     * Returns the input parameter types of the function.
+     */
+    public AttributeType[] getInputTypes() {
+        return inTypes;
+    }
 
-	/** Returns the SQL creation statement for this function. */
-	public String getCreateSQL(String sourceFile) {
-		String outStr = "create function " + getName().toLowerCase() + "(";
+    /**
+     * Returns the SQL creation statement for this function.
+     */
+    public String getCreateSQL(String sourceFile) {
+        String outStr = "create function " + getName().toLowerCase() + "(";
 
-		if (getInputTypes().length > 0) {
+        if (getInputTypes().length > 0) {
 
-	    outStr += "inAtt0 " + getInputTypes()[0].getType().writeOut();
-	    for (int i=1;i<getInputTypes().length;i++) {
-				outStr += ", inAtt" + i + " " + getInputTypes()[i].getType().writeOut();
-	    }
-		}
+            outStr += "inAtt0 " + getInputTypes()[0].getType().writeOut();
+            for (int i = 1; i < getInputTypes().length; i++) {
+                outStr += ", inAtt" + i + " " + getInputTypes()[i].getType().writeOut();
+            }
+        }
 
-		outStr += ") returns " + getOutputType().getType().writeOut() + " source '" + sourceFile + "';";
+        outStr += ") returns " + getOutputType().getType().writeOut() + " source '" + sourceFile + "';";
 
-		return outStr;
-	}
+        return outStr;
+    }
 }

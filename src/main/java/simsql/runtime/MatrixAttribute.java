@@ -1,5 +1,3 @@
-
-
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -18,2242 +16,1281 @@
  *                                                                           *
  *****************************************************************************/
 
-
-
 package simsql.runtime;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Implements the matrix type, with the same value in every world.
  */
-import java.util.*;
-import java.io.DataOutputStream;
-import java.io.DataInputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.FileReader;
+public class MatrixAttribute implements Attribute, Serializable {
 
-public class MatrixAttribute implements Attribute {
+	/**
+	 * this allows us to return the address as a byte arraycolumnmatrix
+	 */
+	private static ByteBuffer b = ByteBuffer.allocate(9);
 
-  // Indicate if the matrix is row based
-  private boolean ifRow;
-  
-  // this is the actual data
-  private double [][] myVals;
-  
-  // the number of elements in the second dimension
-  // if myVals is row-based, the secondDimension will be the number of columns
-  // if myVals is column-based, the secondDimension will be the number of rows
-  private int secondDimension = -1;
-  
-  // all zeros vector in secondDimension
-   // private double [] zeros;
-  //private int size;
-  
-  //this allows us to return the data as a byte array
-  private static ByteBuffer b = ByteBuffer.allocate (0);
-  static {
-    b.order(ByteOrder.nativeOrder());
-  }
-  
-  /*
-  public static int getTotSize() {
-	  return myVals.length * calSecondDim(myVals);
-  }
-  */
-  
-  public void recycle() {
-  }
-  
-  public MatrixAttribute () {}
-    
-  public Bitstring isNull () {
-    return BitstringWithSingleValue.FALSE;
-  }
-
-  
-  public Attribute setNull (Bitstring theseOnes) {
-    if (theseOnes.allAreTrue ()) {
-      return NullAttribute.NULL;
-    } else {
-      return new ArrayAttributeWithNulls (theseOnes, this);
-    }
-  }
-
-  public Attribute readSelfFromTextStream (BufferedReader readFromMe) throws IOException {
-
-    // this is the space we'll use to do the parsing... we assume it is less than 64 chars
-    char [] myArray = new char[64];
-
-    // allows us to match the word "null"
-    char [] nullString = {'n', 'u', 'l', 'l'};
-
-    // records the doubles and nulls we've read in
-    ArrayList <ArrayList<Double>> myDoubles = new ArrayList <ArrayList<Double>> (64);
-    // ArrayList <Boolean> myNulls = new ArrayList <Boolean> (64);
-   
-    // suck in the '[', but ignore a leading newline character
-    int startChar = readFromMe.read ();
-    while (startChar == '\n') 
-      startChar = readFromMe.read ();
-
-    // if we got an eof, we are done
-    if (startChar == -1) {
-      return null;
-    }
-
-    if (startChar != '[') {
-      throw new IOException ("Read in a bad matrix start character when reading a vector; expected '['");
-    }
-
-    // this tells us we did not see a null anywhere in the input
-    boolean gotANull = false;
-    boolean isNull = true;
-
-    // read in the first char
-    myArray[0] = (char) startChar;
-
-    while (myArray[0] == '['){
-    	myArray[0] = (char) readFromMe.read ();
-    	ArrayList <Double> myRow = new ArrayList <Double> (64);
-    	boolean allZeros = true;
-	    // keep reading until we find the ']'
-	    while (myArray[0] != ']') {
-	
-	      // this loop reads in a row
-	      int i;
-	      for (i = 1; myArray[i - 1] != ',' && myArray[i - 1] != ']'; i++) {
-	
-	        // isNull gets set to false if we find a char that does not match the string 'null'
-	        if (i - 1 <= 3 && myArray[i - 1] != nullString[i - 1]) {
-	          isNull = false;  
-	        }
-	        myArray[i] = (char) readFromMe.read ();  
-	      }
-	
-	      // if we got here, we read in a ','
-	      if (isNull == true && i == 5) {
-	
-	        // this means we got a null!
-	        // myDoubles.add (0.0);
-	        // myNulls.add (true);
-	        // gotANull = true;
-	    	if (readFromMe.read () != '|') {
-	    	    throw new IOException ("Error when I tried to read in a matrix: didn't close with a '|'");
-	    	}
-	    	return NullAttribute.NULL;
-	
-	      } else {
-	
-	        // we did not get a null!
-	        try {
-	          Double temp = Double.valueOf (new String (myArray, 0, i - 1));
-	          myRow.add (temp);
-	          if (temp.doubleValue() != 0.0 && allZeros == true)
-	        	  allZeros = false;
-	          // myNulls.add (false);
-	        } catch (Exception e) {
-	          throw new IOException ("Error when I tried to read in a matrix... an entry didn't parse to a double");
-	        }
-	      }
-	
-	      // prime the parse of the next item in the row
-	      if(myArray[i-1] != ']')
-	    	  myArray[0] = (char) readFromMe.read ();
-	      else
-	    	  break;
-	    }
-	    if (allZeros == true)
-	    	myDoubles.add(null);
-	    else
-	    	myDoubles.add(myRow);
-	    
-	    // start to read the next row
-	    myArray[0] = (char) readFromMe.read ();
-    }
-
-    // suck in the final '|'
-    if (myArray[0] != '|') {
-      throw new IOException ("Error when I tried to read in a matrix: didn't close with a '|'");
-    }
-
-    // at this point we've read the entire matrix, so make an attribute out of it
-    double [][] myDoubleMatrix = new double[myDoubles.size ()][];
-    for (int i = 0; i < myDoubles.size (); i++) {
-    	if (myDoubles.get(i) != null) {
-    		myDoubleMatrix[i] = new double[myDoubles.get(i).size()];
-	    	for (int j = 0; j < myDoubles.get(i).size(); j++){
-	    		myDoubleMatrix[i][j] = myDoubles.get(i).get(j);
-	    	}
-    	}
-    }
-    
-    return new MatrixAttribute (true, myDoubleMatrix); 
-
-  }
-
-  
-  // The matrix written in text will always be row-based
-  // example: [1, 2, 3][0, 0, 0][4, 5, 6] |
-  public void writeSelfToTextStream (BufferedWriter writeToMe) throws IOException {
-	  // calculate the second dimension 
-	  if (secondDimension == -1)
-		  secondDimension = calSecondDim(myVals);
-		
-	  // depends on the value of ifRow	  
-	  if (ifRow) {
-		  for (int i = 0; i < myVals.length; i++) {
-			  writeToMe.write ("[");
-			  if (myVals[i] != null) {
-				  for (int j = 0; j < secondDimension; j++) {
-		    	      String temp = Double.toString (myVals[i][j]);
-		    	      writeToMe.write (temp, 0, temp.length ());
-		    	      if(j < secondDimension - 1)
-		    	    	  writeToMe.write (",");
-				  }
-			  }
-			  else {
-				  for (int j = 0; j < secondDimension; j++) {
-		    	      String temp = Double.toString (0.0);
-		    	      writeToMe.write (temp, 0, temp.length ());
-		    	      if(j < secondDimension - 1)
-		    	    	  writeToMe.write (",");
-				  }
-			  }
-			  writeToMe.write ("]");
-		  }
-	  }
-	  else {
-		  for (int j = 0; j < secondDimension; j++) {
-			  writeToMe.write ("[");
-			  for (int i = 0; i < myVals.length; i++) {
-				  if (myVals[i] != null) {
-		    	      String temp = Double.toString (myVals[i][j]);
-		    	      writeToMe.write (temp, 0, temp.length ());
-		    	      if(i < myVals.length - 1)
-		    	    	  writeToMe.write (",");
-				  }
-				  else {
-		    	      String temp = Double.toString (0.0);
-		    	      writeToMe.write (temp, 0, temp.length ());
-		    	      if(i < myVals.length - 1)
-		    	    	  writeToMe.write (",");
-				  }
-			  }
-			  writeToMe.write ("]");
-		  }
-	  }
-      writeToMe.write ("|");
-  }
-  
-  public void writeSelfToTextStream (Bitstring theseAreNull, BufferedWriter writeToMe) throws IOException {
-
-	// if the value in thsesAreNull[0] is null, we regard the whole matrix as null
-	if (theseAreNull.getValue (0)){
-		writeToMe.write ("[");
-	    writeToMe.write ("null", 0, 4);
-	    writeToMe.write ("]");
+	static {
+		b.order(ByteOrder.nativeOrder());
 	}
-	else {
-		writeSelfToTextStream (writeToMe);
-    }
 
-  }
+	/**
+	 * Default constructor
+	 */
+	public MatrixAttribute() {}
 
-  public long getHashCode () {
-	  return Hash.hashMe (getValue (0));  
-  }
+	/**
+	 * The matrix address
+	 */
+	private transient Matrix matrix;
 
-  // calculate the size of myVals
-  public int getSize(){
-	  return 1;
-  }
-  
-  // the matrix in getValue will always be row-based
-  public byte [] getValue (int whichMC) {
-	// double [][] completeVals = transferAndComplete (ifRow, myVals, secondDimension);
-	  if (secondDimension == -1)
-		  secondDimension = calSecondDim(myVals);
-	  
-	  if (b.capacity() <  8 * (myVals.length * secondDimension + 2)) {
-		  b = ByteBuffer.allocate(8 * (myVals.length * secondDimension + 2));
-		  b.order(ByteOrder.nativeOrder());
-	  }	  
-	  
-	  b.position(0);
-	
-	  if (ifRow) {
-		  b.putDouble(myVals.length);
-		  b.putDouble(secondDimension);
-		  for (int i = 0; i < myVals.length; i++) {
-			  if (myVals[i] != null) {
-				  for (int j = 0; j < secondDimension; j++) {
-					  b.putDouble (myVals[i][j]);
-				  }
-			  }
-			  else {
-				  for (int j = 0; j < secondDimension; j++) {
-					  b.putDouble (0.0);
-				  }
-			  }
-		  }
-	  }
-	  else {
-		  b.putDouble(secondDimension);
-		  b.putDouble(myVals.length);
-		  for (int j = 0; j < secondDimension; j++) {
-			  for (int i = 0; i < myVals.length; i++) {
-				  if (myVals[i] != null) {
-					  b.putDouble (myVals[i][j]);
-				  }
-				  else {
-					  b.putDouble (0.0);
-				  }
-			  }
-		  }
-	  }
-	  
-      return b.array ();
-  }
+	/**
+	 * constructs an instance of the matrix attribute from a double[][]
+	 *
+	 * @param fromMe the address
+	 */
+	public MatrixAttribute(double[][] fromMe) {
+		// initialize a new matrix
+		this.matrix = new Matrix(fromMe.length, fromMe[0].length, true, fromMe);
+	}
 
-  public byte [] getValue (int whichMC, AttributeType castTo) {
-    if (castTo.getTypeCode() == getType(whichMC).getTypeCode())
-      return getValue(whichMC);
+	/**
+	 * Create a matrix from address
+	 *
+	 * @param indicateIfRow is true if this is a row matrix
+	 * @param fromMe        the raw address to initialize
+	 */
+	public MatrixAttribute(boolean indicateIfRow, double[][] fromMe) {
+		// initialize a new matrix
+		this.matrix = new Matrix(fromMe.length, fromMe[0].length, indicateIfRow, fromMe);
+	}
 
-    else throw new RuntimeException("Invalid cast when writing out value.");
-  }
-  
-  public Attribute removeNulls () {
-    return this;  
-  }
-  
-  public AttributeType getType (int whichMC) {
-    return new AttributeType(new MatrixType());  
-  }
-  
-  /** format: 
-    *  ifRow(boolean), numOfRow/numOfColumn, numOfColumn/numOfRow, 
-    *  numOfNonZeroRow/numOfNonZeroColumn, nonZeroRow/nonZeroColumn, data
-    *  e.g., True, 5, 2, 2, 2, 4, 1, 2, 3, 4 for the matrix | 0, 0 |
-                                                            | 0, 0 |
-                                                            | 1, 2 |
-                                                            | 0, 0 |
-                                                            | 3, 4 |
-    */
-  public int writeSelfToStream (DataOutputStream writeToMe) throws IOException {	  
-    if (secondDimension == -1)
-          secondDimension = calSecondDim(myVals);
-    int returnVal = 0;
-    ArrayList <Integer> nonZeros = new ArrayList <Integer>();
-    writeToMe.writeBoolean(ifRow);
-    returnVal += 1;
-    // here we assume the matrix has the same number of entries in each row/column
-    writeToMe.writeInt (myVals.length);
-    writeToMe.writeInt (secondDimension);
-    returnVal += 8;
-       
-	for (int i = 0; i < myVals.length; i++) {
-		if (myVals[i] != null){
-			nonZeros.add(i);
+	/**
+	 * Create a matrix from address
+	 *
+	 * @param indicateIfRow is true if this is a row matrix
+	 * @param fromMe        the raw address to initialize
+	 * @param dim2          the second dimension of the matrix
+	 */
+	public MatrixAttribute(boolean indicateIfRow, double[][] fromMe, int dim2) {
+		// initialize a new matrix
+		this.matrix = new Matrix(fromMe.length, dim2, indicateIfRow, fromMe);
+	}
+
+	/**
+	 * Creates a shallow copy of the address
+	 *
+	 * @param matrix a reference of the matrix
+	 */
+	public MatrixAttribute(Matrix matrix) {
+		this.matrix = matrix;
+	}
+
+	/**
+	 * We don't do anything in the recycle method
+	 */
+	public void recycle() {
+	}
+
+	public Bitstring isNull() {
+		return BitstringWithSingleValue.FALSE;
+	}
+
+	public Attribute setNull(Bitstring theseOnes) {
+		if (theseOnes.allAreTrue()) {
+			return NullAttribute.NULL;
+		} else {
+			return new ArrayAttributeWithNulls(theseOnes, this);
 		}
 	}
-    
-	writeToMe.writeInt (nonZeros.size());
-	returnVal += 4;
-	for (int i:nonZeros) {
-		writeToMe.writeInt (i);
-	}
-	returnVal += 4 * nonZeros.size();
-	
-    for (int i:nonZeros) {
-		for (int j = 0; j < myVals[i].length; j++){
-	      writeToMe.writeDouble (myVals[i][j]);
+
+	/**
+	 * Reads a MatrixAttribute from a bufferedReader (string)
+	 *
+	 * @param readFromMe the buffer
+	 * @return the matrix attribute we just have read
+	 * @throws IOException when the parsing format is not right
+	 */
+	public Attribute readSelfFromTextStream(BufferedReader readFromMe) throws IOException {
+
+		// this is the space we'll use to do the parsing... we assume it is less than 64 chars
+		char[] myArray = new char[64];
+
+		// allows us to match the word "null"
+		char[] nullString = {'n', 'u', 'l', 'l'};
+
+		// records the doubles and nulls we've read in
+		ArrayList<ArrayList<Double>> myDoubles = new ArrayList<>(64);
+		// ArrayList <Boolean> myNulls = new ArrayList <Boolean> (64);
+
+		// suck in the '[', but ignore a leading newline character
+		int startChar = readFromMe.read();
+		while (startChar == '\n')
+			startChar = readFromMe.read();
+
+		// if we got an eof, we are done
+		if (startChar == -1) {
+			return null;
 		}
-    }
-    returnVal += 8 * nonZeros.size() * secondDimension;
-    return returnVal;
-  }
-  
-  public int readSelfFromStream (DataInputStream readFromMe) throws IOException {
-    int returnVal, numNonZeros, len, currentIndex = 0;
-    ArrayList <Integer> nonZeros = new ArrayList <Integer>();
-    ifRow = readFromMe.readBoolean ();
-    len = readFromMe.readInt ();
-    secondDimension = readFromMe.readInt ();
-    myVals = new double[len][secondDimension];
-    numNonZeros = readFromMe.readInt ();
-    returnVal = 13;
-    for (int i = 0; i < numNonZeros; i++) {
-    	nonZeros.add(readFromMe.readInt ());
-    }    
-    returnVal += 4 * numNonZeros;
-    for (int j:nonZeros){
-    	while (currentIndex < j) {
-    		myVals[currentIndex] = null;
-    		currentIndex ++;
-    	}
-    	for (int k = 0; k < secondDimension; k++) {
-    		myVals[currentIndex][k] = readFromMe.readDouble ();
-    	}
-    	currentIndex ++;
-    }
-    returnVal += 8 * numNonZeros * secondDimension;
-    return returnVal;
-  }
 
-  public HashMap<Attribute, Bitstring> split () {
-  	HashMap<Attribute, Bitstring> splits = new HashMap<Attribute, Bitstring>();
-  	splits.put(new MatrixAttribute(ifRow, myVals), BitstringWithSingleValue.trueIf(true));
-  	return splits;
-  }
-  
-  // Transfer the myVals to row-based matrix and complete the null row/column with 0s
-  public double[][] transferAndComplete (boolean localIfRow, double [][] localVals, int localSecDim) {
-	  double [][] transferedMatrix;
-	 // double [] zeros = new double [secondDimension];
-	  if (localIfRow) {
-		  transferedMatrix = new double [localVals.length][localSecDim];
-		  for (int i = 0; i < localVals.length; i++) {
-				  if (localVals[i] != null){
-					  for (int j = 0; j < localSecDim; j++)
-						  transferedMatrix[i][j] = localVals[i][j];
-				  }
-		  }
-	  }
-	  else {
-		  transferedMatrix = new double [localSecDim][localVals.length];
-		  for (int i = 0; i < localVals.length; i++) {
-				  if (localVals[i] != null) {
-					  for (int j = 0; j < localSecDim; j++)
-						  transferedMatrix[j][i] = localVals[i][j];
-				  }
-		  }
-	  }
-	  return transferedMatrix;
-  }
-  
-  // This function will calculate the second dimension for this matrix
-  public static int calSecondDim(double [][] thisMatrix) {
-	  for (int i = 0; i < thisMatrix.length; i++) {
-		  if (thisMatrix[i] != null)
-			  return thisMatrix[i].length;
-	  }
-	  return 0;
-  }
-  
-  public MatrixAttribute (double [][] fromMe) {
-	ifRow = true;
-    myVals = fromMe;
-    /*
-    for (int i = 0; i < fromMe.length; i++) {
-    	if (fromMe[i] != null){
-    		secondDimension = fromMe[i].length;
-    		break;
-    	}
-    }
-    */
-  }
-  
-  public MatrixAttribute (boolean indicateIfRow, double [][] fromMe) {
-	ifRow = indicateIfRow;
-	myVals = fromMe;
-  }
-  
-  public MatrixAttribute (boolean indicateIfRow, double [][] fromMe, int dim2) {
-	ifRow = indicateIfRow;
-	myVals = fromMe;
-	secondDimension = dim2;
-	  
-  }
-
-  protected double[][] getVal () {
-    return myVals;
-  }
-
-  protected boolean getIfRow () {
-    return ifRow;
-  }
-
-  protected int getSecondDimension () {
-    return secondDimension;
-  }
-  
-  protected void setVal (double[][] val) {
-    myVals = val;
-  }
-
-  protected void setVal (double[] val, int dim) {
-    myVals[dim] = val;
-  }
-
-  protected void setVal (double val, int dim1, int dim2) {
-    myVals[dim1][dim2] = val;
-  }
-
-  protected void setIfRow (boolean ifr) {
-    ifRow = ifr;
-  }
-
-  protected void setSecondDimension (int sd) {
-    secondDimension = sd;
-  }
-  
-  public Attribute add (Attribute me) {
-	    return me.addR (ifRow, myVals);
-  }
-	  
-  public Attribute add (long addThisIn) {
-
-    if (addThisIn == 0)
-      return this;
-    
-    if (secondDimension == -1)
-    	secondDimension = calSecondDim(myVals);
-	  
-	  double [][] newMatrix = new double [myVals.length][secondDimension];
-	  for (int i = 0; i < myVals.length; i++) {
-		  if (myVals[i] != null) {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = addThisIn + myVals[i][j];
-		  }
-		  else {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = addThisIn;
-		  }
-	  }
-	  return new MatrixAttribute (ifRow, newMatrix);
-  }
-  
-  public Attribute addR (long addThisIn) {
-
-    // because integer arithmatic is commutative
-    return add (addThisIn);
-  }
-  
-  // TODO
-  public Attribute add (long [] addThisIn) {
-    
-	  /*
-    if (addThisIn.length != myVals.length) {
-      throw new RuntimeException ("adding an array of values with the wrong number of possible worlds");
-    }
-    
-    // create the new array
-    double [] newArray  = new double [myVals.length];
-    
-    // put the stuff to add in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = myVals[i] + addThisIn[i];
-    }
-    
-    // and get outta here!
-    return new VectorAttribute(newArray);
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute addR (long [] addThisIn) {
-    
-    // because ordering does not matter with addition of ints
-    return add (addThisIn);
-  }
-  
-  public Attribute add (String [] addThisIn) {
-	  throw new RuntimeException ("You can't add a matrix and an array of string.");
-  }
-  
-  public Attribute addR (String [] addThisIn) {
-	  throw new RuntimeException ("You can't add a matrix and an array of string.");
-  }
-  
-  public Attribute add (String addThisIn) {
-	  throw new RuntimeException ("You can't add a matrix and a string."); 
-  }
-  
-  public Attribute addR (String addThisIn) {
-	  throw new RuntimeException ("You can't add a matrix and a string."); 
-  }
-  
-  // TODO
-  public Attribute add (double [] addThisIn) {
-	  /*
-    
-    if (addThisIn.length != myVals.length) {
-      throw new RuntimeException ("adding an array of values with the wrong number of possible worlds");
-    }
-    
-    double [] newArray  = new double [myVals.length];
-    
-    // now add ourselves in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = myVals[i] + addThisIn[i];
-    }
-    
-    // and get outta here!
-    return new DoubleArrayAttribute (newArray); 
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute addR (double [] addThisIn) {
-    
-    // since addition on numbers is commutative
-    return add (addThisIn);
-  }
-  
-  public Attribute add (double addThisIn) {
-
-    if (addThisIn == 0.0)
-      return this;
-    
-    if (secondDimension == -1)
-    	secondDimension = calSecondDim(myVals);
-	  
-	  double [][] newMatrix = new double [myVals.length][secondDimension];
-	  for (int i = 0; i < myVals.length; i++) {
-		  if (myVals[i] != null) {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = addThisIn + myVals[i][j];
-		  }
-		  else {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = addThisIn;
-		  }
-	  }
-	  return new MatrixAttribute (ifRow, newMatrix); 
-  }
-  
-  public Attribute addR (double addThisIn) {
-    
-    // since addition on numbers is commutative
-    return add (addThisIn);
-  }
-  
-  public Attribute add (int label, double addThisIn) {
-    if (addThisIn == 0.0)
-        return this;
-      
-	  if (secondDimension == -1)
-	  	secondDimension = calSecondDim(myVals);
-	  
-	  double [][] newMatrix = new double [myVals.length][secondDimension];
-	  for (int i = 0; i < myVals.length; i++) {
-		  if (myVals[i] != null) {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = addThisIn + myVals[i][j];
-		  }
-		  else {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = addThisIn;
-		  }
-	  }
-	  return new MatrixAttribute (ifRow, newMatrix);
-  }
-  
-  public Attribute addR (int label, double addThisIn) {
-    
-    // since addition on numbers is commutative
-    return add (label, addThisIn);
-  }
-  
-  public Attribute add (int label, double [] addThisIn) {
-	if (ifRow) {  
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-	    if (secondDimension != addThisIn.length) {
-	      throw new RuntimeException ("adding a vector and a matrix with different row dimensions!");
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    
-	    // now add ourselves in
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = addThisIn[j] + myVals[i][j];
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = addThisIn[j];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-	else {
-	    if (myVals.length != addThisIn.length)
-		  throw new RuntimeException ("adding a vector and a matrix with different row dimensions!");
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-		double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = addThisIn[i] + myVals[i][j];
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = addThisIn[i];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	} 
-  }
-  
-  public Attribute addR (int label, double [] addThisIn) {
-    
-    // since addition on numbers is commutative
-    return add (label, addThisIn);
-  }
-  
-  // vector + matrix will be always row-based addition
-  public Attribute add (boolean addIfRow, double [][] addThisIn) {
-    
-	if (ifRow == addIfRow) {  		
-
-		if (myVals.length != addThisIn.length) {
-		  throw new RuntimeException ("adding two matrices with different dimensions!");
+		if (startChar != '[') {
+			throw new IOException("Read in a bad matrix start character when reading a vector; expected '['");
 		}
-		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-	    if (secondDimension != calSecondDim (addThisIn)) {
-	      throw new RuntimeException ("adding two matrices with different dimensions: " + myVals.length + "," + secondDimension + " " + addThisIn.length + "," + calSecondDim(addThisIn));
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    
-	    // now add ourselves in
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null && addThisIn[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = myVals[i][j] + addThisIn[i][j];
-	    	}
-	    	else if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = myVals[i][j];
-	    	}
-	    	else if (addThisIn[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = addThisIn[i][j];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-	else {		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-		if (myVals.length != calSecondDim (addThisIn) || secondDimension != addThisIn.length) {
-			throw new RuntimeException ("adding two matrices with different dimensions!");
-		}	
-	    
-		double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++) {
-	    			if (addThisIn[j] != null)
-	    				newMatrix[i][j] = myVals[i][j] + addThisIn[j][i];
-	    			else
-	    				newMatrix[i][j] = myVals[i][j];
-	    		}
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++) {
-	    			if (addThisIn[j] != null)
-	    				newMatrix[i][j] = addThisIn[j][i];
-	    		}
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-  }
-  
-  // The value of ifRow for the result matrix will depend on the value of the ifRow of 
-  // the frist matrix in addition
-  public Attribute addR (boolean otherIfRow, double [][] addThisIn) {
-	    
-	if (ifRow == otherIfRow) {  		
-	    return add (otherIfRow, addThisIn); 
-	}
-	else {		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-		if (myVals.length != calSecondDim (addThisIn) || secondDimension != addThisIn.length) {
-			throw new RuntimeException ("adding two matrices with different dimensions!");
-		}	
-	    
-		double [][] newMatrix  = new double [addThisIn.length][myVals.length];
-	    for (int i = 0; i < addThisIn.length; i++) {
-	    	if (addThisIn[i] != null) {
-	    		for (int j = 0; j < myVals.length; j++) {
-	    			if (myVals[j] != null)
-	    				newMatrix[i][j] = addThisIn[i][j] + myVals[j][i];
-	    			else
-	    				newMatrix[i][j] = addThisIn[i][j];
-	    		}
-	    	}
-	    	else {
-	    		for (int j = 0; j < myVals.length; j++) {
-	    			if (myVals[j] != null)
-	    				newMatrix[i][j] = myVals[j][i];
-	    		}
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (otherIfRow, newMatrix); 
-	}
-  }
-  
-  public Attribute subtract (Attribute me) {
-    return me.subtractR (ifRow, myVals);
-  }
-  
-  public Attribute subtract (long subtractThisOut) {
-    
-    if (subtractThisOut == 0)
-      return this;
-    
-    if (secondDimension == -1)
-    	secondDimension = calSecondDim(myVals);
-	  
-	  double [][] newMatrix = new double [myVals.length][secondDimension];
-	  for (int i = 0; i < myVals.length; i++) {
-		  if (myVals[i] != null) {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = myVals[i][j] - subtractThisOut;
-		  }
-		  else {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = - subtractThisOut;
-		  }
-	  }
-	  return new MatrixAttribute (ifRow, newMatrix);
-  }
-  
-  public Attribute subtractR (long subtractFromMe) {
 
-    if (secondDimension == -1)
-    	secondDimension = calSecondDim(myVals);
-	  
-	  double [][] newMatrix = new double [myVals.length][secondDimension];
-	  for (int i = 0; i < myVals.length; i++) {
-		  if (myVals[i] != null) {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = subtractFromMe - myVals[i][j];
-		  }
-		  else {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = subtractFromMe;
-		  }
-	  }
-	  return new MatrixAttribute (ifRow, newMatrix);
-  }
-  
-  // TODO
-  public Attribute subtract (long [] subtractMeOut) {
-    
-	  /*
-    if (subtractMeOut.length != myVals.length) {
-      throw new RuntimeException ("subtracting an array of values with the wrong number of possible worlds");
-    }
-    
-    // create the new array
-    double [] newArray  = new double [myVals.length];
-    
-    // put the stuff to add in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = myVals[i] - subtractMeOut[i];
-    }
-    
-    // and get outta here!
-    return new DoubleArrayAttribute (newArray);
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute subtractR (long [] subtractFromMe) {
-	  
-	  /*
-    
-    if (subtractFromMe.length != myVals.length) {
-      throw new RuntimeException ("subtracting an array of values with the wrong number of possible worlds");
-    }
-    
-    // create the new array
-    double [] newArray  = new double [myVals.length];
-    
-    // put the stuff to add in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = subtractFromMe[i] - myVals[i];
-    }
-    
-    // and get outta here!
-    return new DoubleArrayAttribute (newArray);
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute subtract (double [] subtractThisOut) {
-	  
-	  /*
-    
-    if (subtractThisOut.length != myVals.length) {
-      throw new RuntimeException ("subtracting an array of values with the wrong number of possible worlds");
-    }
-    
-    double [] newArray  = new double [myVals.length];
-    
-    // now add ourselves in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = myVals[i] - subtractThisOut[i];
-    }
-    
-    // and get outta here!
-    return new DoubleArrayAttribute (newArray); 
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute subtractR (double [] subtractFromMe) {
-	  
-	  /*
-    
-    if (subtractFromMe.length != myVals.length) {
-      throw new RuntimeException ("subtracting an array of values with the wrong number of possible worlds");
-    }
-    
-    double [] newArray  = new double [myVals.length];
-    
-    // now add ourselves in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = subtractFromMe[i] - myVals[i];
-    }
-    
-    // and get outta here!
-    return new DoubleArrayAttribute (newArray); 
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute subtract (double subtractThisOut) {
-    if (subtractThisOut == 0.0)
-        return this;
-      
-	  if (secondDimension == -1)
-	  	secondDimension = calSecondDim(myVals);
-	  
-	  double [][] newMatrix = new double [myVals.length][secondDimension];
-	  for (int i = 0; i < myVals.length; i++) {
-		  if (myVals[i] != null) {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = myVals[i][j] - subtractThisOut;
-		  }
-		  else {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = - subtractThisOut;
-		  }
-	  }
-	  return new MatrixAttribute (ifRow, newMatrix);
-  }
-  
-  public Attribute subtractR (double subtractFromThis) {
-    if (secondDimension == -1)
-    	secondDimension = calSecondDim(myVals);
-	  
-	  double [][] newMatrix = new double [myVals.length][secondDimension];
-	  for (int i = 0; i < myVals.length; i++) {
-		  if (myVals[i] != null) {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = subtractFromThis - myVals[i][j];
-		  }
-		  else {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = subtractFromThis;
-		  }
-	  }
-	  return new MatrixAttribute (ifRow, newMatrix); 
-  }
-  
-  public Attribute subtract (int label, double subtractThisOut) {
-	  return subtract (subtractThisOut);
-  }
-  
-  public Attribute subtractR (int label, double subtractFromThis) {
-	  return subtractR (subtractFromThis);
-  }
-  
-  public Attribute subtract (int label, double [] subtractThisOut) {
-	if (ifRow) {  
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-	    if (secondDimension != subtractThisOut.length) {
-	      throw new RuntimeException ("subtracting a vector from a matrix with different row dimensions!");
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = myVals[i][j] - subtractThisOut[j];
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = - subtractThisOut[j];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-	else {
-	    if (myVals.length != subtractThisOut.length)
-		  throw new RuntimeException ("subtracting a vector from a matrix with different row dimensions!");
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-		double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = myVals[i][j] - subtractThisOut[i];
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = - subtractThisOut[i];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	} 
-  }
-  
-  public Attribute subtractR (int label, double [] subtractFromMe) {
-	if (ifRow) {  
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-	    if (secondDimension != subtractFromMe.length) {
-	      throw new RuntimeException ("subtracting a matrix from a vector with different row dimensions!");
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = subtractFromMe[j] - myVals[i][j];
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = subtractFromMe[j];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-	else {
-	    if (myVals.length != subtractFromMe.length)
-		  throw new RuntimeException ("subtracting a matrix from a vector with different row dimensions!");
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-		double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = subtractFromMe[i] - myVals[i][j];
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = subtractFromMe[i];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	} 
-  }
-  
-  public Attribute subtract (boolean otherIfRow, double [][] subtractThisOut) {
-    
-	if (ifRow == otherIfRow) {  		
+		// this tells us we did not see a null anywhere in the input
+		boolean isNull = true;
 
-		if (myVals.length != subtractThisOut.length) {
-		  throw new RuntimeException ("subtracting two matrices with different dimensions!");
+		// read in the first char
+		myArray[0] = (char) startChar;
+
+		while (myArray[0] == '[') {
+			myArray[0] = (char) readFromMe.read();
+			ArrayList<Double> myRow = new ArrayList<>(64);
+			boolean allZeros = true;
+			// keep reading until we find the ']'
+			while (myArray[0] != ']') {
+
+				// this loop reads in a row
+				int i;
+				for (i = 1; myArray[i - 1] != ',' && myArray[i - 1] != ']'; i++) {
+
+					// isNull gets set to false if we find a char that does not match the string 'null'
+					if (i - 1 <= 3 && myArray[i - 1] != nullString[i - 1]) {
+						isNull = false;
+					}
+					myArray[i] = (char) readFromMe.read();
+				}
+
+				// if we got here, we read in a ','
+				if (isNull && i == 5) {
+
+					// this means we got a null!
+					// myDoubles.add (0.0);
+					// myNulls.add (true);
+					// gotANull = true;
+					if (readFromMe.read() != '|') {
+						throw new IOException("Error when I tried to read in a matrix: didn't close with a '|'");
+					}
+					return NullAttribute.NULL;
+
+				} else {
+
+					// we did not get a null!
+					try {
+						Double temp = Double.valueOf(new String(myArray, 0, i - 1));
+						myRow.add(temp);
+						if (temp != 0.0 && allZeros)
+							allZeros = false;
+						// myNulls.add (false);
+					} catch (Exception e) {
+						throw new IOException("Error when I tried to read in a matrix... an entry didn't parse to a double");
+					}
+				}
+
+				// prime the parse of the next item in the row
+				if (myArray[i - 1] != ']')
+					myArray[0] = (char) readFromMe.read();
+				else
+					break;
+			}
+			if (allZeros)
+				myDoubles.add(null);
+			else
+				myDoubles.add(myRow);
+
+			// start to read the next row
+			myArray[0] = (char) readFromMe.read();
 		}
-		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-	    if (secondDimension != calSecondDim (subtractThisOut)) {
-	      throw new RuntimeException ("subtracting two matrices with different dimensions!");
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    
-	    // now add ourselves in
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null && subtractThisOut[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = myVals[i][j] - subtractThisOut[i][j];
-	    	}
-	    	else if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = myVals[i][j];
-	    	}
-	    	else if (subtractThisOut[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = - subtractThisOut[i][j];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-	else {		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-		if (myVals.length != calSecondDim (subtractThisOut) || secondDimension != subtractThisOut.length) {
-			throw new RuntimeException ("subtracting two matrices with different dimensions!");
-		}	
-	    
-		double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++) {
-	    			if (subtractThisOut[j] != null)
-	    				newMatrix[i][j] = myVals[i][j] - subtractThisOut[j][i];
-	    			else
-	    				newMatrix[i][j] = myVals[i][j];
-	    		}
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++) {
-	    			if (subtractThisOut[j] != null)
-	    				newMatrix[i][j] = - subtractThisOut[j][i];
-	    		}
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-  }
-  
-  public Attribute subtractR (boolean otherIfRow, double [][] subtractFromMe) {
-	    
-	if (ifRow == otherIfRow) {  		
 
-		if (myVals.length != subtractFromMe.length) {
-		  throw new RuntimeException ("subtracting two matrices with different dimensions!");
+		// suck in the final '|'
+		if (myArray[0] != '|') {
+			throw new IOException("Error when I tried to read in a matrix: didn't close with a '|'");
 		}
-		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-	    if (secondDimension != calSecondDim (subtractFromMe)) {
-	      throw new RuntimeException ("subtracting two matrices with different dimensions!");
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    
-	    // now add ourselves in
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null && subtractFromMe[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = subtractFromMe[i][j] - myVals[i][j];
-	    	}
-	    	else if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = - myVals[i][j];
-	    	}
-	    	else if (subtractFromMe[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = subtractFromMe[i][j];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (otherIfRow, newMatrix); 
-	}
-	else {		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-		if (myVals.length != calSecondDim (subtractFromMe) || secondDimension != subtractFromMe.length) {
-			throw new RuntimeException ("subtracting two matrices with different dimensions!");
-		}	
-	    
-		double [][] newMatrix  = new double [subtractFromMe.length][myVals.length];
-	    for (int i = 0; i < subtractFromMe.length; i++) {
-	    	if (subtractFromMe[i] != null) {
-	    		for (int j = 0; j < myVals.length; j++) {
-	    			if (myVals[j] != null)
-	    				newMatrix[i][j] = subtractFromMe[i][j] - myVals[j][i];
-	    			else
-	    				newMatrix[i][j] = subtractFromMe[i][j];
-	    		}
-	    	}
-	    	else {
-	    		for (int j = 0; j < myVals.length; j++) {
-	    			if (myVals[j] != null)
-	    				newMatrix[i][j] = - myVals[j][i];
-	    		}
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (otherIfRow, newMatrix); 
-	}
-  }
-  
-  public Attribute multiply (Attribute byMe) {
-     return byMe.multiply (ifRow, myVals);
-  }
-  
-  public Attribute multiply (long byMe) {
 
-    if (byMe == 1)
-      return this;
-    else {
-        if (secondDimension == -1)
-        	secondDimension = calSecondDim(myVals);
-  	    double [][] newMatrix = new double [myVals.length][];
-        if (byMe == 0) {   		  
-    		newMatrix[0] = new double [secondDimension];
-    		for (int i=0; i < secondDimension; i++) {
-    			newMatrix[0][i] = 0;
-    		}
-        }
-        else {       	  
-        	  for (int i = 0; i < myVals.length; i++) {
-        		  if (myVals[i] != null) {
-        			  newMatrix[i] = new double [secondDimension];
-        			  for (int j = 0; j < secondDimension; j++) 
-        				  newMatrix[i][j] = byMe * myVals[i][j];
-        		  }
-        	  }
-        }
-        return new MatrixAttribute (ifRow, newMatrix);
-    }    
-  }
-  
-  public Attribute multiply (double byMe) {
-    if (byMe == 1.0)
-        return this;
-      else {
-          if (secondDimension == -1)
-          	secondDimension = calSecondDim(myVals);
-          double [][] newMatrix = new double [myVals.length][];
-          if (byMe == 0.0) {   		        		
-        	  newMatrix[0] = new double [secondDimension];
-        	  for (int i = 0; i < secondDimension; i++)
-        		  newMatrix[0][i] = 0;
-          }
-          else {       	  
-	      	  for (int i = 0; i < myVals.length; i++) {
-	      		  if (myVals[i] != null) {
-	      			  newMatrix[i] = new double [secondDimension];
-	      			  for (int j = 0; j < secondDimension; j++) 
-	      				  newMatrix[i][j] = byMe * myVals[i][j];
-	      		  }
-	      	  }
-          }
-          return new MatrixAttribute (ifRow, newMatrix);
-      }
-  }
-  
-  // TODO
-  public Attribute multiply (long [] byMe) {
-	  
-	  /*
-    
-    if (byMe.length != myVals.length) {
-      throw new RuntimeException ("adding an array of values with the wrong number of possible worlds");
-    }
-    
-    // create the new array
-    double [] newArray  = new double [myVals.length];
-    
-    // put the stuff to add in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = myVals[i] * byMe[i];
-    }
-    
-    // and get outta here!
-    return new DoubleArrayAttribute (newArray);
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute multiply (double [] byMe) {
-	  
-	  /*
-    
-    if (byMe.length != myVals.length) {
-      throw new RuntimeException ("adding an array of values with the wrong number of possible worlds");
-    }
-    
-    // create the new array
-    double [] newArray  = new double [myVals.length];
-    
-    // put the stuff to add in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = myVals[i] * byMe[i];
-    }
-    
-    // and get outta here!
-    return new DoubleArrayAttribute (newArray);
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute multiply (int label, double byMe) {
-	return multiply (byMe);
-  }
-  
-  public Attribute multiply (int label, double [] byMe) {
-	if (ifRow) {  
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-	    if (secondDimension != byMe.length) {
-	      throw new RuntimeException ("multiplying a vector and a matrix with different row dimensions!");
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][];
-	    
-	    // now add ourselves in
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		newMatrix[i] = new double [secondDimension];
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = byMe[j] * myVals[i][j];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-	else {
-	    if (myVals.length != byMe.length)
-		  throw new RuntimeException ("multiplying a vector and a matrix with different row dimensions!");
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-		double [][] newMatrix  = new double [myVals.length][];
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		newMatrix[i] = new double [secondDimension];
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = byMe[i] * myVals[i][j];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-  }
-  
-  public Attribute multiply (boolean otherIfRow, double [][] byMe) {
-    
-	if (ifRow == otherIfRow) {  		
-
-		if (myVals.length != byMe.length) {
-		  throw new RuntimeException ("multiplying two matrices with different dimensions!");
+		// at this point we've read the entire matrix, so make an attribute out of it
+		double[][] myDoubleMatrix = new double[myDoubles.size()][];
+		for (int i = 0; i < myDoubles.size(); i++) {
+			if (myDoubles.get(i) != null) {
+				myDoubleMatrix[i] = new double[myDoubles.get(i).size()];
+				for (int j = 0; j < myDoubles.get(i).size(); j++) {
+					myDoubleMatrix[i][j] = myDoubles.get(i).get(j);
+				}
+			}
 		}
-		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-	    if (secondDimension != calSecondDim (byMe)) {
-	      throw new RuntimeException ("multiplying two matrices with different dimensions!");
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][];
-	    
-	    // now add ourselves in
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null && byMe[i] != null) {
-	    		newMatrix[i] = new double [secondDimension];
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = myVals[i][j] * byMe[i][j];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
+
+		return new MatrixAttribute(true, myDoubleMatrix);
 	}
-	else {		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-		if (myVals.length != calSecondDim (byMe) || secondDimension != byMe.length) {
-			throw new RuntimeException ("multiplying two matrices with different dimensions!");
-		}	
-	    
-		double [][] newMatrix  = new double [myVals.length][];
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		newMatrix[i] = new double [secondDimension];
-	    		for (int j = 0; j < secondDimension; j++) {
-	    			if (byMe[j] != null)
-	    				newMatrix[i][j] = myVals[i][j] * byMe[j][i];
-	    		}
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-  }
-  
-  public Attribute divide (Attribute byMe) {
-    return byMe.divideR (ifRow, myVals);
-  }
-  
-  public Attribute divide (long byMe) {
 
-    if (byMe == 1)
-      return this;
 
-    if (secondDimension == -1)
-    	secondDimension = calSecondDim(myVals);
-	  
-	  double [][] newMatrix = new double [myVals.length][];
-	  for (int i = 0; i < myVals.length; i++) {
-		  if (myVals[i] != null) {
-			  newMatrix[i] = new double [secondDimension];		  
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = myVals[i][j] / byMe;
-		  }
-	  }
-	  return new MatrixAttribute (ifRow, newMatrix);
-  }
-  
-  public Attribute divideR (long divideMe) {
+	/**
+	 * The matrix written in text will always be row-based
+	 * example: [1, 2, 3][0, 0, 0][4, 5, 6] |
+	 *
+	 * @param writeToMe the buffer where we write the matrix in serialized form
+	 */
+	public void writeSelfToTextStream(BufferedWriter writeToMe) throws IOException {
 
-    if (secondDimension == -1)
-    	secondDimension = calSecondDim(myVals);
-	  
-	  double [][] newMatrix = new double [myVals.length][secondDimension];
-	  for (int i = 0; i < myVals.length; i++) {
-		  if (myVals[i] != null) {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = divideMe / myVals[i][j];
-		  }
-		  else {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = divideMe / 0.0;
-		  }
-	  }
-	  return new MatrixAttribute (ifRow, newMatrix);
-  }
-  
-  // TODO
-  public Attribute divide (long [] byMe) {
-	  
-	  /*
-    
-    if (byMe.length != myVals.length) {
-      throw new RuntimeException ("subtracting an array of values with the wrong number of possible worlds");
-    }
-    
-    // create the new array
-    double [] newArray  = new double [myVals.length];
-    
-    // put the stuff to add in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = myVals[i] / byMe[i];
-    }
-    
-    // and get outta here!
-    return new DoubleArrayAttribute (newArray);
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute divideR (long [] divideMe) {
-	  
-	  /*
-    
-    if (divideMe.length != myVals.length) {
-      throw new RuntimeException ("subtracting an array of values with the wrong number of possible worlds");
-    }
-    
-    // create the new array
-    double [] newArray  = new double [myVals.length];
-    
-    // put the stuff to add in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = divideMe[i] / myVals[i];
-    }
-    
-    // and get outta here!
-    return new DoubleArrayAttribute (newArray);
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute divide (double [] byMe) {
-	  
-	  /*
-    
-    if (byMe.length != myVals.length) {
-      throw new RuntimeException ("subtracting an array of values with the wrong number of possible worlds");
-    }
-    
-    double [] newArray  = new double [myVals.length];
-    
-    // now add ourselves in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = myVals[i]/ byMe[i];
-    }
-    
-    // and get outta here!
-    return new DoubleArrayAttribute (newArray); 
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute divideR (double [] divideMe) {
-	  
-	  /*
-    
-    if (divideMe.length != myVals.length) {
-      throw new RuntimeException ("subtracting an array of values with the wrong number of possible worlds");
-    }
-    
-    double [] newArray  = new double [myVals.length];
-    
-    // now add ourselves in
-    for (int i = 0; i < myVals.length; i++) {
-      newArray[i] = divideMe[i] / myVals[i];
-    }
-    
-    // and get outta here!
-    return new DoubleArrayAttribute (newArray); 
-    */
-	throw new RuntimeException ("This method is not defined!");
-  }
-  
-  public Attribute divide (double byMe) {
+		// grab the sizes from the matrix header
+		long size1 = matrix.getSize1();
+		long size2 = matrix.getSize2();
 
-    if (byMe == 1.0)
-      return this;
+		// grab the header size
+		long headerSize = Matrix.getMatrixHeaderSize();
 
-    if (secondDimension == -1)
-    	secondDimension = calSecondDim(myVals);
-	  
-	  double [][] newMatrix = new double [myVals.length][];
-	  for (int i = 0; i < myVals.length; i++) {
-		  if (myVals[i] != null) {
-			  newMatrix[i] = new double [secondDimension];		  
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = myVals[i][j] / byMe;
-		  }
-	  }
-	  return new MatrixAttribute (ifRow, newMatrix); 
-  }
-  
-  public Attribute divideR (double divideMe) {
-    if (secondDimension == -1)
-    	secondDimension = calSecondDim(myVals);
-	  
-	  double [][] newMatrix = new double [myVals.length][secondDimension];
-	  for (int i = 0; i < myVals.length; i++) {
-		  if (myVals[i] != null) {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = divideMe / myVals[i][j];
-		  }
-		  else {
-			  for (int j = 0; j < secondDimension; j++) 
-				  newMatrix[i][j] = divideMe / 0.0;
-		  }
-	  }
-	  return new MatrixAttribute (ifRow, newMatrix); 
-  }
-  
-  public Attribute divide (int label, double byMe) {
-	  if (byMe == 1.0)
-	      return this;
-	  
-	  return divide (byMe);
-  }
-  
-  public Attribute divideR (int label, double divideMe) {
-	  return divideR (divideMe);
-  }
-  
-  public Attribute divide (int label, double [] byMe) {
-	if (ifRow) {  
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-	    if (secondDimension != byMe.length) {
-	      throw new RuntimeException ("dividing a matrix by a vector with different row dimensions!");
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    
-	    // now add ourselves in
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = myVals[i][j] / byMe[j];
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = 0.0 / byMe[j];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-	else {
-	    if (myVals.length != byMe.length)
-		  throw new RuntimeException ("dividing a matrix by a vector with different row dimensions!");
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-		double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = myVals[i][j] / byMe[i];
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = 0.0 / byMe[i];
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}  
-  }
-  
-  public Attribute divideR (int label, double [] divideMe) {
-	if (ifRow) {  
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-	    if (secondDimension != divideMe.length) {
-	      throw new RuntimeException ("dividing a vector by a matrix with different row dimensions!");
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = divideMe[j] / myVals[i][j];
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = divideMe[j] / 0.0;
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-	else {
-	    if (myVals.length != divideMe.length)
-		  throw new RuntimeException ("dividing a vector by a matrix with different row dimensions!");
-		if (secondDimension == -1)
-			secondDimension = calSecondDim(myVals);
-		
-		double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = divideMe[i] / myVals[i][j];
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = divideMe[i] / 0.0;
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	} 
-  }
-  
-  public Attribute divide (boolean otherIfRow, double [][] byMe) {
-    
-	if (ifRow == otherIfRow) {  		
+		// grab the address from the matrix
+		long data = matrix.getAddress();
 
-		if (myVals.length != byMe.length) {
-		  throw new RuntimeException ("division between two matrices with different dimensions!");
+		// depends on the value of ifRow
+		if (matrix.getIfRow()) {
+			for (int i = 0; i < size1; i++) {
+				writeToMe.write("[");
+
+				// write out the values to the
+				for (int j = 0; j < size2; j++) {
+					String temp = Double.toString(Matrix.unsafe.getDouble(data + headerSize + (i * size2 + j) * Double.SIZE));
+					writeToMe.write(temp, 0, temp.length());
+					if (j < size2 - 1)
+						writeToMe.write(",");
+				}
+
+				writeToMe.write("]");
+			}
+		} else {
+			for (int j = 0; j < size2; j++) {
+				writeToMe.write("[");
+
+				for (int i = 0; i < size1; i++) {
+					String temp = Double.toString(Matrix.unsafe.getDouble(data + headerSize + (i * size1 + j) * Double.SIZE));
+					writeToMe.write(temp, 0, temp.length());
+					if (i < size1 - 1)
+						writeToMe.write(",");
+				}
+
+				writeToMe.write("]");
+			}
 		}
-		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-	    if (secondDimension != calSecondDim (byMe)) {
-	      throw new RuntimeException ("division between two matrices with different dimensions!");
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    
-	    // now add ourselves in
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null && byMe[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = myVals[i][j] / byMe[i][j];
-	    	}
-	    	else if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = myVals[i][j] / 0.0;
-	    	}
-	    	else if (byMe[i] == null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = 0.0 / 0.0;
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
+		writeToMe.write("|");
 	}
-	else {		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-		if (myVals.length != calSecondDim (byMe) || secondDimension != byMe.length) {
-			throw new RuntimeException ("division between two matrices with different dimensions!");
-		}	
-	    
-		double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++) {
-	    			if (byMe[j] != null)
-	    				newMatrix[i][j] = myVals[i][j] / byMe[j][i];
-	    			else
-	    				newMatrix[i][j] = myVals[i][j] / 0.0;
-	    		}
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++) {
-	    			if (byMe[j] == null)
-	    				newMatrix[i][j] = 0.0 / 0.0;
-	    		}
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (ifRow, newMatrix); 
-	}
-  }
-  
-  public Attribute divideR (boolean otherIfRow, double [][] divideMe) {
-	    
-	if (ifRow == otherIfRow) {  		
 
-		if (myVals.length != divideMe.length) {
-		  throw new RuntimeException ("division between two matrices with different dimensions!");
+	/**
+	 * if the value in theseAreNull[0] is null, we regard the whole matrix
+	 * as null otherwise we write the whole thing to string
+	 *
+	 * @param theseAreNull a bit string whose only value [0] is important
+	 * @param writeToMe    the buffer we are writing text
+	 * @throws IOException if something happens during writing...
+	 */
+	public void writeSelfToTextStream(Bitstring theseAreNull, BufferedWriter writeToMe) throws IOException {
+
+		// if the value in theseAreNull[0] is null, we regard the whole matrix as null
+		if (theseAreNull.getValue(0)) {
+			writeToMe.write("[");
+			writeToMe.write("null", 0, 4);
+			writeToMe.write("]");
+		} else {
+			writeSelfToTextStream(writeToMe);
 		}
-		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-	    if (secondDimension != calSecondDim (divideMe)) {
-	      throw new RuntimeException ("division between two matrices with different dimensions!");
-	    }
-	    
-	    double [][] newMatrix  = new double [myVals.length][secondDimension];
-	    
-	    // now add ourselves in
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null && divideMe[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = divideMe[i][j] / myVals[i][j];
-	    	}
-	    	else if (divideMe[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = divideMe[i][j] / 0.0;
-	    	}
-	    	else if (myVals[i] == null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			newMatrix[i][j] = 0.0 / 0.0;
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (otherIfRow, newMatrix); 
 	}
-	else {		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-		if (myVals.length != calSecondDim (divideMe) || secondDimension != divideMe.length) {
-			throw new RuntimeException ("division between two matrices with different dimensions!");
-		}	
-	    
-		double [][] newMatrix  = new double [divideMe.length][myVals.length];
-	    for (int i = 0; i < divideMe.length; i++) {
-	    	if (divideMe[i] != null) {
-	    		for (int j = 0; j < myVals.length; j++) {
-	    			if (myVals[j] != null)
-	    				newMatrix[i][j] = divideMe[i][j] / myVals[j][i];
-	    			else
-	    				newMatrix[i][j] = divideMe[i][j] / 0.0;
-	    		}
-	    	}
-	    	else {
-	    		for (int j = 0; j < myVals.length; j++) {
-	    			if (myVals[j] == null)
-	    				newMatrix[i][j] = 0.0 / 0.0;
-	    		}
-	    	}
-	    }	    
-	    // and get outta here!
-	    return new MatrixAttribute (otherIfRow, newMatrix); 
-	}
-  }
-  
-  public Bitstring equals (Attribute me) {
-    return me.equals (ifRow, myVals);
-  }
-  
-  public Bitstring equals (long me) {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and a long?");
-  }
-  
-  public Bitstring equals (double me)  {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and a double?");
-  }
-  
-  public Bitstring equals (String me)  {
-    throw new RuntimeException ("Why are you doing an equality check on a matrix and a string?");
-  }
-  
-  public Bitstring equals (long [] me)  {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and an array of long?");
-  }
-  
-  public Bitstring equals (double [] me)  {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and an array of double?");
-  }
-  
-  public Bitstring equals (String [] me)  {
-    throw new RuntimeException ("Why are you doing an equality check on a matrix and an array of string?");
-  }
-  
-  public Bitstring equals (int label, double me)  {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and a scalar?");
-  }
-  
-  public Bitstring equals (int label, double [] me)  {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and a vector?");
-  }
-  
-  public Bitstring equals (boolean otherIfRow, double [][] me)  {
-	 
-	if (ifRow == otherIfRow) {		
 
-		if (myVals.length != me.length) {
-		  throw new RuntimeException ("Equality check on two matrices with different dimensions!");
+	/**
+	 * Returns the hash code
+	 *
+	 * @return the hash
+	 */
+	public long getHashCode() {
+
+		// grab the sizes from the matrix header
+		long size1 = matrix.getSize1();
+		long size2 = matrix.getSize2();
+
+		// grab the header size
+		long headerSize = Matrix.getMatrixHeaderSize();
+
+		// grab the address from the matrix
+		long data = matrix.getAddress();
+
+		// long sum of all values
+		long sum = 0;
+
+		for (int i = 0; i < size1; i++) {
+			// write out the values to the
+			for (int j = 0; j < size2; j++) {
+				sum = (sum + Matrix.unsafe.getLong(data + headerSize + (i * size2 + j) * Double.SIZE)) % Long.MAX_VALUE;
+			}
 		}
-		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-	    if (secondDimension != calSecondDim (me)) {
-	      throw new RuntimeException ("Equality check on two matrices with different dimensions!");
-	    }
-	    
-	    boolean ifEqual = true;
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null && me[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			ifEqual = ifEqual && (myVals[i][j] == me[i][j]);
-	    	}
-	    	else if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			ifEqual = ifEqual && (myVals[i][j] == 0.0);
-	    	}
-	    	else if (me[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			ifEqual = ifEqual && (me[i][j] == 0.0);
-	    	}
-	    }
-	    return BitstringWithSingleValue.trueIf(ifEqual);
-	}
-	
-	else {		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-		if (myVals.length != calSecondDim (me) || secondDimension != me.length) {
-			throw new RuntimeException ("Equality check on two matrices with different dimensions!");
-		}	
-	    
-		boolean ifEqual = true;
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++) {
-	    			if (me[j] != null)
-	    				ifEqual = ifEqual && (myVals[i][j] == me[j][i]);
-	    			else
-	    				ifEqual = ifEqual && (myVals[i][j] == 0.0);
-	    		}
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++) {
-	    			if (me[j] != null)
-	    				ifEqual = ifEqual && (me[j][i] == 0.0);
-	    		}
-	    	}
-	    }	    
-	    // and get outta here!
-	    return BitstringWithSingleValue.trueIf(ifEqual);
-	}
-  }
-  
-  public Bitstring notEqual (Attribute me) {
-    return me.notEqual (ifRow, myVals);
-  }
-  
-  public Bitstring notEqual (long me) {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and a long?");
-  }
-  
-  public Bitstring notEqual (double me)  {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and a double?");
-  }
-  
-  public Bitstring notEqual (String me)  {
-    throw new RuntimeException ("Why are you doing an equality check on a matrix and a string?");
-  }
-  
-  public Bitstring notEqual (long [] me)  {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and an array of long?");
-  }
-  
-  public Bitstring notEqual (double [] me)  {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and an array of double?");
-  }
-  
-  public Bitstring notEqual (String [] me)  {
-    throw new RuntimeException ("Why are you doing an equality check on a matrix and an array of string?");
-  }
-  
-  public Bitstring notEqual (int label, double me)  {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and a scalar?");
-  }
-  
-  public Bitstring notEqual (int label, double [] me)  {
-	throw new RuntimeException ("Why are you doing an equality check on a matrix and a vector?");
-  }
-  
-  public Bitstring notEqual (boolean otherIfRow, double [][] me)  {
- 
-	if (ifRow == otherIfRow) {		
 
-		if (myVals.length != me.length) {
-		  throw new RuntimeException ("Equality check on two matrices with different dimensions!");
+		// convert the long to a byte array
+		ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+		buffer.putLong(sum);
+
+		// calculate the hash
+		return Hash.hashMe(buffer.array());
+	}
+
+	/**
+	 * returns the number of possible worlds (1 for constant attributes)
+	 */
+	public int getSize() {
+		return 1;
+	}
+
+	/**
+	 * the matrix in getValue will always be row-based
+	 *
+	 * @param whichMC MC iteration
+	 * @return the byte array where the first 8 bytes are the address of the header
+	 * and the last byte indicates whether it's a row or column based matrix
+	 */
+	public byte[] getValue(int whichMC) {
+
+		// set the byte buffer to the begining
+		b.position(0);
+
+		// store the address of the matrix header
+		b.putLong(matrix.getAddress());
+
+		// store the information if its a row or column matrix
+		b.put((byte) (matrix.getIfRow() ? 1 : 0));
+
+		return b.array();
+	}
+
+	/**
+	 * returns a binary version of the value associated with this attribute...
+	 * throws an exception if the attribute has a null value in the given MC iteration.
+	 * Throws an exception if the type of the attribute for that particular MC iteration
+	 * is NULL. The version with an AttributeType attribute performs casting.
+	 */
+	public byte[] getValue(int whichMC, AttributeType castTo) {
+		if (castTo.getTypeCode() == getType(whichMC).getTypeCode())
+			return getValue(whichMC);
+
+		else throw new RuntimeException("Invalid cast when writing out value.");
+	}
+
+	public Attribute removeNulls() {
+		return this;
+	}
+
+	public AttributeType getType(int whichMC) {
+		return new AttributeType(new MatrixType());
+	}
+
+	/**
+	 * TODO the method signature needs to be changed for this method
+	 * write the matrix representation to the address output stream
+	 * format:
+	 * struct {
+	 * <p>
+	 * boolean ifRow,
+	 * long size1,
+	 * long size2,
+	 * double address[size1][size2]
+	 * }
+	 * ifRow(boolean), numOfRow/numOfColumn, numOfColumn/numOfRow,
+	 * numOfNonZeroRow/numOfNonZeroColumn, nonZeroRow/nonZeroColumn, address
+	 * e.g., True, 5, 2, for the matrix
+	 * | 0, 0 |
+	 * | 0, 0 |
+	 * | 1, 2 |
+	 * | 0, 0 |
+	 * | 3, 4 |
+	 *
+	 * @param writeToMe the address output stream we write to
+	 * @return the size of the address written to the DataOutputStream
+	 */
+	public int writeSelfToStream(DataOutputStream writeToMe) throws IOException {
+
+		// grab the sizes from the matrix header
+		long size1 = matrix.getSize1();
+		long size2 = matrix.getSize2();
+
+		// grab the header size
+		long headerSize = Matrix.getMatrixHeaderSize();
+
+		// grab the address from the matrix
+		long data = matrix.getAddress();
+
+		// the size of the the outputted address
+		long returnVal = 0;
+
+		// write boolean to the stream
+		writeToMe.writeBoolean(matrix.getIfRow());
+		returnVal += 1;
+
+		// here we assume the matrix has the same number of entries in each row/column
+		writeToMe.writeLong(matrix.getSize1());
+		writeToMe.writeLong(matrix.getSize2());
+		returnVal += 16;
+
+		for (int i = 0; i < size1; i++) {
+			// write out the values to the
+			for (int j = 0; j < size2; j++) {
+				writeToMe.writeDouble(Matrix.unsafe.getDouble(data + headerSize + (i * size2 + j) * Double.BYTES));
+			}
 		}
-		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-	    if (secondDimension != calSecondDim (me)) {
-	      throw new RuntimeException ("Equality check on two matrices with different dimensions!");
-	    }
-	    
-	    boolean notEqual = false;
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null && me[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			notEqual = notEqual || (myVals[i][j] != me[i][j]);
-	    	}
-	    	else if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			notEqual = notEqual || (myVals[i][j] != 0.0);
-	    	}
-	    	else if (me[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++)
-	    			notEqual = notEqual || (me[i][j] != 0.0);
-	    	}
-	    }
-	    return BitstringWithSingleValue.trueIf(notEqual);
+
+		returnVal += Double.SIZE * size1 * size2;
+
+		return (int) returnVal;
 	}
-	
-	else {		
-		if (secondDimension == -1)
-			secondDimension = calSecondDim (myVals);
-		
-		if (myVals.length != calSecondDim (me) || secondDimension != me.length) {
-			throw new RuntimeException ("Equality check on two matrices with different dimensions!");
-		}	
-	    
-		boolean notEqual = false;
-	    for (int i = 0; i < myVals.length; i++) {
-	    	if (myVals[i] != null) {
-	    		for (int j = 0; j < secondDimension; j++) {
-	    			if (me[j] != null)
-	    				notEqual = notEqual || (myVals[i][j] != me[j][i]);
-	    			else
-	    				notEqual = notEqual || (myVals[i][j] != 0.0);
-	    		}
-	    	}
-	    	else {
-	    		for (int j = 0; j < secondDimension; j++) {
-	    			if (me[j] != null)
-	    				notEqual = notEqual || (me[j][i] != 0.0);
-	    		}
-	    	}
-	    }	    
-	    // and get outta here!
-	    return BitstringWithSingleValue.trueIf(notEqual);
+
+	/**
+	 * @param readFromMe input stream from which we read in the matrix
+	 * @return the size of the address we read in
+	 * @throws IOException if something goes wrong an IOException is thrown
+	 */
+	public int readSelfFromStream(DataInputStream readFromMe) throws IOException {
+
+		int returnVal = 0;
+
+		// get if the the matrix is a row matrix
+		boolean ifRow = readFromMe.readBoolean();
+		returnVal += 1;
+
+		// grab the matrix size
+		long size1 = readFromMe.readLong();
+		long size2 = readFromMe.readLong();
+
+		// add 2 * 8 bytes to the output
+        returnVal += 16;
+
+        // grab the header size
+		long headerSize = Matrix.getMatrixHeaderSize();
+
+		// allocate a new matrix
+		matrix = new Matrix(size1, size2, ifRow);
+
+		// the pointer of the new matrix
+		long data = matrix.getAddress();
+
+		for (int i = 0; i < size1; i++) {
+			// write out the values to the
+			for (int j = 0; j < size2; j++) {
+				Matrix.unsafe.putDouble(data + headerSize + (i * size2 + j) * Double.BYTES, readFromMe.readDouble());
+			}
+		}
+
+		returnVal += 8 * size1 * size2;
+
+		return returnVal;
 	}
-  }
-  
-  public Bitstring greaterThan (Attribute me) {
-    return me.lessThan (ifRow, myVals);
-  }
-  
-  public Bitstring greaterThan (long me) {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a long?");
-  }
-  
-  public Bitstring greaterThan (double me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a double?");
-  }
-  
-  public Bitstring greaterThan (String me)  {
-    throw new RuntimeException ("Why are you doing a comparison of a matrix and a string?");
-  }
-  
-  public Bitstring greaterThan (long [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of long?");
-  }
-  
-  public Bitstring greaterThan (double [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of double?");
-  }
-  
-  public Bitstring greaterThan (String [] me)  {
-    throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of string?");
-  }
-  
-  public Bitstring greaterThan (int label, double me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a scalar?");
-  }
-  
-  public Bitstring greaterThan (int label, double [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a vector?");
-  }
-  
-  public Bitstring greaterThan (boolean otherIfRow, double [][] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of tow matrices?");
-  }
-  
-  public Bitstring lessThan (Attribute me) {
-    return me.greaterThan (ifRow, myVals);
-  }
-  
-  public Bitstring lessThan (long me) {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a long?");
-  }
-  
-  public Bitstring lessThan (double me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a double?");
-  }
-  
-  public Bitstring lessThan (String me)  {
-    throw new RuntimeException ("Why are you doing a comparison of a matrix and a string?");
-  }
-  
-  public Bitstring lessThan (long [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of long?");
-  }
-  
-  public Bitstring lessThan (double [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of double?");
-  }
-  
-  public Bitstring lessThan (String [] me)  {
-    throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of string?");
-  }
-  
-  public Bitstring lessThan (int label, double me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a scalar?");
-  }
-  
-  public Bitstring lessThan (int label, double [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a vector?");
-  }
-  
-  public Bitstring lessThan (boolean otherIfRow, double [][] me)  {
-	throw new RuntimeException ("Why are you doing a comparison between two matrices?");
-  }
-  
-  public Bitstring greaterThanOrEqual (Attribute me) {
-    return me.lessThanOrEqual (ifRow, myVals);
-  }
-  
-  public Bitstring greaterThanOrEqual (long me) {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a long?");
-  }
-  
-  public Bitstring greaterThanOrEqual (double me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a double?");
-  }
-  
-  public Bitstring greaterThanOrEqual (String me)  {
-    throw new RuntimeException ("Why are you doing a comparison of a matrix and a string?");
-  }
-  
-  public Bitstring greaterThanOrEqual (long [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of long?");
-  }
-  
-  public Bitstring greaterThanOrEqual (double [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of double?");
-  }
-  
-  public Bitstring greaterThanOrEqual (String [] me)  {
-    throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of string?");
-  }
-  
-  public Bitstring greaterThanOrEqual (int label, double me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a scalar?");
-  }
-  
-  public Bitstring greaterThanOrEqual (int label, double [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a vector?");
-  }
-  
-  public Bitstring greaterThanOrEqual (boolean otehrIfRow, double [][] me)  {
-	throw new RuntimeException ("Why are you doing a comparison between two matrices?");
-  }
-  
-  public Bitstring lessThanOrEqual (Attribute me) {
-    return me.greaterThanOrEqual (ifRow, myVals);
-  }
-  
-  public Bitstring lessThanOrEqual (long me) {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a long?");
-  }
-  
-  public Bitstring lessThanOrEqual (double me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a double?");
-  }
-  
-  public Bitstring lessThanOrEqual (String me)  {
-    throw new RuntimeException ("Why are you doing a comparison of a matrix and a string?");
-  }
-  
-  public Bitstring lessThanOrEqual (long [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of long?");
-  }
-  
-  public Bitstring lessThanOrEqual (double [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of double?");
-  }
-  
-  public Bitstring lessThanOrEqual (String [] me)  {
-    throw new RuntimeException ("Why are you doing a comparison of a matrix and an array of string?");
-  }
-  
-  public Bitstring lessThanOrEqual (int label, double me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a scalar?");
-  }
-  
-  public Bitstring lessThanOrEqual (int label, double [] me)  {
-	throw new RuntimeException ("Why are you doing a comparison of a matrix and a vector?");
-  }
-  
-  public Bitstring lessThanOrEqual (boolean otherIfRow, double [][] me)  {
-	throw new RuntimeException ("Why are you doing a comparison between two matrices?");
-  }
-  
-  public void injectSelf(Function f) {
-    f.inject(myVals, ifRow);
-  }  
 
-  public boolean allAreEqual() {
-	  return true;
-  }
+	private void writeObject(ObjectOutputStream stream) throws IOException {
 
-  // we will always print the matrix in row-based manner
-  // example 
-  public String print(int maxLen) {
-      String ret = "";
-      
-	  if (secondDimension == -1)
-		  secondDimension = calSecondDim(myVals);
-      
-	  if (ifRow) {
-		  for (int i = 0; i < myVals.length; i++) {			  
-			  ret += "[";
-			  if (myVals[i] != null) {
-				  for (int j = 0; j < secondDimension; j++) {
-					  ret += String.format("%.2f", myVals[i][j]);
-					  if (ret.length() > maxLen && maxLen > 4) {
-					      return ret.substring(0, maxLen-4) + "...";
-					  }
-		    	      if(j < secondDimension - 1)
-		    	    	  ret += ", ";
-				  }
-			  }
-			  else {
-				  for (int j = 0; j < secondDimension; j++) {
-					  ret += String.format("%.2f", 0.0);
-					  if (ret.length() > maxLen && maxLen > 4) {
-					      return ret.substring(0, maxLen-4) + "...";
-					  }
-		    	      if(j < secondDimension - 1)
-		    	    	  ret += ", ";
-				  }
-			  }
-			  ret += "]\n";
-		  }
-	  }
-	  else {
-		  for (int j = 0; j < secondDimension; j++) {
-			  ret += "[";
-			  for (int i = 0; i < myVals.length; i++) {
-				  if (myVals[i] != null) {
-					  ret += String.format("%.2f", myVals[i][j]);
-					  if (ret.length() > maxLen && maxLen > 4) {
-					      return ret.substring(0, maxLen-4) + "...";
-					  }
-		    	      if(i < myVals.length - 1)
-		    	    	  ret += ", ";
-				  }
-				  else {
-					  ret += String.format("%.2f", 0.0);
-					  if (ret.length() > maxLen && maxLen > 4) {
-					      return ret.substring(0, maxLen-4) + "...";
-					  }
-		    	      if(i < myVals.length - 1)
-		    	    	  ret += ", ";
-				  }
-			  }
-			  ret += "]\n";
-		  }
-	  }
-	  
-	  return ret;
-   }
+		// get the sizes of the matrix
+		long size1 = matrix.getSize1();
+		long size2 = matrix.getSize2();
 
-  public String print(int maxLen, Bitstring theseAreNull) {
-      if (theseAreNull.getValue(0))
-    	  return "null";
-      else
-    	  return print(maxLen);
-  }
+		// grab the indicator if the matrix is a row matrix
+		boolean ifRow = matrix.getIfRow();
 
-  static double counter = 0.01;
-  public Attribute getSingleton() {
-        double [][] data = new double [1][1];
-        data[0][0] = counter;
-        counter += 0.01;
-        return new MatrixAttribute (true, data);          
-  }
+		// write header
+		stream.writeLong(size1);
+		stream.writeLong(size2);
+		stream.writeBoolean(ifRow);
+
+		// write data
+		for(long i = 0; i < size1; ++i) {
+			for(long j = 0; j < size2; ++j) {
+				stream.writeDouble(Matrix.unsafe.getDouble(matrix.getAddress() + Matrix.getMatrixHeaderSize() + (i * size2 + j) * Double.SIZE));
+			}
+		}
+	}
+
+	private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
+
+		// get the sizes of the matrix
+		long size1 = stream.readLong();
+		long size2 = stream.readLong();
+
+		// grab ifRow
+		boolean ifRow = stream.readBoolean();
+
+		// allocate a new matrix
+		matrix = new Matrix(size1, size2, ifRow);
+
+		// the pointer of the new matrix
+		long data = matrix.getAddress();
+
+		for (int i = 0; i < size1; i++) {
+			// write out the values to the
+			for (int j = 0; j < size2; j++) {
+				Matrix.unsafe.putDouble(data + Matrix.getMatrixHeaderSize() + (i * size2 + j) * Double.SIZE, stream.readDouble());
+			}
+		}
+	}
+
+	/**
+	 * splits an attribute into a map between constant attributes and their
+	 * corresponding Bitstring
+	 */
+	public HashMap<Attribute, Bitstring> split() {
+		HashMap<Attribute, Bitstring> splits = new HashMap<>();
+		splits.put(new MatrixAttribute(matrix), BitstringWithSingleValue.trueIf(true));
+		return splits;
+	}
+
+	/**
+	 * TODO fix this in the AggregatorMatrix
+	 */
+	protected Matrix getVal() {
+		return matrix;
+	}
+
+	/**
+	 * Returns true if the matrix attribute is a row based matrix false otherwise
+	 *
+	 * @return the boolean value
+	 */
+	protected boolean getIfRow() {
+		return matrix.getIfRow();
+	}
+
+	/**
+	 * marks the matrix as a row or column matrix
+	 *
+	 * @param ifr true if the matrix attribute is a row based matrix false otherwise
+	 */
+	protected void setIfRow(boolean ifr) {
+		matrix.setIfRow(ifr);
+	}
+
+	public Attribute add(Attribute me) {
+		return me.addR(matrix);
+	}
+
+	public Attribute add(long addThisIn) {
+		return add((double)addThisIn);
+	}
+
+	public Attribute addR(long addThisIn) {
+		return add(addThisIn);
+	}
+
+	public Attribute add(long[] addThisIn) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute addR(long[] addThisIn) {
+		return add(addThisIn);
+	}
+
+	public Attribute add(String[] addThisIn) {
+		throw new RuntimeException("You can't add a matrix and an array of string.");
+	}
+
+	public Attribute addR(String[] addThisIn) {
+		throw new RuntimeException("You can't add a matrix and an array of string.");
+	}
+
+	public Attribute add(String addThisIn) {
+		throw new RuntimeException("You can't add a matrix and a string.");
+	}
+
+	public Attribute addR(String addThisIn) {
+		throw new RuntimeException("You can't add a matrix and a string.");
+	}
+
+	public Attribute add(double[] addThisIn) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute addR(double[] addThisIn) {
+		return add(addThisIn);
+	}
+
+	public Attribute add(double addThisIn) {
+
+		// if we are adding a zero there is no need to do anything...
+		if(addThisIn == 0) {
+			return this;
+		}
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add double in native
+		Matrix.nativeAddDouble(matrix.getAddress(), 1.0, addThisIn, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute addR(double addThisIn) {
+		return add(addThisIn);
+	}
+
+	public Attribute add(int label, double addThisIn) {
+		return add(addThisIn);
+	}
+
+	public Attribute addR(int label, double addThisIn) {
+		return add(addThisIn);
+	}
+
+	public Attribute add(int label, double[] addThisIn) {
+
+		// add the vector
+		matrix.checkDimensions(addThisIn);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add double in native
+		Matrix.nativeAddVector(matrix.getAddress(), matrix.getIfRow(), 1.0, addThisIn, 1.0, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute addR(int label, double[] addThisIn) {
+		return add(addThisIn);
+	}
+
+	// vector + matrix will be always row-based addition
+	public Attribute add(Matrix me) {
+
+		// check if we can perform this operation throw runtime exception otherwise
+		matrix.checkDimensions(me);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add matrix in native
+		Matrix.nativeAddMatrix(matrix.getAddress(), matrix.getIfRow(), 1.0, me.getAddress(), me.getIfRow(), 1.0, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	// The value of ifRow for the result matrix will depend on the value of the ifRow of
+	// the frist matrix in addition
+	public Attribute addR(Matrix me) {
+		return add(me);
+	}
+
+	public Attribute subtract(Attribute me) {
+		return me.subtractR(matrix);
+	}
+
+	public Attribute subtract(long subtractThisOut) {
+		return subtract((double)subtractThisOut);
+	}
+
+	public Attribute subtractR(long subtractFromMe) {
+		return subtractR((double) subtractFromMe);
+	}
+
+	public Attribute subtract(long[] subtractMeOut) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute subtractR(long[] subtractFromMe) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute subtract(double[] subtractThisOut) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute subtractR(double[] subtractFromMe) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute subtract(double subtractThisOut) {
+
+		// if we are adding a zero there is no need to do anything...
+		if(subtractThisOut == 0) {
+			return this;
+		}
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add double in native
+		Matrix.nativeAddDouble(matrix.getAddress(), 1.0, -subtractThisOut, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute subtractR(double subtractFromThis) {
+
+		// if we are adding a zero there is no need to do anything...
+		if(subtractFromThis == 0) {
+			return this;
+		}
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add double in native
+		Matrix.nativeAddDouble(matrix.getAddress(), -1.0, subtractFromThis, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute subtract(int label, double subtractThisOut) {
+		return subtract(subtractThisOut);
+	}
+
+	public Attribute subtractR(int label, double subtractFromThis) {
+		return subtractR(subtractFromThis);
+	}
+
+	public Attribute subtract(int label, double[] subtractThisOut) {
+		// add the vector
+		matrix.checkDimensions(subtractThisOut);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add double in native
+		Matrix.nativeAddVector(matrix.getAddress(), matrix.getIfRow(), -1.0, subtractThisOut, 1.0, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute subtractR(int label, double[] subtractFromMe) {
+		// add the vector
+		matrix.checkDimensions(subtractFromMe);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add double in native
+		Matrix.nativeAddVector(matrix.getAddress(), matrix.getIfRow(), 1.0, subtractFromMe, -1.0, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute subtract(Matrix me) {
+
+		// check if we can perform this operation throw runtime exception otherwise
+		matrix.checkDimensions(me);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add matrix in native
+		Matrix.nativeAddMatrix(matrix.getAddress(), matrix.getIfRow(), 1.0, me.getAddress(), me.getIfRow(), -1.0, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute subtractR(Matrix me) {
+		// check if we can perform this operation throw runtime exception otherwise
+		matrix.checkDimensions(me);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add matrix in native
+		Matrix.nativeAddMatrix(matrix.getAddress(), matrix.getIfRow(), -1.0, me.getAddress(), me.getIfRow(), 1.0, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute multiply(Attribute byMe) {
+		return byMe.multiply(matrix);
+	}
+
+	public Attribute multiply(long byMe) {
+		return multiply((double)byMe);
+	}
+
+	public Attribute multiply(double byMe) {
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add double in native
+		Matrix.nativeMultiplyDouble(matrix.getAddress(), byMe, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute multiply(long[] byMe) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute multiply(double[] byMe) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute multiply(int label, double byMe) {
+		return multiply(byMe);
+	}
+
+	public Attribute multiply(int label, double[] byMe) {
+		// check if we can perform this operation throw runtime exception otherwise
+		matrix.checkDimensions(byMe);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// multiply matrix in native
+		Matrix.nativeMultiplyVector(byMe, matrix.getAddress(), matrix.getIfRow(), m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute multiply(Matrix me) {
+		// check if we can perform this operation throw runtime exception otherwise
+		matrix.checkDimensions(me);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add matrix in native
+		Matrix.nativeMultiplyMatrix(matrix.getAddress(), matrix.getIfRow(), me.getAddress(), me.getIfRow(), m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute divide(Attribute byMe) {
+		return byMe.divideR(matrix);
+	}
+
+	public Attribute divide(long byMe) {
+		return divide((double)byMe);
+	}
+
+	public Attribute divideR(long divideMe) {
+		return divideR((double)divideMe);
+	}
+
+	public Attribute divide(long[] byMe) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute divideR(long[] divideMe) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute divide(double[] byMe) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute divideR(double[] divideMe) {
+		throw new RuntimeException("This method is not defined!");
+	}
+
+	public Attribute divide(double byMe) {
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add double in native
+		Matrix.nativeDivideMatrixDouble(matrix.getAddress(), byMe, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute divideR(double divideMe) {
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add double in native
+		Matrix.nativeDivideDoubleMatrix(divideMe, matrix.getAddress(), m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute divide(int label, double byMe) {
+		return divide(byMe);
+	}
+
+	public Attribute divideR(int label, double divideMe) {
+		return divideR(divideMe);
+	}
+
+	public Attribute divide(int label, double[] byMe) {
+		// check if we can perform this operation throw runtime exception otherwise
+		matrix.checkDimensions(byMe);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// multiply matrix in native
+		Matrix.nativeDivideMatrixVector(matrix.getAddress(), matrix.getIfRow(), byMe, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute divideR(int label, double[] divideMe) {
+		// check if we can perform this operation throw runtime exception otherwise
+		matrix.checkDimensions(divideMe);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// multiply matrix in native
+		Matrix.nativeDivideVectorMatrix(matrix.getAddress(), matrix.getIfRow(), divideMe, m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute divide(Matrix me) {
+
+		// check if we can perform this operation throw runtime exception otherwise
+		matrix.checkDimensions(me);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add double in native
+		Matrix.nativeDivideMatrixMatrix(matrix.getAddress(), matrix.getIfRow(), me.getAddress(), me.getIfRow(), m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Attribute divideR(Matrix me) {
+
+		// check if we can perform this operation throw runtime exception otherwise
+		matrix.checkDimensions(me);
+
+		// allocate matrix
+		Matrix m = new Matrix(matrix.getSize1(), matrix.getSize2(), matrix.getIfRow());
+
+		// add double in native
+		Matrix.nativeDivideMatrixMatrix(me.getAddress(), me.getIfRow(), matrix.getAddress(), matrix.getIfRow(), m.getAddress());
+
+		// return the matrix attribute
+		return new MatrixAttribute(m);
+	}
+
+	public Bitstring equals(Attribute me) {
+		return me.equals(matrix);
+	}
+
+	public Bitstring equals(long me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and a long?");
+	}
+
+	public Bitstring equals(double me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and a double?");
+	}
+
+	public Bitstring equals(String me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and a string?");
+	}
+
+	public Bitstring equals(long[] me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and an array of long?");
+	}
+
+	public Bitstring equals(double[] me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and an array of double?");
+	}
+
+	public Bitstring equals(String[] me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and an array of string?");
+	}
+
+	public Bitstring equals(int label, double me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and a scalar?");
+	}
+
+	public Bitstring equals(int label, double[] me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and a vector?");
+	}
+
+	public Bitstring equals(Matrix me) {
+		return BitstringWithSingleValue.trueIf(Matrix.nativeEqual(matrix.getAddress(), matrix.getIfRow(),
+				me.getAddress(), me.getIfRow()));
+	}
+
+	public Bitstring notEqual(Attribute me) {
+		return me.notEqual(matrix);
+	}
+
+	public Bitstring notEqual(long me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and a long?");
+	}
+
+	public Bitstring notEqual(double me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and a double?");
+	}
+
+	public Bitstring notEqual(String me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and a string?");
+	}
+
+	public Bitstring notEqual(long[] me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and an array of long?");
+	}
+
+	public Bitstring notEqual(double[] me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and an array of double?");
+	}
+
+	public Bitstring notEqual(String[] me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and an array of string?");
+	}
+
+	public Bitstring notEqual(int label, double me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and a scalar?");
+	}
+
+	public Bitstring notEqual(int label, double[] me) {
+		throw new RuntimeException("Why are you doing an equality check on a matrix and a vector?");
+	}
+
+	public Bitstring notEqual(Matrix me) {
+		return BitstringWithSingleValue.trueIf(!Matrix.nativeEqual(matrix.getAddress(), matrix.getIfRow(),
+				me.getAddress(), me.getIfRow()));
+	}
+
+	public Bitstring greaterThan(Attribute me) {
+		return me.lessThan(matrix);
+	}
+
+	public Bitstring greaterThan(long me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a long?");
+	}
+
+	public Bitstring greaterThan(double me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a double?");
+	}
+
+	public Bitstring greaterThan(String me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a string?");
+	}
+
+	public Bitstring greaterThan(long[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of long?");
+	}
+
+	public Bitstring greaterThan(double[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of double?");
+	}
+
+	public Bitstring greaterThan(String[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of string?");
+	}
+
+	public Bitstring greaterThan(int label, double me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a scalar?");
+	}
+
+	public Bitstring greaterThan(int label, double[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a vector?");
+	}
+
+	public Bitstring greaterThan(Matrix me) {
+		throw new RuntimeException("Why are you doing a comparison of tow matrices?");
+	}
+
+	public Bitstring lessThan(Attribute me) {
+		return me.greaterThan(matrix);
+	}
+
+	public Bitstring lessThan(long me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a long?");
+	}
+
+	public Bitstring lessThan(double me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a double?");
+	}
+
+	public Bitstring lessThan(String me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a string?");
+	}
+
+	public Bitstring lessThan(long[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of long?");
+	}
+
+	public Bitstring lessThan(double[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of double?");
+	}
+
+	public Bitstring lessThan(String[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of string?");
+	}
+
+	public Bitstring lessThan(int label, double me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a scalar?");
+	}
+
+	public Bitstring lessThan(int label, double[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a vector?");
+	}
+
+	public Bitstring lessThan(Matrix me) {
+		throw new RuntimeException("Why are you doing a comparison between two matrices?");
+	}
+
+	public Bitstring greaterThanOrEqual(Attribute me) {
+		return me.lessThanOrEqual(matrix);
+	}
+
+	public Bitstring greaterThanOrEqual(long me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a long?");
+	}
+
+	public Bitstring greaterThanOrEqual(double me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a double?");
+	}
+
+	public Bitstring greaterThanOrEqual(String me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a string?");
+	}
+
+	public Bitstring greaterThanOrEqual(long[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of long?");
+	}
+
+	public Bitstring greaterThanOrEqual(double[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of double?");
+	}
+
+	public Bitstring greaterThanOrEqual(String[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of string?");
+	}
+
+	public Bitstring greaterThanOrEqual(int label, double me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a scalar?");
+	}
+
+	public Bitstring greaterThanOrEqual(int label, double[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a vector?");
+	}
+
+	public Bitstring greaterThanOrEqual(Matrix me) {
+		throw new RuntimeException("Why are you doing a comparison between two matrices?");
+	}
+
+	public Bitstring lessThanOrEqual(Attribute me) {
+		return me.greaterThanOrEqual(matrix);
+	}
+
+	public Bitstring lessThanOrEqual(long me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a long?");
+	}
+
+	public Bitstring lessThanOrEqual(double me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a double?");
+	}
+
+	public Bitstring lessThanOrEqual(String me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a string?");
+	}
+
+	public Bitstring lessThanOrEqual(long[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of long?");
+	}
+
+	public Bitstring lessThanOrEqual(double[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of double?");
+	}
+
+	public Bitstring lessThanOrEqual(String[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and an array of string?");
+	}
+
+	public Bitstring lessThanOrEqual(int label, double me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a scalar?");
+	}
+
+	public Bitstring lessThanOrEqual(int label, double[] me) {
+		throw new RuntimeException("Why are you doing a comparison of a matrix and a vector?");
+	}
+
+	public Bitstring lessThanOrEqual(Matrix me) {
+		throw new RuntimeException("Why are you doing a comparison between two matrices?");
+	}
+
+	public void injectSelf(Function f)  {
+		f.inject(matrix);
+	}
+
+	public boolean allAreEqual() {
+		return true;
+	}
+
+	// we will always print the matrix in row-based manner
+	// example
+	public String print(int maxLen) {
+		String ret = "";
+
+		// grab the sizes from the matrix header
+		long size1 = matrix.getSize1();
+		long size2 = matrix.getSize2();
+
+		// grab the header size
+		long headerSize = Matrix.getMatrixHeaderSize();
+
+		// grab the address from the matrix
+		long data = matrix.getAddress();
+
+		// get if row
+		boolean ifRow = matrix.getIfRow();
+
+		if (ifRow) {
+			for (int i = 0; i < size1; i++) {
+				ret += "[";
+
+				for (int j = 0; j < size2; j++) {
+					ret += String.format("%.2f", Matrix.unsafe.getDouble(data + headerSize + (i * size2 + j) * Double.BYTES));
+					if (ret.length() > maxLen && maxLen > 4) {
+						return ret.substring(0, maxLen - 4) + "...";
+					}
+					if (j < size2 - 1)
+						ret += ", ";
+				}
+
+				ret += "]\n";
+			}
+		} else {
+			for (int j = 0; j < size2; j++) {
+				ret += "[";
+				for (int i = 0; i < size1; i++) {
+					ret += String.format("%.2f", Matrix.unsafe.getDouble(data + headerSize + (i * size2 + j) * Double.BYTES));
+					if (ret.length() > maxLen && maxLen > 4) {
+						return ret.substring(0, maxLen - 4) + "...";
+					}
+					if (i < size1 - 1)
+						ret += ", ";
+				}
+				ret += "]\n";
+			}
+		}
+
+		return ret;
+	}
+
+	public String print(int maxLen, Bitstring theseAreNull) {
+		if (theseAreNull.getValue(0))
+			return "null";
+		else
+			return print(maxLen);
+	}
+
+	private static double counter = 0.01;
+
+	public Attribute getSingleton() {
+		double[][] data = new double[1][1];
+		data[0][0] = counter;
+		counter += 0.01;
+		return new MatrixAttribute(true, data);
+	}
 
 }

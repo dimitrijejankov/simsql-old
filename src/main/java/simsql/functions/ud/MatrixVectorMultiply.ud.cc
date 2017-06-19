@@ -5,179 +5,83 @@
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_blas.h>
-#include <math.h>
 
-#include "VGFunction.h"
+#include "UDFunction.h"
 
-/** 
+/**
  * Input record, used by the takeParams() method.
  * Values could be NULL, meaning they were not present in the tuple.
  */
 struct RecordIn {
-  Matrix *value1;
-  Vector *value2;
+  Matrix *m; // the vector in matrix form
+  Vector *v; // the matrix
 };
 
-/**
- * Output record, used by the outputVals() method.
- * If any of the values is NULL, then the user must allocate space for
- * it (the engine will de-allocate). 
- */
-struct RecordOut {
-  Vector *outValue;
-};
-
-int runningError;
-void handler (const char * reason,
-        const char * file,
-        int line,
-        int gsl_errno)
-{
-
-  runningError = 1;
-  fprintf(stderr, "reason: %s\n, file: %s\n, line: %d\n, gsl_errno: %d\n\n", reason, file, line, gsl_errno);
-}
-
-// ----------------------------------------------------------- // 
+// ----------------------------------------------------------- //
 
 /** A pseudo-VG function for inverting a matrix. */
-class MatrixVectorMultiply : public VGFunction {
-
-private:
-
-  // input matrix and vector.
-  gsl_matrix *input1 = NULL;
-  gsl_vector *input2 = NULL;
-
-  bool active;
+class MatrixVectorMultiply : public UDFunction {
 
 public:
 
-  /** Constructor. Use this to declare your RNG and other
-   * important structures.
-   */
-  MatrixVectorMultiply() {
+    /** Constructor. Use this to declare your RNG and other
+    * important structures.
+    */
+    MatrixVectorMultiply() {}
 
-    gsl_set_error_handler(&handler);
+    /** Destructor. Deallocate everything from the constructor. */
+    ~MatrixVectorMultiply() {}
 
-    active = true;
-  }
+    gsl_vector* executeVector(RecordIn* in) {
 
-  /** Destructor. Deallocate everything from the constructor. */
-  ~MatrixVectorMultiply() {
+        // allocate a matrix to output
+        gsl_vector *out = allocateOutputVector(in->m->matrix->size1);
 
-    gsl_matrix_free(input1);
-    gsl_vector_free(input2);
-  }
+        // convert the vector to a gsl_vector
+        gsl_vector vec = in->v->to_gsl_vector();
 
-  /** Initializes the RNG seed for a given call. */
-  void initializeSeed(long seedValue) {
+        // multiply
+        gsl_blas_dgemv(CblasNoTrans, 1.0, in->m->matrix, &vec, 1.0, out);
 
-    // do nothing.
-  }
-
-  /** Finalizes the current trial and prepares the structures for
-   * another fresh call to outputVals(). */
-  void finalizeTrial() {
-
-    // do nothing.
-  }
-
-  /**
-   * Clears the set of parameters for the first call to takeParams.
-   * If possible, uses the default parameter set.
-   */
-  void clearParams() {
-
-    // if input
-    if(input1 != NULL)
-	gsl_matrix_free(input1);
-    input1 = NULL;
-
-    if(input2 != NULL)
-	gsl_vector_free(input2);
-    input2 = NULL;
-  }
-
-  
-  /** 
-   * Passes the parameter values. Might be called several times
-   * for each group. 
-   */ 
-  void takeParams(RecordIn &input) {
-
-    if (input.value1 != NULL) {
-      this->input1 = getMatrix(input.value1);
-    }
-    else
-      printf("we are reading a null matrix!");
-
-    if (input.value2 != NULL) {
-      this->input2 = getVector(input.value2);
-    }
-    else
-      printf("we are reading a null vector!");
-
-    active = true;
-  }
-
-  /** 
-   * Produces the sample values. Returns 1 if there are more
-   * records to be produced for the current sample, 0 otherwise. 
-   */
-  int outputVals(RecordOut &output) { 
-
-    if (!active)
-      return 0;
-
-    runningError = -1;
-
-    gsl_vector* product = gsl_vector_calloc(input1->size1);
-
-    /* if input2 is not an all-0 vector */
-    
-    if (input2->size != 0)
-    /* Compute y = A x */	
-    	gsl_blas_dgemv (CblasNoTrans, 1.0, input1, input2, 0.0, product);
-
-    if (runningError > 0) {
-      gsl_vector_set_zero(product);
+        // return the result
+        return out;
     }
 
-    setVector(product, &output.outValue);
+    /**
+     * Returns the name
+     */
+    std::string getName() {
+        return std::string("matrix_vector_multiply");
+    }
 
-    gsl_vector_free(product);
-    active = false;
+    /**
+     * Returns the output type
+     */
+    std::string getOutputType(){
+        return std::string("vector[a]");
+    }
 
-    return 1;
-  }
+    /**
+     * Returns the input types as strings
+     */
+    std::vector<std::string> getInputTypes() {
 
-  // ----------------------------------------------------------- // 
+        std::vector<std::string> ret;
 
-  /** Schema information methods -- DO NOT MODIFY */
-  VGSchema inputSchema() {
+        ret.push_back("matrix[a][b]");
+        ret.push_back("vector[b]");
 
-    return (VGSchema){2, {"matrix[a][b]", "vector[b]"}, {"value1", "value2"}};
-  }
-
-  VGSchema outputSchema() {
-
-    return (VGSchema){1, {"vector[a]"}, {"outValue"}};
-  }
-
-  const char *getName() {
-    return "MatrixVectorMultiply";
-  }
+        return ret;
+    }
 };
 
-// ----------------------------------------------------------- // 
+// ----------------------------------------------------------- //
 
 /** External creation/destruction methods -- DO NOT MODIFY */
-VGFunction *create() {
+UDFunction *create() {
   return(new MatrixVectorMultiply());
 }
 
-void destroy(VGFunction *vgFunction) {
-  delete (MatrixVectorMultiply *)vgFunction;
+void destroy(UDFunction *udFunction) {
+  delete (MatrixVectorMultiply *)udFunction;
 }
-

@@ -2,44 +2,27 @@ package simsql.functions.ud;
 
 import simsql.runtime.*;
 
-/** A reflected function obtained from a java method.
+/**
+ * A reflected function obtained from a java method.
  *
  * @author Jacob
  */
 
-public class matrix_vector_multiply extends UDFunction { 
+public class matrix_vector_multiply extends UDFunction {
 
-  private static VGFunction udf;
-  private static UDWrapper udw;
+    public matrix_vector_multiply() {
+        super("/simsql/runtime/MatrixVectorMultiply.ud.so");
+    }
 
-  static {
+    public static void main(String[] args) {
 
-    // the corresponding UDF
-    udf = new VGFunction("/simsql/runtime/MatrixVectorMultiply.ud.so");
+        matrix_vector_multiply os = new matrix_vector_multiply();
 
-    // only one UDWrapper related with each UDFunction
-    udw = new UDWrapper(udf);
-  };
+        double[][] mat = new double[][]{{1, 2, 3}, {4, 5, 6}};
+        double[] vec = new double[]{7, 8, 9};
 
-  public matrix_vector_multiply() {
-    super(udf, udw);
-  }
+        Attribute out = os.apply(new MatrixAttribute(mat), new VectorAttribute(vec));
 
-  @Override
-	public String getName() {
-		return "matrix_vector_multiply";
-	}
-
-  public static void main (String[] args) {
-
-    matrix_vector_multiply os = new matrix_vector_multiply();
-
-    double[][] mat = new double[][]{{1, 2, 3}, {4, 5, 6}};
-    double[] vec = new double[]{7, 8, 9};
-
-    Attribute out = os.apply(new MatrixAttribute(mat), new VectorAttribute(vec));
-
-    System.out.println(out.print(200));
-
-  }
+        System.out.println(out.print(200));
+    }
 }

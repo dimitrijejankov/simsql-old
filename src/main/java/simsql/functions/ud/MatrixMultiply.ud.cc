@@ -5,166 +5,80 @@
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_blas.h>
-#include <math.h>
 
-#include "VGFunction.h"
+#include "UDFunction.h"
 
-/** 
+/**
  * Input record, used by the takeParams() method.
  * Values could be NULL, meaning they were not present in the tuple.
  */
 struct RecordIn {
-  Matrix *value1;
-  Matrix *value2;
+  Matrix *v; // the vector in matrix form
+  Matrix *m; // the matrix
 };
 
-/**
- * Output record, used by the outputVals() method.
- * If any of the values is NULL, then the user must allocate space for
- * it (the engine will de-allocate). 
- */
-struct RecordOut {
-  Matrix *outValue;
-};
-
-int runningError;
-void handler (const char * reason,
-        const char * file,
-        int line,
-        int gsl_errno)
-{
-
-  runningError = 1;
-  fprintf(stderr, "reason: %s\n, file: %s\n, line: %d\n, gsl_errno: %d\n\n", reason, file, line, gsl_errno);
-}
-
-// ----------------------------------------------------------- // 
+// ----------------------------------------------------------- //
 
 /** A pseudo-VG function for inverting a matrix. */
-class MatrixMultiply : public VGFunction {
-
-private:
-
-  // input matrix.
-  gsl_matrix *input1;
-  gsl_matrix *input2;
-
-  bool active;
+class MatrixMultiply : public UDFunction {
 
 public:
 
-  /** Constructor. Use this to declare your RNG and other
-   * important structures.
-   */
-  MatrixMultiply() {
+    /** Constructor. Use this to declare your RNG and other
+    * important structures.
+    */
+    MatrixMultiply() {}
 
-    gsl_set_error_handler(&handler);
+    /** Destructor. Deallocate everything from the constructor. */
+    ~MatrixMultiply() {}
 
-    active = true;
-  }
+    gsl_matrix* executeMatrix(RecordIn* in) {
 
-  /** Destructor. Deallocate everything from the constructor. */
-  ~MatrixMultiply() {
+        // allocate a matrix to output
+        gsl_matrix* out = allocateOutputMatrix(in->v->matrix->size1, in->m->matrix->size2);
 
-    gsl_matrix_free(input1);
-    gsl_matrix_free(input2);
-  }
+        // multiply the matrix
+        gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, in->v->matrix, in->m->matrix, 0.0, out);
 
-  /** Initializes the RNG seed for a given call. */
-  void initializeSeed(long seedValue) {
-
-    // do nothing.
-  }
-
-  /** Finalizes the current trial and prepares the structures for
-   * another fresh call to outputVals(). */
-  void finalizeTrial() {
-
-    // do nothing.
-  }
-
-  /**
-   * Clears the set of parameters for the first call to takeParams.
-   * If possible, uses the default parameter set.
-   */
-  void clearParams() {
-
-    // do nothing.
-  }
-
-  
-  /** 
-   * Passes the parameter values. Might be called several times
-   * for each group. 
-   */ 
-  void takeParams(RecordIn &input) {
-
-    if (input.value1 != NULL) {
-      this->input1 = getMatrix(input.value1);
+        // return the result
+        return out;
     }
 
-    if (input.value2 != NULL) {
-      this->input2 = getMatrix(input.value2);
+    /**
+     * Returns the name
+     */
+    std::string getName() {
+        return std::string("matrix_multiply");
     }
 
-    active = true;
-  }
-
-  /** 
-   * Produces the sample values. Returns 1 if there are more
-   * records to be produced for the current sample, 0 otherwise. 
-   */
-  int outputVals(RecordOut &output) { 
-
-    if (!active)
-      return 0;
-
-    runningError = -1;
-
-    gsl_matrix* product = gsl_matrix_calloc(input1->size1, input2->size2);
-
-    /* Compute C = A B */
-
-    gsl_blas_dgemm (CblasNoTrans, CblasNoTrans, 1.0, input1, input2, 0.0, product);
-
-    if (runningError > 0) {
-      gsl_matrix_set_identity(product);
+    /**
+     * Returns the output type
+     */
+    std::string getOutputType(){
+        return std::string("matrix[a][c]");
     }
 
-    setMatrix(product, &output.outValue);
+    /**
+     * Returns the input types as strings
+     */
+    std::vector<std::string> getInputTypes() {
 
-    gsl_matrix_free(product);
-    active = false;
+        std::vector<std::string> ret;
 
-    return 1;
-  }
+        ret.push_back("matrix[a][b]");
+        ret.push_back("matrix[b][c]");
 
-  // ----------------------------------------------------------- // 
-
-  /** Schema information methods -- DO NOT MODIFY */
-  VGSchema inputSchema() {
-
-    return (VGSchema){2, {"matrix[a][b]", "matrix[b][c]"}, {"value1", "value2"}};
-  }
-
-  VGSchema outputSchema() {
-
-    return (VGSchema){1, {"matrix[a][c]"}, {"outValue"}};
-  }
-
-  const char *getName() {
-    return "MatrixMultiply";
-  }
+        return ret;
+    }
 };
 
-// ----------------------------------------------------------- // 
+// ----------------------------------------------------------- //
 
 /** External creation/destruction methods -- DO NOT MODIFY */
-VGFunction *create() {
+UDFunction *create() {
   return(new MatrixMultiply());
 }
 
-void destroy(VGFunction *vgFunction) {
-  delete (MatrixMultiply *)vgFunction;
+void destroy(UDFunction *udFunction) {
+  delete (MatrixMultiply *)udFunction;
 }
-

@@ -37,38 +37,8 @@ public class VGFunction {
   static {
 
     // get the library file
-    String file = extractFile("/simsql/runtime/VGFunction.jni.so");
+    String file = Function.extractFile("/simsql/runtime/VGFunction.jni.so");
     System.load(file);
-  }
-
-  private static String extractFile(String fileName) {
-
-    String longFileName = null;
-    try {
-      File fx = File.createTempFile("simsql_", ".so");
-
-      // NOTE: commented this because Linux tends to crash if one deletes a loaded .so file!
-      // fx.deleteOnExit();
-      longFileName = fx.getAbsolutePath();
-    } catch (Exception e) {
-      e.printStackTrace();
-      longFileName = new File(fileName.replaceAll("/", "_")).getAbsolutePath() + new Random().nextLong();
-    }
-
-    // extract the file to the work directory
-    try {
-      FileOutputStream out = new FileOutputStream(longFileName);
-      InputStream in = VGFunction.class.getResourceAsStream(fileName);
-      while (in.available() > 0) {
-	out.write(in.read());
-      }
-      in.close();
-      out.close();
-    } catch (Exception e) {
-      throw new RuntimeException("Unable to extract file.", e);
-    }       		
-
-    return longFileName;
   }
 
   // pointer to the actual VG function.
@@ -197,7 +167,7 @@ public class VGFunction {
 
   // default constructor
   public VGFunction(String libFile) {
-    String f = extractFile(libFile);
+    String f = Function.extractFile(libFile);
     instancePtr = load(f);
   }
 
