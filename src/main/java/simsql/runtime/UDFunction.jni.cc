@@ -276,6 +276,9 @@ JNIEXPORT jdoubleArray JNICALL Java_simsql_runtime_UDFunction_getVectorResult(JN
     // set the data
     env->SetDoubleArrayRegion(result, 0, v->size, v->data);
 
+    // free the vector memory
+    gsl_vector_free(v);
+
     // free the memory of the record
     freeRecord(inst, inRecord);
 
