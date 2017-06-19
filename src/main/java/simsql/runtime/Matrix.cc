@@ -201,10 +201,6 @@ JNIEXPORT void JNICALL Java_simsql_runtime_Matrix_nativeAddMatrix (JNIEnv *env,
                                                                    jboolean tb,
                                                                    jdouble sb,
                                                                    jlong out){
-
-    // multiplier
-    double multiplier = sa * sb;
-
     // left hand size matrix
     gsl_matrix *lhs = (gsl_matrix*)a;
 
@@ -223,7 +219,7 @@ JNIEXPORT void JNICALL Java_simsql_runtime_Matrix_nativeAddMatrix (JNIEnv *env,
         // go through both matrices
         for (size_t i = 0; i < M; i++) {
           for (size_t j = 0; j < N; j++) {
-            result->data[i * N + j] = lhs->data[i * N + j] * rhs->data[i * N + j] * multiplier;
+            result->data[i * N + j] = sa * lhs->data[i * N + j] + sb * rhs->data[i * N + j];
           }
         }
     }
@@ -231,7 +227,7 @@ JNIEXPORT void JNICALL Java_simsql_runtime_Matrix_nativeAddMatrix (JNIEnv *env,
         // go through both matrices
         for (size_t i = 0; i < M; i++) {
           for (size_t j = 0; j < N; j++) {
-            result->data[i * N + j] = lhs->data[i * N + j] * rhs->data[j * M + i] * multiplier;
+            result->data[i * N + j] = sa * lhs->data[i * N + j] + sb * rhs->data[j * M + i];
           }
         }
     }
@@ -514,7 +510,6 @@ JNIEXPORT jboolean JNICALL Java_simsql_runtime_Matrix_nativeEqual(JNIEnv *env,
                                                                   jboolean ta,
                                                                   jlong b,
                                                                   jboolean tb) {
-
     // left hand size matrix
     gsl_matrix *lhs = (gsl_matrix*)a;
 
