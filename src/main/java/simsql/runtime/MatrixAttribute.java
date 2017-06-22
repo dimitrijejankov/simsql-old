@@ -18,6 +18,8 @@
 
 package simsql.runtime;
 
+import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -452,7 +454,9 @@ public class MatrixAttribute implements Attribute, Serializable {
 		long headerSize = Matrix.getMatrixHeaderSize();
 
 		// allocate a new matrix
-		matrix = new Matrix(size1, size2, ifRow);
+		if (matrix == null || !matrix.reshape(size1, size2)) {
+			matrix = new Matrix(size1, size2, ifRow);
+		}
 
 		// the pointer of the new matrix
 		long data = matrix.getAddress();
