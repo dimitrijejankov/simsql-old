@@ -115,7 +115,7 @@ public:
     // fill the sucker up
     for(int i = 0; i < inputs.back().row_num; i++){
         for(int j = 0; j < inputs.back().col_num; j++) {
-            out.w->value[i * inputs.back().col_num + j] = gsl_rng_uniform(rng);
+            out.w->value[i * inputs.back().col_num + j] = gsl_ran_ugaussian(rng);
         }
     }
 
