@@ -125,7 +125,6 @@ public class MatrixAttribute implements Attribute, Serializable {
 
 		// records the doubles and nulls we've read in
 		ArrayList<ArrayList<Double>> myDoubles = new ArrayList<>(64);
-		// ArrayList <Boolean> myNulls = new ArrayList <Boolean> (64);
 
 		// suck in the '[', but ignore a leading newline character
 		int startChar = readFromMe.read();
@@ -137,6 +136,7 @@ public class MatrixAttribute implements Attribute, Serializable {
 			return null;
 		}
 
+		// check if the matrix begins with a '[' character
 		if (startChar != '[') {
 			throw new IOException("Read in a bad matrix start character when reading a vector; expected '['");
 		}
@@ -150,7 +150,7 @@ public class MatrixAttribute implements Attribute, Serializable {
 		while (myArray[0] == '[') {
 			myArray[0] = (char) readFromMe.read();
 			ArrayList<Double> myRow = new ArrayList<>(64);
-			boolean allZeros = true;
+
 			// keep reading until we find the ']'
 			while (myArray[0] != ']') {
 
@@ -167,25 +167,16 @@ public class MatrixAttribute implements Attribute, Serializable {
 
 				// if we got here, we read in a ','
 				if (isNull && i == 5) {
-
-					// this means we got a null!
-					// myDoubles.add (0.0);
-					// myNulls.add (true);
-					// gotANull = true;
 					if (readFromMe.read() != '|') {
 						throw new IOException("Error when I tried to read in a matrix: didn't close with a '|'");
 					}
 					return NullAttribute.NULL;
-
 				} else {
 
 					// we did not get a null!
 					try {
 						Double temp = Double.valueOf(new String(myArray, 0, i - 1));
 						myRow.add(temp);
-						if (temp != 0.0 && allZeros)
-							allZeros = false;
-						// myNulls.add (false);
 					} catch (Exception e) {
 						throw new IOException("Error when I tried to read in a matrix... an entry didn't parse to a double");
 					}
@@ -197,10 +188,8 @@ public class MatrixAttribute implements Attribute, Serializable {
 				else
 					break;
 			}
-			if (allZeros)
-				myDoubles.add(null);
-			else
-				myDoubles.add(myRow);
+
+			myDoubles.add(myRow);
 
 			// start to read the next row
 			myArray[0] = (char) readFromMe.read();
