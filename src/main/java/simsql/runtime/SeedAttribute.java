@@ -646,6 +646,11 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("Seed types cannot be injected into scalar functions.");
     }
 
+    // injection into a VG function for initialization
+    public void initializeVG(VGFunction f, int numIter) {
+        byte[] someStuff = {(byte)numIter, (byte)(numIter >>> 8), (byte)(numIter >>> 16)};
+        f.initializeSeed(myVal + Hash.hashMe(someStuff));
+    }
 
     public boolean allAreEqual() {
         return true;

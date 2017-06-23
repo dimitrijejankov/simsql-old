@@ -257,7 +257,7 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
         files.addAll(Arrays.asList(getAllFilesInDirectory("simsql/functions/ud", ".class")));
 
         // the scalar functions
-        //files.addAll(Arrays.asList(getAllFilesInDirectory("simsql/functions/scalar", ".class")));
+        files.addAll(Arrays.asList(getAllFilesInDirectory("simsql/functions/scalar", ".class")));
 
         for (File s : files) {
 

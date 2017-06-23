@@ -54,11 +54,11 @@ public class seed extends Function {
 		// add the mac address
 		try {
 	    buildIntoSeed(NetworkInterface.getByInetAddress(InetAddress.getLocalHost()).getHardwareAddress());
-		} catch (Exception e) { }
+		} catch (Exception ignore) { }
 
 		// add the current time
 		buildIntoSeed(Calendar.getInstance().getTime().toString().getBytes());
-	};
+	}
 
 	// simple constructor
 	public seed() {
