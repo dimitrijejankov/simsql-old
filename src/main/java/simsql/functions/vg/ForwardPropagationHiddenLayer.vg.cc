@@ -88,19 +88,19 @@ public:
 
     // weight matrix is provided store it
     if(input.w != NULL) {
-        w = getMatrix(input.w);
+        w = input.w->matrix;
         active--;
     }
 
     // bias matrix is provided store it
     if(input.b != NULL) {
-        b = getMatrix(input.b);
+        b = input.b->matrix;
         active--;
     }
 
     //
     if(input.x != NULL) {
-        x = getMatrix(input.x);
+        x = input.x->matrix;
         active--;
     }
 
@@ -129,6 +129,7 @@ public:
     // set the dimensions
     out.o->numRow = product->size1;
     out.o->numCol = product->size2;
+    out.o->ifRow = true;
     out.o->value = (double*)malloc(sizeof(double) * product->size1 * product->size2);
 
     // add the bias and to ReLU
