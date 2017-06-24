@@ -242,7 +242,7 @@ public class MatrixAttribute implements Attribute, Serializable {
 
 				// write out the values to the
 				for (int j = 0; j < size2; j++) {
-					String temp = Double.toString(Matrix.unsafe.getDouble(data + headerSize + (i * size2 + j) * Double.SIZE));
+					String temp = Double.toString(Matrix.unsafe.getDouble(data + headerSize + (i * size2 + j) * Double.BYTES));
 					writeToMe.write(temp, 0, temp.length());
 					if (j < size2 - 1)
 						writeToMe.write(",");
@@ -255,7 +255,7 @@ public class MatrixAttribute implements Attribute, Serializable {
 				writeToMe.write("[");
 
 				for (int i = 0; i < size1; i++) {
-					String temp = Double.toString(Matrix.unsafe.getDouble(data + headerSize + (i * size1 + j) * Double.SIZE));
+					String temp = Double.toString(Matrix.unsafe.getDouble(data + headerSize + (i * size1 + j) * Double.BYTES));
 					writeToMe.write(temp, 0, temp.length());
 					if (i < size1 - 1)
 						writeToMe.write(",");
@@ -310,7 +310,7 @@ public class MatrixAttribute implements Attribute, Serializable {
 		for (int i = 0; i < size1; i++) {
 			// write out the values to the
 			for (int j = 0; j < size2; j++) {
-				sum = (sum + Matrix.unsafe.getLong(data + headerSize + (i * size2 + j) * Double.SIZE)) % Long.MAX_VALUE;
+				sum = (sum + Matrix.unsafe.getLong(data + headerSize + (i * size2 + j) * Double.BYTES)) % Long.MAX_VALUE;
 			}
 		}
 
@@ -490,7 +490,7 @@ public class MatrixAttribute implements Attribute, Serializable {
 		// write data
 		for(long i = 0; i < size1; ++i) {
 			for(long j = 0; j < size2; ++j) {
-				stream.writeDouble(Matrix.unsafe.getDouble(matrix.getAddress() + Matrix.getMatrixHeaderSize() + (i * size2 + j) * Double.SIZE));
+				stream.writeDouble(Matrix.unsafe.getDouble(matrix.getAddress() + Matrix.getMatrixHeaderSize() + (i * size2 + j) * Double.BYTES));
 			}
 		}
 	}
@@ -513,7 +513,7 @@ public class MatrixAttribute implements Attribute, Serializable {
 		for (int i = 0; i < size1; i++) {
 			// write out the values to the
 			for (int j = 0; j < size2; j++) {
-				Matrix.unsafe.putDouble(data + Matrix.getMatrixHeaderSize() + (i * size2 + j) * Double.SIZE, stream.readDouble());
+				Matrix.unsafe.putDouble(data + Matrix.getMatrixHeaderSize() + (i * size2 + j) * Double.BYTES, stream.readDouble());
 			}
 		}
 	}
