@@ -425,7 +425,7 @@ public class MatrixAttribute implements Attribute, Serializable {
 			}
 		}
 
-		returnVal += Double.SIZE * size1 * size2;
+		returnVal += Double.BYTES * size1 * size2;
 
 		return (int) returnVal;
 	}
