@@ -90,7 +90,7 @@ public:
 
     // bias matrix is provided store it
     if(input.o != NULL) {
-        o = getMatrix(input.o);
+        o = input.o->matrix;
         active--;
     }
 
@@ -109,6 +109,7 @@ public:
     // set the dimensions
     out.e->numRow = o->size1;
     out.e->numCol = o->size2;
+    out.e->ifRow = true;
     out.e->value = (double*)malloc(sizeof(double) * o->size1 * o->size2);
 
     // do the calculation

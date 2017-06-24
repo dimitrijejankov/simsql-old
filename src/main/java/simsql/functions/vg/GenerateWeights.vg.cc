@@ -133,6 +133,7 @@ public:
     // set the dimensions
     out.w->numRow = input_dim/input_split;
     out.w->numCol = output_dim/output_split;
+    out.w->ifRow = true;
     out.w->value = (double*)malloc(sizeof(double) * (long)out.w->numRow * (long)out.w->numCol);
 
 

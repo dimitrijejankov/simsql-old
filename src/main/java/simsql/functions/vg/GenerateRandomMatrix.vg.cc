@@ -110,6 +110,7 @@ public:
     // set the dimensions
     out.w->numRow = inputs.back().row_num;
     out.w->numCol = inputs.back().col_num;
+    out.w->ifRow = true;
     out.w->value = (double*)malloc(sizeof(double) * inputs.back().row_num * inputs.back().col_num);
 
     // fill the sucker up
