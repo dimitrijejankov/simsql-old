@@ -397,6 +397,27 @@ public abstract class RelOp {
         return p.getMemoryPerCPUInMB();
     }
 
+    /**
+     * Returns the amount of JVM memory we want to have
+     * @param params the runtime example parameter
+     * @return the amount
+     */
+    public int getJVMMemory(RuntimeParameter params) {
+        ExampleRuntimeParameter p = (ExampleRuntimeParameter) params;
+        return (int) (1.0 -p.getNativeToJVMRatio()) * p.getMemoryPerCPUInMB();
+    }
+
+
+    /**
+     * Returns the amount of native memory we want to have
+     * @param params the runtime example parameter
+     * @return the amount
+     */
+    public int getNativeMemory(RuntimeParameter params) {
+        ExampleRuntimeParameter p = (ExampleRuntimeParameter) params;
+        return (int) (p.getNativeToJVMRatio() * p.getMemoryPerCPUInMB());
+    }
+
     // returns the memory to allocate per reduce task, in MB.
     // default -- override if necessary.
     public int getMemPerReducer(RuntimeParameter params) {
@@ -979,9 +1000,9 @@ public abstract class RelOp {
         conf.setBoolean("mapred.compress.map.output", true);
 
         int ioSortMB = conf.getInt("io.sort.mb", 256);
-        conf.set("mapred.map.child.java.opts", "-Xmx" + (getMemPerMapper(params) + ioSortMB) + "m -Xms" + (getMemPerMapper(params)) + "m -Duser.timezone='America/Chicago' -Djava.net.preferIPv4Stack=true -XX:CompileThreshold=10000 -XX:+DoEscapeAnalysis -XX:+UseNUMA -XX:-EliminateLocks -XX:+UseBiasedLocking -XX:+OptimizeStringConcat -XX:+UseFastAccessorMethods -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:+UseCompressedOops -XX:+AggressiveOpts -XX:-UseStringCache -XX:ErrorFile=/tmp/hs_err_pid%p.log");
+        conf.set("mapred.map.child.java.opts", "-XX:MaxDirectMemorySize=" + getNativeMemory(params) + "m -Xmx" + (getJVMMemory(params) + ioSortMB) + "m -Xms" + (getJVMMemory(params)) + "m -Duser.timezone='America/Chicago' -Djava.net.preferIPv4Stack=true -XX:CompileThreshold=10000 -XX:+DoEscapeAnalysis -XX:+UseNUMA -XX:-EliminateLocks -XX:+UseBiasedLocking -XX:+OptimizeStringConcat -XX:+UseFastAccessorMethods -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:+UseCompressedOops -XX:+AggressiveOpts -XX:-UseStringCache -XX:ErrorFile=/tmp/hs_err_pid%p.log");
 
-        conf.set("mapred.reduce.child.java.opts", "-Xmx" + (getMemPerReducer(params) + ioSortMB) + "m -Xms" + (getMemPerMapper(params)) + "m -Duser.timezone='America/Chicago' -Djava.net.preferIPv4Stack=true -XX:CompileThreshold=10000 -XX:+DoEscapeAnalysis -XX:+UseNUMA -XX:-EliminateLocks -XX:+UseBiasedLocking -XX:+OptimizeStringConcat -XX:+UseFastAccessorMethods -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:+UseCompressedOops -XX:+AggressiveOpts -XX:-UseStringCache -XX:ErrorFile=/tmp/hs_err_pid%p.log");
+        conf.set("mapred.reduce.child.java.opts", "-XX:MaxDirectMemorySize=" + getNativeMemory(params) + "m -Xms" + (getJVMMemory(params)) + "m -Duser.timezone='America/Chicago' -Djava.net.preferIPv4Stack=true -XX:CompileThreshold=10000 -XX:+DoEscapeAnalysis -XX:+UseNUMA -XX:-EliminateLocks -XX:+UseBiasedLocking -XX:+OptimizeStringConcat -XX:+UseFastAccessorMethods -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:+UseCompressedOops -XX:+AggressiveOpts -XX:-UseStringCache -XX:ErrorFile=/tmp/hs_err_pid%p.log");
 
         conf.setInt("simsql.input.numSplits", pp.getNumCPUs());
         conf.setInt("mapred.job.reuse.jvm.num.tasks", 1);

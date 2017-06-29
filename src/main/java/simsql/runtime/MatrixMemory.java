@@ -1,6 +1,7 @@
 package simsql.runtime;
 
 import sun.misc.Cleaner;
+import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 import sun.misc.VM;
 
@@ -161,9 +162,35 @@ public class MatrixMemory {
             }
         }
 
-        System.gc();
         try {
-            Thread.sleep(100);
+
+            // the number of tries for the cleaning process
+            int numberOfTries = 10;
+
+            // the check for the memory
+            boolean check;
+
+            do {
+
+                // call the gc
+                System.gc();
+
+                // sleep for a few minutes
+                Thread.sleep(100);
+
+                // run all the cleaners
+                while (SharedSecrets.getJavaLangRefAccess().tryHandlePendingReference()){}
+
+                // check if we have enough memory
+                synchronized (bits) {
+                    check = cap <= maxMemory - totalCapacity.get();
+                }
+
+                // we used a try so reduce the count
+                numberOfTries--;
+
+            } while (!check && numberOfTries > 0);
+
         } catch (InterruptedException x) {
             // Restore interrupt status
             Thread.currentThread().interrupt();
