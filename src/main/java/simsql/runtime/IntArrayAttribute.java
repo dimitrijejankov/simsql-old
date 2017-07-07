@@ -34,9 +34,6 @@ import java.nio.ByteOrder;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.FileReader;
 
 public class IntArrayAttribute implements Attribute {
 
@@ -64,18 +61,17 @@ public class IntArrayAttribute implements Attribute {
   	return myVals.length;
   }
   
-  public byte [] getValue (int whichMC) {
+  public byte [] injectValue(int whichMC) {
     b.putLong (0, myVals[whichMC]);
     return b.array ();
   }
 
-  public byte [] getValue (int whichMC, AttributeType castTo) {
+  public void injectIntoBuffer(int whichMC, AttributeType castTo, LargeByteBuffer buffer) {
     if (castTo.getTypeCode() == getType(whichMC).getTypeCode())
-      return getValue(whichMC);
+      buffer.putLong (myVals[whichMC]);
 
     if (castTo.getTypeCode() == TypeCode.DOUBLE) {
-      b.putDouble(0, (double)myVals[whichMC]);
-      return b.array();
+      buffer.putDouble((double)myVals[whichMC]);
     }
 
     else throw new RuntimeException("Invalid cast when writing out value.");
@@ -215,7 +211,7 @@ public class IntArrayAttribute implements Attribute {
   
   public IntArrayAttribute () {}
   
-  public int writeSelfToStream (DataOutputStream writeToMe)  throws IOException  {
+  public long writeSelfToStream (DataOutputStream writeToMe)  throws IOException  {
     int returnVal = 4;
     writeToMe.writeInt (myVals.length);
     for (int i = 0; i < myVals.length; i++) {
@@ -225,7 +221,7 @@ public class IntArrayAttribute implements Attribute {
     return returnVal;
   }
   
-  public int readSelfFromStream (DataInputStream readFromMe)  throws IOException {
+  public long readSelfFromStream (DataInputStream readFromMe)  throws IOException {
     int returnVal = 4;
     int len = readFromMe.readInt ();
     myVals = new long[len];

@@ -79,7 +79,7 @@ public class VGFunction {
   private native void unload(long instancePtr);
   private native void initializeSeed(long instancePtr, long seedValue);
   private native void clearParams(long instancePtr);
-  private native void setBuffers(long instancePtr, ByteBuffer inBuff, ByteBuffer outBuff, LongBuffer positionsIn, LongBuffer positionsOut, LongBuffer tuplesIn);
+  private native void setBuffers(long instancePtr, LargeByteBuffer inBuff, LargeByteBuffer outBuff, LongBuffer positionsIn, LongBuffer positionsOut, LongBuffer tuplesIn);
   private native void takeParams(long instancePtr, long numTuples);
   private native long outputVals(long instancePtr);
   private native void finalizeTrial(long instancePtr);
@@ -96,7 +96,7 @@ public class VGFunction {
     initializeSeed(instancePtr, seed);
   }
 
-  public void setBuffers(LongBuffer posBufferIn, LongBuffer posBufferOut, ByteBuffer dataBufferIn, ByteBuffer dataBufferOut, LongBuffer tuplesIn) {
+  public void setBuffers(LongBuffer posBufferIn, LongBuffer posBufferOut, LargeByteBuffer dataBufferIn, LargeByteBuffer dataBufferOut, LongBuffer tuplesIn) {
     setBuffers(instancePtr, dataBufferIn, dataBufferOut, posBufferIn, posBufferOut, tuplesIn);
   }
 

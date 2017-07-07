@@ -58,7 +58,7 @@ public class BitstringWithSomeUnknown implements Bitstring {
     
   public boolean getValue (int whichMC) {
     if (theseAreUnknown.getValue (whichMC))
-      throw new RuntimeException ("you can't call getValue when the value is unknown!!");
+      throw new RuntimeException ("you can't call injectValue when the value is unknown!!");
     else
       return myVals.getValue (whichMC);
   }

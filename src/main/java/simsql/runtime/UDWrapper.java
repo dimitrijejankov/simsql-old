@@ -31,12 +31,10 @@ public class UDWrapper {
     /** Runs the UDWrapper. */
     public Attribute run(IntermediateValue[] inParams, int numMC) {
 
-        // System.out.println("The number of numMC is: " + numMC);
-
         IntermediateValue outVal = new IntermediateValue(outType, numMC);
 
-        ByteBuffer dataBuffIn = UDFunction.getDataBuffIn();
-        ByteBuffer dataBuffOut = UDFunction.getDataBuffIn();
+        LargeByteBuffer dataBuffIn = UDFunction.getDataBuffIn();
+        LargeByteBuffer dataBuffOut = UDFunction.getDataBuffIn();
         LongBuffer posBuffIn = UDFunction.getPosBuffIn();
         LongBuffer posBuffOut = UDFunction.getPosBuffOut();
         LongBuffer tupleBuf = UDFunction.getTupleBuf();
@@ -54,12 +52,12 @@ public class UDWrapper {
             UDFunction.setPosBuffOut(posBuffOut);
 
             // and data output buffer.
-            dataBuffOut = ByteBuffer.allocateDirect(bufferSize / 4);
+            dataBuffOut = LargeByteBuffer.allocateDirect(bufferSize / 4);
             dataBuffOut.order(ByteOrder.nativeOrder());
             UDFunction.setDataBuffOut(dataBuffOut);
 
             // create the input data exchange buffer.
-            dataBuffIn = ByteBuffer.allocateDirect(bufferSize / 4);
+            dataBuffIn = LargeByteBuffer.allocateDirect(bufferSize / 4);
             dataBuffIn.order(ByteOrder.nativeOrder());
             UDFunction.setDataBuffIn(dataBuffIn);
 
@@ -77,7 +75,6 @@ public class UDWrapper {
         }
         udf.setBuffers(posBuffIn, posBuffOut, dataBuffIn, dataBuffOut, tupleBuf);
 
-//    calculateSize(inParams, numMC);
         dataBuffIn.position(0);
         dataBuffOut.position(0);
         posBuffIn.position(0);
@@ -99,8 +96,7 @@ public class UDWrapper {
 
                 // otherwise, buffer the data and advance the position.
                 posBuffIn.put(dataBuffIn.position());
-                byte[] bx = IntermediateValue.getAttributes(inParams)[j].getValue(i, inTypes[j]);
-                dataBuffIn.put(bx);
+                IntermediateValue.getAttributes(inParams)[j].injectIntoBuffer(i, inTypes[j], dataBuffIn);
             }
 
             udf.clearParams();
@@ -212,11 +208,11 @@ public class UDWrapper {
             for (int j=0;j<inTypes.length;j++) {
 
                 // if it's null, move on.
-                if (IntermediateValue.getAttributes(inParams)[j].isNull().getValue(i)) {
+                if (IntermediateValue.getAttributes(inParams)[j].isNull().injectValue(i)) {
                     continue;
                 }
 
-                byte[] bx = IntermediateValue.getAttributes(inParams)[j].getValue(i, inTypes[j]);
+                byte[] bx = IntermediateValue.getAttributes(inParams)[j].injectValue(i, inTypes[j]);
                 size += bx.length;
             }
         }

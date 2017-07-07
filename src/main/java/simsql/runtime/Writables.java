@@ -39,7 +39,7 @@ interface WritableKey {
 }
 
 interface WritableValue {
-  int writeSelfToStream (DataOutputStream writeToMe) throws IOException;
+  long writeSelfToStream (DataOutputStream writeToMe) throws IOException;
   int readSelfFromStream (DataInputStream readFromMe) throws IOException;
 }
 

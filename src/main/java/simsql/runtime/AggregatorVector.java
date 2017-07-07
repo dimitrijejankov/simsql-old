@@ -5,17 +5,9 @@ package simsql.runtime;
  *
  * @author Jacob
  */
-import java.util.*;
 import java.io.DataOutputStream;
 import java.io.DataInputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.FileReader;
 
 public class AggregatorVector extends VectorAttribute {
 
@@ -86,7 +78,7 @@ public class AggregatorVector extends VectorAttribute {
 		return new VectorAttribute(newVals);
 	}
 
-  	public int writeSelfToStream (DataOutputStream writeToMe) throws IOException {
+  	public long writeSelfToStream (DataOutputStream writeToMe) throws IOException {
 	    int returnVal = 0;
 	    writeToMe.writeInt(curDim);
 	    writeToMe.writeInt(myScalars.length);
@@ -106,8 +98,8 @@ public class AggregatorVector extends VectorAttribute {
 	    return returnVal;
   	}
   
-  	public int readSelfFromStream (DataInputStream readFromMe) throws IOException {
-	    int returnVal = 0;
+  	public long readSelfFromStream (DataInputStream readFromMe) throws IOException {
+	    long returnVal = 0;
 	    curDim = readFromMe.readInt();
 	    int len = readFromMe.readInt();
 	    returnVal += 8;

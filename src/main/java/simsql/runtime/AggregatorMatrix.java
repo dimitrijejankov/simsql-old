@@ -5,17 +5,9 @@ package simsql.runtime;
  *
  * @author Jacob
  */
-import java.util.*;
 import java.io.DataOutputStream;
 import java.io.DataInputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.FileReader;
 
 public class AggregatorMatrix extends MatrixAttribute {
 
@@ -95,7 +87,7 @@ public class AggregatorMatrix extends MatrixAttribute {
 		return new MatrixAttribute(ifRow, newVals, secondDimension);
 	}
 
-	public int writeSelfToStream (DataOutputStream writeToMe) throws IOException {
+	public long writeSelfToStream (DataOutputStream writeToMe) throws IOException {
 	    int returnVal = 0;
 	    writeToMe.writeBoolean(ifRow);
 	    returnVal += 1;
@@ -117,8 +109,8 @@ public class AggregatorMatrix extends MatrixAttribute {
 	    return returnVal;
 	}
   
-	public int readSelfFromStream (DataInputStream readFromMe) throws IOException {
-		int returnVal = 0;
+	public long readSelfFromStream (DataInputStream readFromMe) throws IOException {
+		long returnVal = 0;
 	    ifRow = readFromMe.readBoolean();
 	    returnVal += 1;
 	    curDim = readFromMe.readInt();

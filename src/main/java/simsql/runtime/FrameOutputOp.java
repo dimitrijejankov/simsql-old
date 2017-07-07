@@ -86,7 +86,7 @@ public class FrameOutputOp extends RelOp {
 
     ArrayList<String> out = new ArrayList<String>();
     /***
-    for (Assignment a: getValue("output.outAtts").getAssignmentList()) {
+    for (Assignment a: injectValue("output.outAtts").getAssignmentList()) {
       out.add(a.getIdentifier());
     }
 

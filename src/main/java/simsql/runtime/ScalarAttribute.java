@@ -27,10 +27,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.io.IOException;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.FileReader;
 
 public class ScalarAttribute extends AbstractDoubleAttribute {
 	// private double myVal;
@@ -81,7 +77,7 @@ public class ScalarAttribute extends AbstractDoubleAttribute {
 
 	  public ScalarAttribute () {}
 	  
-	  public int writeSelfToStream (DataOutputStream writeToMe) throws IOException {
+	  public long writeSelfToStream (DataOutputStream writeToMe) throws IOException {
 		writeToMe.writeInt(getLabel());
 	    writeToMe.writeDouble (getVal());
 	    return 12;
@@ -99,7 +95,7 @@ public class ScalarAttribute extends AbstractDoubleAttribute {
 	  // currently same with DoubleAttribute
 	  /*
 	  public void writeSelfToTextStream (Bitstring theseAreNull, BufferedWriter writeToMe) throws IOException {
-	    if (theseAreNull.getValue (0)) {
+	    if (theseAreNull.injectValue (0)) {
 	      writeToMe.write ("null", 0, 4);
 	    } else {
 	      String temp = Double.toString (myVal);
@@ -168,29 +164,26 @@ public class ScalarAttribute extends AbstractDoubleAttribute {
 	    }
 	  }
 
-	  public int readSelfFromStream (DataInputStream readFromMe)  throws IOException {
+	  public long readSelfFromStream (DataInputStream readFromMe)  throws IOException {
 		setLabel (readFromMe.readInt ());
 		setVal (readFromMe.readDouble ());
 	    return 12;
 	  }
 	    
-	  public byte [] getValue (int whichMC) {
+	  public byte [] injectValue(int whichMC) {
 	    b.putDouble (0, getVal());
 	    return b.array ();
 	  }
 
-	  public byte [] getValue (int whichMC, AttributeType castTo) {
-	    if (castTo.getTypeCode() == getType(whichMC).getTypeCode())
-	      return getValue(whichMC);
-
-	    if (castTo.getTypeCode() == TypeCode.INT) {
-	      b.putLong(0, (long)getVal());
-	      return b.array();
+	  public void injectIntoBuffer(int whichMC, AttributeType castTo, LargeByteBuffer buffer) {
+	    if (castTo.getTypeCode() == getType(whichMC).getTypeCode()) {
+			buffer.putDouble (getVal());
+		}
+	    else if (castTo.getTypeCode() == TypeCode.INT) {
+			buffer.putLong((long)getVal());
 	    }
-	    
 	    else if (castTo.getTypeCode() == TypeCode.DOUBLE) {
-	    	b.putDouble(0, getVal());
-		    return b.array();
+			buffer.putDouble(getVal());
 	    }
 
 	    else throw new RuntimeException("Invalid cast when writing out value.");
@@ -203,7 +196,7 @@ public class ScalarAttribute extends AbstractDoubleAttribute {
 	  }
 
 	  public long getHashCode () {
-	    return Hash.hashMe (getValue (0));
+	    return Hash.hashMe (injectValue(0));
 	  }
 	    
 	  public AttributeType getType (int whichMC) {

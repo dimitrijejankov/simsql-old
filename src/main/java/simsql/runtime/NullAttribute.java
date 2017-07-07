@@ -30,7 +30,6 @@ import java.io.DataOutputStream;
 import java.io.DataInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.PrintStream;
 import java.io.IOException;
 
 public class NullAttribute implements Attribute {
@@ -59,14 +58,16 @@ public class NullAttribute implements Attribute {
     writeToMe.write ("null|");
   }
 
-  public byte [] getValue (int whichMC) {
-    throw new RuntimeException ("you tried to get the value assoiated with a NULL");
+  public byte [] injectValue(int whichMC) {
+    throw new RuntimeException ("you tried to get the value associated with a NULL");
   }
 
-  public byte [] getValue (int whichMC, AttributeType castTo) {
-    if (castTo.getTypeCode() == getType(whichMC).getTypeCode()) 
-      return getValue(whichMC);
-    else throw new RuntimeException("Invalid cast when writing out value.");
+  public void injectIntoBuffer(int whichMC, AttributeType castTo, LargeByteBuffer buffer) {
+    if (castTo.getTypeCode() == getType(whichMC).getTypeCode()) {
+      throw new RuntimeException ("you tried to get the value associated with a NULL");
+    }
+
+    throw new RuntimeException("Invalid cast when writing out value.");
   }
 
   
@@ -82,7 +83,7 @@ public class NullAttribute implements Attribute {
     return IntAttribute.ZERO;
   }
     
-  public int writeSelfToStream (DataOutputStream writeToMe) {
+  public long writeSelfToStream (DataOutputStream writeToMe) {
     // do nothing!
     return 0;
   }
@@ -95,7 +96,7 @@ public class NullAttribute implements Attribute {
     return null;
   }
     
-  public int readSelfFromStream (DataInputStream readFromMe) {
+  public long readSelfFromStream (DataInputStream readFromMe) {
     // do nothing!
     return 0;
   }

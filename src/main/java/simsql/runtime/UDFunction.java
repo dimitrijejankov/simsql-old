@@ -2,7 +2,6 @@
 package simsql.runtime;
 
 import java.lang.*;
-import java.lang.reflect.*;
 import java.nio.*;
 
 /**
@@ -22,8 +21,8 @@ public class UDFunction extends Function {
     private static LongBuffer posBuffOut;
 
     // the data exchange buffers
-    private static ByteBuffer dataBuffIn;
-    private static ByteBuffer dataBuffOut;
+    private static LargeByteBuffer dataBuffIn;
+    private static LargeByteBuffer dataBuffOut;
 
     // the tuple buffer
     private static LongBuffer tupleBuf;
@@ -52,11 +51,11 @@ public class UDFunction extends Function {
         return posBuffOut;
     }
 
-    public static ByteBuffer getDataBuffIn() {
+    public static LargeByteBuffer getDataBuffIn() {
         return dataBuffIn;
     }
 
-    public static ByteBuffer getDataBuffOut() {
+    public static LargeByteBuffer getDataBuffOut() {
         return dataBuffOut;
     }
 
@@ -72,11 +71,11 @@ public class UDFunction extends Function {
         posBuffOut = otherPosBuffOut;
     }
 
-    public static void setDataBuffIn(ByteBuffer otherDataBuffIn) {
+    public static void setDataBuffIn(LargeByteBuffer otherDataBuffIn) {
         dataBuffIn = otherDataBuffIn;
     }
 
-    public static void setDataBuffOut(ByteBuffer otherDataBuffOut) {
+    public static void setDataBuffOut(LargeByteBuffer otherDataBuffOut) {
         dataBuffOut = otherDataBuffOut;
     }
 

@@ -137,6 +137,33 @@ void throwException(JNIEnv *env, const char *message) {
   }
 }
 
+/**
+ * Gets the address from the LargeArrayBuffer
+ */
+long getAddressFromBuffer(JNIEnv *env, jobject buffer) {
+    jclass cls = env->GetObjectClass(buffer);
+    jmethodID mid = env->GetMethodID(cls, "getAddress", "()J");
+
+    if (mid == 0) {
+        throwException(env, "Can't find the getAddress method for LargeByteBuffer");
+    }
+
+    return env->CallLongMethod(buffer, mid);
+}
+
+/**
+ * Gets the address from the LargeArrayBuffer
+ */
+long getCapacityFromBuffer(JNIEnv *env, jobject buffer) {
+    jclass cls = env->GetObjectClass(buffer);
+    jmethodID mid = env->GetMethodID(cls, "capacity", "()J");
+
+    if (mid == 0) {
+        throwException(env, "Can't find the capacity method for LargeByteBuffer");
+    }
+
+    return env->CallLongMethod(buffer, mid);
+}
 
 /** 
  * Signal handler: in case of a certain fatal event, we try to exit
@@ -393,8 +420,8 @@ JNIEXPORT void JNICALL Java_simsql_runtime_VGFunction_setBuffers
   }
 
   // get the buffers
-  inst->dataBufIn = env->GetDirectBufferAddress(_dataBufIn);
-  inst->dataBufOut = env->GetDirectBufferAddress(_dataBufOut);
+  inst->dataBufIn = (void*)getAddressFromBuffer(env, _dataBufIn);
+  inst->dataBufOut = (void*)getAddressFromBuffer(env, _dataBufOut);
   inst->posBufIn = (long *)env->GetDirectBufferAddress(_posBufIn);
   inst->posBufOut = (long *)env->GetDirectBufferAddress(_posBufOut);
   inst->tupBuf = (long *)env->GetDirectBufferAddress(_tupBuf);
@@ -405,8 +432,8 @@ JNIEXPORT void JNICALL Java_simsql_runtime_VGFunction_setBuffers
   }
 
   // get the capacity of the DataBuffer
-  inst->dataBufInCapacity = env->GetDirectBufferCapacity(_dataBufIn);
-  inst->dataBufOutCapacity = env->GetDirectBufferCapacity(_dataBufOut);
+  inst->dataBufInCapacity = getCapacityFromBuffer(env, _dataBufIn);
+  inst->dataBufOutCapacity = getCapacityFromBuffer(env, _dataBufOut);
 
 
   currentMethod = UNKNOWN;

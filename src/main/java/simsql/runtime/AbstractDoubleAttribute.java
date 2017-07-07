@@ -26,14 +26,9 @@ package simsql.runtime;
 import java.util.*;
 import java.io.DataOutputStream;
 import java.io.DataInputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.FileReader;
 
 public abstract class AbstractDoubleAttribute implements Attribute {
 
@@ -103,7 +98,7 @@ public abstract class AbstractDoubleAttribute implements Attribute {
 
   public AbstractDoubleAttribute () {}
   
-  public int writeSelfToStream (DataOutputStream writeToMe) throws IOException {
+  public long writeSelfToStream (DataOutputStream writeToMe) throws IOException {
     writeToMe.writeDouble (myVal);
     return 8;
   }
@@ -180,7 +175,7 @@ public abstract class AbstractDoubleAttribute implements Attribute {
     }
   }
 
-  public int readSelfFromStream (DataInputStream readFromMe)  throws IOException {
+  public long readSelfFromStream (DataInputStream readFromMe)  throws IOException {
     myVal = readFromMe.readDouble ();
     return 8;
   }

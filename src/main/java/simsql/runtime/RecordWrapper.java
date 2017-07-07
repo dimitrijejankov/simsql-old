@@ -56,7 +56,7 @@ public class RecordWrapper implements WritableValue {
   }
 
 
-  public int writeSelfToStream (DataOutputStream writeToMe) throws IOException {
+  public long writeSelfToStream (DataOutputStream writeToMe) throws IOException {
     return holdMe.writeSelfToStream(writeToMe);
   }
 

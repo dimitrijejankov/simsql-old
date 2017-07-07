@@ -1,5 +1,3 @@
-
-
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -18,8 +16,6 @@
  *                                                                           *
  *****************************************************************************/
 
-
-
 package simsql.runtime;
 
 import java.io.DataOutputStream;
@@ -28,8 +24,6 @@ import java.io.BufferedOutputStream;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import java.io.IOException;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import java.io.FileNotFoundException;
-import org.apache.hadoop.conf.Configuration;
 
 public class OutputFileSerializer extends RecordWriter <WritableKey, WritableValue> {
 
@@ -47,7 +41,7 @@ public class OutputFileSerializer extends RecordWriter <WritableKey, WritableVal
   int numBytesToWrite = 1000000;
   
   // this is the current location in the file
-  int pos;
+  long pos;
   long totalBytesWritten;
   
   /**
@@ -78,7 +72,7 @@ public class OutputFileSerializer extends RecordWriter <WritableKey, WritableVal
     }
   }
   
-  public  void write (WritableKey nothing, WritableValue value) throws IOException {
+  public void write (WritableKey nothing, WritableValue value) throws IOException {
       if (value instanceof RecordWrapper) {
 	  write(null, ((RecordWrapper)value).getWrappedRecord());
 	  return;
@@ -99,7 +93,7 @@ public class OutputFileSerializer extends RecordWriter <WritableKey, WritableVal
     
     // since "key" and "value" should defintely be equal here, we only need to 
     // write one of them
-    int total = value.writeSelfToStream (writeToMe);
+    long total = value.writeSelfToStream (writeToMe);
     pos += total;
     totalBytesWritten += total;    
   }

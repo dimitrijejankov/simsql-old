@@ -65,7 +65,7 @@ public interface Record extends WritableValue {
    * This serializes the record to the specified output stream, returning the number of
    * bytes that were written (including the TypeCode)
    */
-  int writeSelfToStream (DataOutputStream writeToMe) throws IOException;
+  long writeSelfToStream (DataOutputStream writeToMe) throws IOException;
   
   /**
    * This deserializes the record from the specified input stream, returning the number
