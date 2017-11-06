@@ -71,6 +71,20 @@ public class Join extends Operator {
         super(nodeName, children, parents);
     }
 
+    @Override
+    public ArrayList<String> getOutputAttributeNames() {
+
+        if(getChildren().size() != 2) {
+            throw new RuntimeException("The join must have two tables!");
+        }
+
+        // combine the rhs and lhs in one
+        ArrayList<String> combined = new ArrayList<>(getChildren().get(0).getOutputAttributeNames());
+        combined.addAll(getChildren().get(1).getOutputAttributeNames());
+
+        return combined;
+    }
+
     /**
      * @param nodeName        the name of the operator
      * @param children        the children of the operator
@@ -131,6 +145,16 @@ public class Join extends Operator {
      */
     public void setBooleanOperator(BooleanOperator booleanOperator) {
         this.booleanOperator = booleanOperator;
+    }
+
+
+    /**
+     * Returns the type enumeration of the operator
+     * @return returns the type
+     */
+    @JsonIgnore
+    public OperatorType getOperatorType() {
+        return OperatorType.JOIN;
     }
 
     /**

@@ -5,8 +5,9 @@
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_blas.h>
+#include <math.h>
 
-#include "UDFunction.h"
+#include "VGFunction.h"
 
 /**
  * Input record, used by the takeParams() method.
@@ -17,68 +18,220 @@ struct RecordIn {
   Matrix *m; // the matrix
 };
 
+/**
+ * Output record, used by the outputVals() method.
+ * If any of the values is NULL, then the user must allocate space for
+ * it (the engine will de-allocate).
+ */
+struct RecordOut {
+  Matrix *out;
+};
+
+int r1,c1;
+int r2,c2;
+
+int runningError;
+void handler (const char * reason,
+        const char * file,
+        int line,
+        int gsl_errno)
+{
+
+  runningError = 1;
+  fprintf(stderr, "reason: %s\n, file: %s\n, line: %d\n, gsl_errno: %d\n\n", reason, file, line, gsl_errno);
+  fprintf(stderr, "r1: %d\n, c1: %d\n, r2: %d\n, c2: %d\n\n", r1, c1, r2, c2);
+}
+
 // ----------------------------------------------------------- //
 
 /** A pseudo-VG function for inverting a matrix. */
-class MatrixMatrixTransposeMultiply : public UDFunction {
+class MatrixMatrixTransposeMultiply : public VGFunction {
+
+private:
+
+  // input matrix and vector.
+  gsl_matrix *v = NULL;
+  gsl_matrix *m = NULL;
+
+  bool hasVector;
+  bool hasMatrix;
 
 public:
 
-    /** Constructor. Use this to declare your RNG and other
-    * important structures.
-    */
-    MatrixMatrixTransposeMultiply() {}
+  /** Constructor. Use this to declare your RNG and other
+   * important structures.
+   */
+  MatrixMatrixTransposeMultiply() {
+    gsl_set_error_handler(&handler);
 
-    /** Destructor. Deallocate everything from the constructor. */
-    ~MatrixMatrixTransposeMultiply() {}
+    // resets the inputs...
+    hasVector = false;
+    hasMatrix = false;
+  }
 
-    gsl_matrix* executeMatrix(RecordIn* in) {
+  /** Destructor. Deallocate everything from the constructor. */
+  ~MatrixMatrixTransposeMultiply() {
 
-        // allocate a matrix to output
-        gsl_matrix* out = allocateOutputMatrix(in->v->matrix->size1, in->m->matrix->size1);
+    // free the memory we are done with it...
+    gsl_matrix_free(v);
+    gsl_matrix_free(m);
+  }
 
-        // multiply the matrix
-        gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, in->v->matrix, in->m->matrix, 0.0, out);
+  /** Initializes the RNG seed for a given call. */
+  void initializeSeed(long seedValue) {
+    // do nothing.
+  }
 
-        // return the result
-        return out;
+  /** Finalizes the current trial and prepares the structures for
+   * another fresh call to outputVals(). */
+  void finalizeTrial() {
+    // do nothing.
+  }
+
+  /**
+   * Clears the set of parameters for the first call to takeParams.
+   * If possible, uses the default parameter set.
+   */
+  void clearParams() {
+
+      // resets the inputs...
+      hasVector = false;
+      hasMatrix = false;
+  }
+
+
+  /**
+   * Passes the parameter values. Might be called several times
+   * for each group.
+   */
+  void takeParams(RecordIn &input) {
+
+    if (!hasVector) {
+
+      // we don't have a vector allocated so we go and allocate it...
+      if(this->v == NULL) {
+        this->v = getMatrix(input.v);
+      }
+      // we have a vector allocated
+      else {
+
+        // can we reuse the memory we have...
+        if(this->v->size1 == input.v->numRow && this->v->size2 == input.v->numCol){
+            // if we can use it...
+            updateMatrix(input.v, this->v);
+        }
+        // otherwise
+        else {
+            // free the vector...
+            gsl_matrix_free(this->v);
+
+            // allocate it again...
+            this->v = getMatrix(input.v);
+        }
+      }
+
+
+      // we stored the vector
+      hasVector = true;
     }
 
-    /**
-     * Returns the name
-     */
-    std::string getName() {
-        return std::string("matrix_matrix_transpose_multiply");
+    if (!hasMatrix) {
+
+      // we don't have a vector allocated so we go and allocate it...
+      if(this->m == NULL) {
+        this->m = getMatrix(input.m);
+      }
+      // we have a vector allocated
+      else {
+
+        // can we reuse the memory we have...
+        if(this->m->size1 == input.m->numRow && this->m->size2 == input.m->numCol){
+            // if we can use it...
+            updateMatrix(input.m, this->m);
+        }
+        // otherwise
+        else {
+            // free the vector...
+            gsl_matrix_free(this->m);
+
+            // allocate it again...
+            this->m = getMatrix(input.m);
+        }
+      }
+
+      // we stored the vector
+      hasMatrix = true;
     }
 
-    /**
-     * Returns the output type
-     */
-    std::string getOutputType(){
-        return std::string("matrix[a][c]");
+  }
+
+  /**
+   * Produces the sample values. Returns 1 if there are more
+   * records to be produced for the current sample, 0 otherwise.
+   */
+  int outputVals(RecordOut &output) {
+
+    r1 = this->v->size1;
+    c1 = this->v->size2;
+    r2 = this->m->size1;
+    c2 = this->m->size2;
+
+    // do we have the inputs...
+    if (!hasVector || !hasMatrix)
+      return 0;
+
+    // we don't have a error
+    runningError = -1;
+
+    // the product vector
+    gsl_matrix* product = gsl_matrix_calloc(this->v->size1, this->m->size1);
+
+    /* Compute y = x trans(A) */
+    gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, v, m, 0.0, product);
+
+    // check if we have gotten an error...
+    if (runningError > 0) {
+      gsl_matrix_set_zero(product);
     }
 
-    /**
-     * Returns the input types as strings
-     */
-    std::vector<std::string> getInputTypes() {
+    // set the matrix
+    setMatrix(product, &output.out);
 
-        std::vector<std::string> ret;
+    // free the vector
+    gsl_matrix_free(product);
 
-        ret.push_back("matrix[a][b]");
-        ret.push_back("matrix[c][b]");
+    // resets the inputs...
+    hasVector = false;
+    hasMatrix = false;
 
-        return ret;
-    }
+    return 1;
+  }
+
+  // ----------------------------------------------------------- //
+
+  /** Schema information methods -- DO NOT MODIFY */
+  VGSchema inputSchema() {
+
+    return (VGSchema){2, {"matrix[a][b]", "matrix[c][b]"}, {"v", "m"}};
+  }
+
+  VGSchema outputSchema() {
+
+    return (VGSchema){1, {"matrix[a][c]"}, {"out"}};
+  }
+
+  const char *getName() {
+    return "MatrixMatrixTransposeMultiply";
+  }
 };
 
 // ----------------------------------------------------------- //
 
 /** External creation/destruction methods -- DO NOT MODIFY */
-UDFunction *create() {
+VGFunction *create() {
   return(new MatrixMatrixTransposeMultiply());
 }
 
-void destroy(UDFunction *udFunction) {
-  delete (MatrixMatrixTransposeMultiply *)udFunction;
+void destroy(VGFunction *vgFunction) {
+  delete (MatrixMatrixTransposeMultiply *)vgFunction;
 }

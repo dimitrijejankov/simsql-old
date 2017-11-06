@@ -22,7 +22,6 @@
 package simsql.runtime;
 
 import simsql.compiler.Relation;
-
 import java.io.*;
 
 /**
@@ -32,59 +31,59 @@ import java.io.*;
  */
 public abstract class DataLoader {
 
-    private Attribute[] atts;
-    private PipedReader pr;
-    private PipedWriter pw;
-    private BufferedReader br;
-    private LoaderRecord myRec;
+  private Attribute[] atts;
+  private PipedReader pr;
+  private PipedWriter pw;
+  private BufferedReader br;
+  private LoaderRecord myRec;
 
-    public DataLoader() {
+  public DataLoader() {
 
-        atts = null;
-        myRec = null;
+    atts = null;
+    myRec = null;
 
-        // set up the streams
-        try {
-            //pr = new PipedReader();
-            pw = new PipedWriter();
-            //pw.connect(pr);
-            pr = new PipedReader(pw, 100 * 1024 * 1024);
-            br = new BufferedReader(pr);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to connect streams for bulk loading!");
-        }
+    // set up the streams
+    try {
+      //pr = new PipedReader();
+      pw = new PipedWriter();
+      //pw.connect(pr);
+      pr = new PipedReader(pw, 100 * 1024 * 1024);
+      br = new BufferedReader(pr);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to connect streams for bulk loading!");
+    }
+  }
+
+  // sets up the loader record.
+  protected void setup(short typeCode, Attribute[] inAtts) {
+    LoaderRecord.setup(inAtts.length, typeCode);
+    atts = inAtts;
+
+    myRec = new LoaderRecord();
+    myRec.setIsPresent(new BitstringWithSingleValue(true));
+  }
+
+  // translates a record from its text representation
+  protected Record getRecord(String inRec) {
+
+    // write the text representation into the pipe
+    try {
+      pw.write(inRec);
+      pw.write((int)'\n');
+      
+      // parse all the attributes
+      for (int i=0;i<atts.length;i++) {
+	Attribute temp = atts[i].readSelfFromTextStream(br);
+	myRec.setIthAttribute(i, temp);
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("Could not load record!", e);
     }
 
-    // sets up the loader record.
-    protected void setup(short typeCode, Attribute[] inAtts) {
-        LoaderRecord.setup(inAtts.length, typeCode);
-        atts = inAtts;
+    return myRec;
+  }
 
-        myRec = new LoaderRecord();
-        myRec.setIsPresent(new BitstringWithSingleValue(true));
-    }
-
-    // translates a record from its text representation
-    protected Record getRecord(String inRec) {
-
-        // write the text representation into the pipe
-        try {
-            pw.write(inRec);
-            pw.write((int) '\n');
-
-            // parse all the attributes
-            for (int i = 0; i < atts.length; i++) {
-                Attribute temp = atts[i].readSelfFromTextStream(br);
-                myRec.setIthAttribute(i, temp);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Could not load record!", e);
-        }
-
-        return myRec;
-    }
-
-    // runs the bulk loader. returns the uncompressed size of the
-    // relation on HDFS, otherwise zero.
-    public abstract long run(String inputPath, String outputPath, short typeCode, Relation r, int sortAtt);
+  // runs the bulk loader. returns the uncompressed size of the
+  // relation on HDFS, otherwise zero.
+  public abstract long run(String inputPath, String outputPath, short typeCode, Relation r, int sortAtt);
 }

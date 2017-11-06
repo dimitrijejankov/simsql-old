@@ -91,8 +91,15 @@ public class TableScan extends Operator {
         super(nodeName, children, parents);
         this.type = TableReference.COMMON_TABLE;
         this.tableInfo = null;
-        this.indexStrings = new HashMap<String, Integer>();
-        this.indexMathExpressions = new HashMap<String, MathExpression>();
+        this.indexStrings = new HashMap<>();
+        this.indexMathExpressions = new HashMap<>();
+        this.catalog = SimsqlCompiler.catalog;
+    }
+
+    @Override
+    @JsonIgnore
+    public ArrayList<String> getOutputAttributeNames() {
+        return new ArrayList<>(attributeList);
     }
 
     /**
@@ -119,7 +126,7 @@ public class TableScan extends Operator {
         this.catalog = SimsqlCompiler.catalog;
         this.tableInfo = null;
         this.type = type;
-        this.indexStrings = new HashMap<String, Integer>();
+        this.indexStrings = new HashMap<>();
         this.indexMathExpressions = indexMathExpressions;
     }
 
@@ -282,6 +289,15 @@ public class TableScan extends Operator {
     }
 
     /**
+     * Returns the type enumeration of the operator
+     * @return returns the type
+     */
+    @JsonIgnore
+    public OperatorType getOperatorType() {
+        return OperatorType.TABLE_SCAN;
+    }
+
+    /**
      * @return returns the string file representation of this operator
      */
     @Override
@@ -309,8 +325,49 @@ public class TableScan extends Operator {
 			/* add the statistics of this table and its attributes */
             result += "stats(" + this.getNodeName() + ", [";
 
-            Relation relation = catalog.getRelation(tableName);
-            ArrayList<Attribute> realAttributeList = relation.getAttributes();
+            // the real attributes of the relation to be scanned
+            ArrayList<Attribute> realAttributeList;
+
+            // the number of records in this relation
+            long tupleNumber;
+
+            // the directory in the HDFS of the relation
+            String directory;
+
+            // the primary key of the relation
+            ArrayList<String> primaryKey;
+
+            // if we don't have the information about this relation
+            if(tableInfo == null) {
+                Relation relation = catalog.getRelation(tableName);
+
+                // grab the attributes
+                realAttributeList = relation.getAttributes();
+
+                // grab the tuple number
+                tupleNumber = relation.getTupleNum();
+
+                // grab the directory
+                directory = relation.getFileName();
+
+                // grab the primary key
+                primaryKey = relation.getPrimaryKey();
+            }
+            else {
+
+                // grab it from table info
+                realAttributeList = tableInfo.getRealAttributeList();
+
+                // grab the tuple number
+                tupleNumber = tableInfo.getTupleNum();
+
+                // grab the directory
+                directory = tableInfo.getFileDirectory();
+
+                // grab the primary key from the table info
+                primaryKey = tableInfo.getPrimaryKey();
+            }
+
             String attributeAlias;
             Attribute attribute;
             int attributeSize;
@@ -346,15 +403,12 @@ public class TableScan extends Operator {
                 }
             }
 
-            result += "], " + relation.getTupleNum() + ", _).\r\n";
-
-            //primary key
-            ArrayList<String> primaryKey = relation.getPrimaryKey();
+            result += "], " + tupleNumber + ", _).\r\n";
 
             if (primaryKey != null && primaryKey.size() >= 1) {
                 int keyIndex;
 
-                HashMap<String, Integer> attributeIndexMap = new HashMap<String, Integer>();
+                HashMap<String, Integer> attributeIndexMap = new HashMap<>();
                 if (realAttributeList != null) {
                     for (int i = 0; i < realAttributeList.size(); i++) {
                         attribute = realAttributeList.get(i);
@@ -377,6 +431,29 @@ public class TableScan extends Operator {
 
                 result += "]).\r\n";
             }
+
+            // if we don't have the relation statistics time to make some...
+            if(relationStatistics == null) {
+
+                ArrayList<String> attributeNames = new ArrayList<>();
+
+                if(realAttributeList == null) {
+                    throw new RuntimeException("The real attribute list is missing, something went wrong!");
+                }
+
+                // copy the attribute names
+                for (Attribute a : realAttributeList) {
+                    attributeNames.add(a.getName());
+                }
+
+                this.relationStatistics = new RelationStatistics(tableName,
+                        directory,
+                        attributeNames,
+                        TableReference.COMMON_TABLE);
+
+                this.relationStatistics.setTableInfo(tableInfo);
+            }
+
         } else if (tableName.matches("^[^_]+(_[a-z])+$")) {
             result += this.getNodeStructureString();
 

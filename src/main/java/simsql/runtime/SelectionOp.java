@@ -43,7 +43,7 @@ public class SelectionOp extends RelOp {
 
   // returns a set of necessary mappings.   
   public Set<String> getNecessaryValues() {
-    return new HashSet<>(Arrays.asList
+    return new HashSet<String>(Arrays.asList
 			("operation", "input", "input.inFiles", "input.typeCode", "input.inAtts", "output", "output.outFile",
 			"output.typeCode", "output.outAtts"));
   }

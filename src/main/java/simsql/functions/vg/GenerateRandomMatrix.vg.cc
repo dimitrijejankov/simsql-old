@@ -110,13 +110,12 @@ public:
     // set the dimensions
     out.w->numRow = inputs.back().row_num;
     out.w->numCol = inputs.back().col_num;
-    out.w->ifRow = true;
     out.w->value = (double*)malloc(sizeof(double) * inputs.back().row_num * inputs.back().col_num);
 
     // fill the sucker up
     for(int i = 0; i < inputs.back().row_num; i++){
         for(int j = 0; j < inputs.back().col_num; j++) {
-            out.w->value[i * inputs.back().col_num + j] = gsl_ran_ugaussian(rng);
+            out.w->value[i * inputs.back().col_num + j] = gsl_rng_uniform(rng);
         }
     }
 

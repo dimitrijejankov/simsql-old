@@ -652,16 +652,13 @@ public class Translator {
 		 * There can be multiple vgFunctions in the statement,
 		 * and each vgFucntion can have multiple parameter sql.
 		 */
-        HashMap<String, ArrayList<Operator>> tranlatedElementMap = new HashMap<String, ArrayList<Operator>>();
-        for (int i = 0; i < vgTableNameList.size(); i++) {
-            String vgTableName = vgTableNameList.get(i);
+        HashMap<String, ArrayList<Operator>> tranlatedElementMap = new HashMap<>();
+        for (String vgTableName : vgTableNameList) {
             ArrayList<UnnestedSelectStatement> vgParaList = vgWrapperParaStatementMap.get(vgTableName);
 
-            ArrayList<Operator> translatedParaElementList = new ArrayList<Operator>();
-            for (int j = 0; j < vgParaList.size(); j++) {
-                UnnestedSelectStatement paraStatement = vgParaList.get(j);
-                Operator translatedParaElement = translateVGFunctionParameter(paraStatement,
-                        translatedOutTableElment);
+            ArrayList<Operator> translatedParaElementList = new ArrayList<>();
+            for (UnnestedSelectStatement paraStatement : vgParaList) {
+                Operator translatedParaElement = translateVGFunctionParameter(paraStatement, translatedOutTableElment);
                 translatedParaElementList.add(translatedParaElement);
             }
             tranlatedElementMap.put(vgTableName, translatedParaElementList);
@@ -2116,8 +2113,8 @@ public class Translator {
 		 * Create the node Projection
 		 */
         String nodeName = "node" + translatorHelper.getNodeIndex();
-        ArrayList<Operator> children = new ArrayList<Operator>();
-        ArrayList<Operator> parents = new ArrayList<Operator>();
+        ArrayList<Operator> children = new ArrayList<>();
+        ArrayList<Operator> parents = new ArrayList<>();
         ArrayList<String> projectedNameList = new ArrayList<String>();
 		/*
 		 * 1.1 fill tranlateResult
@@ -2147,13 +2144,13 @@ public class Translator {
 		 * We need to create the VGWraper node.
 		 */
         nodeName = "node" + translatorHelper.getNodeIndex();
-        children = new ArrayList<Operator>();
-        parents = new ArrayList<Operator>();
+        children = new ArrayList<>();
+        parents = new ArrayList<>();
         String vgWrapperName;
         //String vgFunctionName (we have in the input parameter)
         String inputSeedAttributeName;
-        ArrayList<String> inputAttributeNameList = new ArrayList<String>();
-        ArrayList<String> outputAttributeNameList = new ArrayList<String>();
+        ArrayList<String> inputAttributeNameList = new ArrayList<>();
+        ArrayList<String> outputAttributeNameList = new ArrayList<>();
         String outputSeedAttributeName;
         Operator outerRelationOperator;
 		
@@ -2162,14 +2159,10 @@ public class Translator {
 		 */
         children.add(projection);
 
-        for (int i = 0; i < translatedParaElementList.size(); i++) {
-            Operator temp = translatedParaElementList.get(i);
-
+        for (Operator temp : translatedParaElementList) {
             if (temp instanceof Projection) {
                 ArrayList<String> projectionList = ((Projection) temp).getProjectedNameList();
-                for (int j = 0; j < projectionList.size(); j++) {
-                    inputAttributeNameList.add(projectionList.get(j));
-                }
+                inputAttributeNameList.addAll(projectionList);
             }
 
             children.add(temp);
@@ -2195,12 +2188,10 @@ public class Translator {
         ArrayList<String> vgOutStringList = getOutAttribteNameList(vgFunction);
 
 
-        for (int i = 0; i < vgOutStringList.size(); i++) {
-			/*
+        /*
 			 * 2.6 Fill outputAttributeNameList
 			 */
-            outputAttributeNameList.add(vgOutStringList.get(i));
-        }
+        outputAttributeNameList.addAll(vgOutStringList);
 		
 		/*
 		 * 2.7 Fill outputSeedName
@@ -2243,8 +2234,7 @@ public class Translator {
 		 * 2.10 Add the parent of its children node
 		 */
         projection.addParent(vgWrapper);
-        for (int i = 0; i < translatedParaElementList.size(); i++) {
-            Operator temp = translatedParaElementList.get(i);
+        for (Operator temp : translatedParaElementList) {
             temp.addParent(vgWrapper);
         }
 		

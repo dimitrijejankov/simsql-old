@@ -38,13 +38,11 @@ public class Aggregate extends Operator {
     @JsonProperty("aggregate-name")
     private String aggregateName;
 
-
     /**
      * The group by list of the aggregate
      */
     @JsonProperty("group-by-list")
     private ArrayList<String> groupByList;
-
 
     /**
      * The expression list of the aggregate operation
@@ -72,6 +70,22 @@ public class Aggregate extends Operator {
     @JsonCreator
     public Aggregate(@JsonProperty("node-name") String nodeName, @JsonProperty("children") ArrayList<Operator> children, @JsonProperty("parents") ArrayList<Operator> parents) {
         super(nodeName, children, parents);
+    }
+
+    /**
+     * Returns the output attribute names that are in the output map
+     * @return the list of attribute names
+     */
+    @Override
+    @JsonIgnore
+    public ArrayList<String> getOutputAttributeNames() {
+        ArrayList<String> names = new ArrayList<>();
+
+        for(MathOperator o : aggregateExpressionList) {
+            names.add(outputMap.get(o));
+        }
+
+        return names;
     }
 
     /**
@@ -311,6 +325,15 @@ public class Aggregate extends Operator {
             }
         }
         return resultList;
+    }
+
+    /**
+     * Returns the type enumeration of the operator
+     * @return returns the type
+     */
+    @JsonIgnore
+    public OperatorType getOperatorType() {
+        return OperatorType.AGGREGATE;
     }
 
     /**

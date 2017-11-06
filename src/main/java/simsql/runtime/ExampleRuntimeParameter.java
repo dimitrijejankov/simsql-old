@@ -1,3 +1,5 @@
+
+
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -27,25 +29,22 @@ import jline.*;
 
 import java.util.*;
 import java.util.jar.*;
+import java.lang.reflect.Method;
 import java.net.URL;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Level;
 
+import java.lang.reflect.*;
+
 import static simsql.runtime.ReflectedFunction.isScalarFunction;
 import static simsql.runtime.ReflectedFunction.isUDFunction;
 
-
-/**
- * This class implements the RuntimeParameters interface and it is used to store and retrieve parameters that
- * are crucial for the execution of SimSQL
- */
 public class ExampleRuntimeParameter implements RuntimeParameter {
 
     // runtime parameter data
     private Integer numCPUs;
     private Integer memoryPerCPUInMB;
-    private Double nativeToJVMRatio;
     private Integer numIterations;
     private Integer optIterations;
     private Integer optPlans;
@@ -69,10 +68,6 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
 
     public int getNumCPUs() {
         return numCPUs;
-    }
-
-    public Double getNativeToJVMRatio() {
-        return nativeToJVMRatio;
     }
 
     public int getMemoryPerCPUInMB() {
@@ -105,7 +100,6 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
         // parameters
         System.out.format("%-25s | %-50d%n", "numCPUs", numCPUs);
         System.out.format("%-25s | %-50d%n", "memoryPerCPUInMB", memoryPerCPUInMB);
-        System.out.format("%-25s | %f", "nativeToJVMRatio", nativeToJVMRatio);
         System.out.format("%-25s | %-50d%n", "numIterations", numIterations);
         System.out.format("%-25s | %-50d%n", "optIterations", optIterations);
         System.out.format("%-25s | %-50d%n", "optPlans", optPlans);
@@ -128,13 +122,6 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
                 numCPUs = Integer.parseInt(paramValue);
             } else if (paramName.equalsIgnoreCase("memoryPerCPUInMB")) {
                 memoryPerCPUInMB = Integer.parseInt(paramValue);
-            } else if (paramName.equalsIgnoreCase("nativeToJVMRatio")) {
-                nativeToJVMRatio = Double.parseDouble(paramValue);
-
-                // check if te ratio is correct
-                if(nativeToJVMRatio < 0 || nativeToJVMRatio > 1.0) {
-                    throw new RuntimeException("ratio has to be between between 0 and 1");
-                }
             } else if (paramName.equalsIgnoreCase("numIterations")) {
                 numIterations = Integer.parseInt(paramValue);
             } else if (paramName.equalsIgnoreCase("optIterations")) {
@@ -192,7 +179,7 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
 
     private File extractTemporaryFile(InputStream in) {
 
-        File fx;
+        File fx = null;
         try {
             fx = File.createTempFile("simsql_", null);
 
@@ -262,9 +249,9 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
     @SuppressWarnings("unchecked")
     public String[] getFunctionCTs() {
 
-        ArrayList<String> ret = new ArrayList<>();
+        ArrayList<String> ret = new ArrayList<String>();
 
-        HashSet<File> files = new HashSet<>();
+        HashSet<File> files = new HashSet<File>();
 
         // the ud functions
         files.addAll(Arrays.asList(getAllFilesInDirectory("simsql/functions/ud", ".class")));
@@ -275,7 +262,7 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
         for (File s : files) {
 
             // read the file
-            byte[] bytes;
+            byte[] bytes = null;
 
             try {
                 FileInputStream fis = new FileInputStream(s);
@@ -296,7 +283,7 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
             }.loadFromBytes(bytes);
 
             // get an instance
-            Function obj;
+            Function obj = null;
             try {
                 obj = clazz.newInstance();
             } catch (Exception e) {
@@ -384,11 +371,13 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
 
         for (String ff : regularFunctionLocations.keySet()) {
 
-            if (isScalarFunction(ff)) {
+            if(isScalarFunction(ff)) {
                 writeFunctionToFile(ff, new File(whereToWrite + "/scalar", ff + ".class"));
-            } else if (isUDFunction(ff)) {
+            }
+            else if(isUDFunction(ff)){
                 writeFunctionToFile(ff, new File(whereToWrite + "/ud", ff + ".class"));
-            } else {
+            }
+            else {
                 throw new RuntimeException(ff + " is not a Scalar nor a UD function!");
             }
 
@@ -425,7 +414,7 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
 
             // create a buffer
             byte[] b = new byte[1024];
-            int noOfBytes;
+            int noOfBytes = 0;
 
             // read bytes from source file and write to destination file
             while ((noOfBytes = fin.read(b)) != -1) {
@@ -468,17 +457,14 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
 
     public void setUpDefaults(File here) {
         whereILive = here;
-        vgFunctionLocations = new HashMap<>();
-        regularFunctionLocations = new HashMap<>();
+        vgFunctionLocations = new HashMap<String, FileInfoPair>();
+        regularFunctionLocations = new HashMap<String, FileInfoPair>();
 
         // get the number of CPUs
         numCPUs = Runtime.getRuntime().availableProcessors();
 
         // get the total memory per CPUs
         memoryPerCPUInMB = (int) (Runtime.getRuntime().totalMemory() / (1024 * 1024));
-
-        // set the native to jvm memory ratio
-        nativeToJVMRatio = 0.8;
 
         // default number of iterations
         numIterations = 1;
@@ -498,7 +484,7 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
         setUpDefaults(here);
 
         // get a console for reading
-        ConsoleReader cr;
+        ConsoleReader cr = null;
         try {
             cr = new ConsoleReader();
         } catch (Exception e) {
@@ -527,18 +513,6 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
             }
         }
 
-        // the native ratio
-        keepAsking = true;
-        while (keepAsking) {
-            try {
-                String s = cr.readLine("[nativeToJVMRatio]\t What is the ratio between native/jvm memory?");
-                keepAsking = !setParam("nativeToJVMRatio", s);
-            } catch (Exception e) {
-                keepAsking = true;
-            }
-        }
-
-
         keepAsking = true;
         while (keepAsking) {
             try {
@@ -555,14 +529,13 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
 
         whereILive = myFile;
 
-        FileInputStream fis;
-        ObjectInputStream in;
+        FileInputStream fis = null;
+        ObjectInputStream in = null;
         try {
             fis = new FileInputStream(myFile);
             in = new ObjectInputStream(fis);
             numCPUs = (Integer) in.readObject();
             memoryPerCPUInMB = (Integer) in.readObject();
-            nativeToJVMRatio = (Double) in.readObject();
             numIterations = (Integer) in.readObject();
             optIterations = (Integer) in.readObject();
             optPlans = (Integer) in.readObject();
@@ -579,14 +552,13 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
     }
 
     public void save() {
-        FileOutputStream fos;
-        ObjectOutputStream out;
+        FileOutputStream fos = null;
+        ObjectOutputStream out = null;
         try {
             fos = new FileOutputStream(whereILive);
             out = new ObjectOutputStream(fos);
             out.writeObject(numCPUs);
             out.writeObject(memoryPerCPUInMB);
-            out.writeObject(nativeToJVMRatio);
             out.writeObject(numIterations);
             out.writeObject(optIterations);
             out.writeObject(optPlans);

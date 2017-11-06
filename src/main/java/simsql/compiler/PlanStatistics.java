@@ -188,7 +188,6 @@ public class PlanStatistics {
 	
 	/**
 	 * @param element
-	 * @param resultList
 	 * @param attributeTypeMap
 	 */
 	private void getAttributeFromVGWrapper(VGWrapper element,
@@ -293,8 +292,13 @@ public class PlanStatistics {
 		ArrayList<Attribute> attributeList;
 		if(element.getIndexStrings().isEmpty() && element.getType() == TableReference.COMMON_TABLE)
 		{
-			Relation relation = catalog.getRelation(tableName);
-			attributeList = relation.getAttributes();
+		    // if we have the table info we don't need to fetch the relation from the catalog
+			if(element.getTableInfo() != null) {
+			    attributeList = element.getTableInfo().getRealAttributeList();
+            }
+            else {
+                attributeList = catalog.getRelation(tableName).getAttributes();
+            }
 		}
 		else
 		{

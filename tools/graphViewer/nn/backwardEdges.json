@@ -1,0 +1,50 @@
+{
+  "activation[0to][3]":[
+    "weights[i][(j)]",
+    "bias[i][(j)]",
+    "activation[i][(j)-(1)]"
+  ],
+  "weights[1to][1to3]":[
+    "activation[i-1][(j)-(1)]",
+    "error[i-1][(j)]",
+    "weights[i-1][(j)]"
+  ],
+  "error[0to][3]":[
+    "activation[i][(j)]"
+  ],
+  "weights[0][1]":[
+
+  ],
+  "weights[0][2]":[
+
+  ],
+  "activation[0to][1to2]":[
+    "weights[i][(j)]",
+    "bias[i][(j)]",
+    "activation[i][(j)-(1)]"
+  ],
+  "weights[0][3]":[
+
+  ],
+  "bias[0][3]":[
+
+  ],
+  "bias[0][2]":[
+
+  ],
+  "bias[1to][1to3]":[
+    "bias[i-1][(j)]",
+    "error[i-1][(j)]"
+  ],
+  "activation[0to][0]":[
+
+  ],
+  "error[0to][1to2]":[
+    "weights[i][(j)+(1)]",
+    "error[i][(j)+(1)]",
+    "activation[i][(j)]"
+  ],
+  "bias[0][1]":[
+
+  ]
+}

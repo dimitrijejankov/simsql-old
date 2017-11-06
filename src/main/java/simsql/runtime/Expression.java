@@ -67,64 +67,85 @@ public class Expression {
     
 	// this nasty code simply considers each of the various expression types and prints them out
 	String toMe;
-	if (myType.equals ("less than or equal")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".lessThanOrEqual (" + rightSubexpression.print (replacementMap) + ")";
-	} else if (myType.equals ("equals")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".equals (" + rightSubexpression.print (replacementMap) + ")";
-	}  else if (myType.equals ("not equal")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".notEqual (" + rightSubexpression.print (replacementMap) + ")";
-	} else if (myType.equals ("greater than")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".greaterThan (" + rightSubexpression.print (replacementMap) + ")";
-	} else if (myType.equals ("less than")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".lessThan (" + rightSubexpression.print (replacementMap) + ")";
-	} else if (myType.equals ("greater than or equal")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".greaterThanOrEqual (" + rightSubexpression.print (replacementMap) + ")";  
-	} else if (myType.equals ("plus")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".add (" + rightSubexpression.print (replacementMap) + ")";
-	} else if (myType.equals ("minus")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".subtract (" + rightSubexpression.print (replacementMap) + ")";
-	} else if (myType.equals ("times")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".multiply (" + rightSubexpression.print (replacementMap) + ")";   
-	} else if (myType.equals ("divided by")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".divide (" + rightSubexpression.print (replacementMap) + ")";
-	} else if (myType.equals ("or")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".or (" + rightSubexpression.print (replacementMap) + ")";
-	} else if (myType.equals ("and")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".and (" + rightSubexpression.print (replacementMap) + ")"; 
-	} else if (myType.equals ("not")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".not ()";
-	} else if (myType.equals ("is null")) {
-	    toMe = leftSubexpression.print (replacementMap) + ".isNull()";
-	} else if (myType.equals ("literal string")) {
-	    toMe = "(new StringAttribute (" + myValue + "))";
-	} else if (myType.equals ("literal float")) {
-	    toMe = "(new DoubleAttribute (" + myValue + "))";
-	} else if (myType.equals ("literal int")) {
-	    toMe = "(new IntAttribute (" + myValue + "))"; 
-	} else if (myType.equals ("identifier")) {
-	    toMe = replacementMap.get (myValue);
-	    if (toMe == null) {
-		System.err.println(replacementMap);
-		throw new RuntimeException ("When outputting Java code, I could not find any reference to attribute " + myValue + 
-					    " from the dataflow program"); 
-	    }
-	} else if (myType.equals ("unary minus")) {
-	    toMe = "(new IntAttribute (0)).subtract (" + leftSubexpression.print (replacementMap) + ")";
-	} else if (myType.equals ("func")) {
-	    toMe = "func_" + myValue + ".apply (";
-	    boolean first = true;
-	    for (Expression e : subexpressionList) {
-		if (first) {
-		    toMe += e.print (replacementMap);
-		} else {
-		    toMe += ", " + e.print (replacementMap);
+		switch (myType) {
+			case "less than or equal":
+				toMe = leftSubexpression.print(replacementMap) + ".lessThanOrEqual (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "equals":
+				toMe = leftSubexpression.print(replacementMap) + ".equals (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "not equal":
+				toMe = leftSubexpression.print(replacementMap) + ".notEqual (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "greater than":
+				toMe = leftSubexpression.print(replacementMap) + ".greaterThan (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "less than":
+				toMe = leftSubexpression.print(replacementMap) + ".lessThan (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "greater than or equal":
+				toMe = leftSubexpression.print(replacementMap) + ".greaterThanOrEqual (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "plus":
+				toMe = leftSubexpression.print(replacementMap) + ".add (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "minus":
+				toMe = leftSubexpression.print(replacementMap) + ".subtract (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "times":
+				toMe = leftSubexpression.print(replacementMap) + ".multiply (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "divided by":
+				toMe = leftSubexpression.print(replacementMap) + ".divide (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "or":
+				toMe = leftSubexpression.print(replacementMap) + ".or (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "and":
+				toMe = leftSubexpression.print(replacementMap) + ".and (" + rightSubexpression.print(replacementMap) + ")";
+				break;
+			case "not":
+				toMe = leftSubexpression.print(replacementMap) + ".not ()";
+				break;
+			case "is null":
+				toMe = leftSubexpression.print(replacementMap) + ".isNull()";
+				break;
+			case "literal string":
+				toMe = "(new StringAttribute (" + myValue + "))";
+				break;
+			case "literal float":
+				toMe = "(new DoubleAttribute (" + myValue + "))";
+				break;
+			case "literal int":
+				toMe = "(new IntAttribute (" + myValue + "))";
+				break;
+			case "identifier":
+				toMe = replacementMap.get(myValue);
+				if (toMe == null) {
+					System.err.println(replacementMap);
+					throw new RuntimeException("When outputting Java code, I could not find any reference to attribute " + myValue +
+							" from the dataflow program");
+				}
+				break;
+			case "unary minus":
+				toMe = "(new IntAttribute (0)).subtract (" + leftSubexpression.print(replacementMap) + ")";
+				break;
+			case "func":
+				toMe = "func_" + myValue + ".apply (";
+				boolean first = true;
+				for (Expression e : subexpressionList) {
+					if (first) {
+						toMe += e.print(replacementMap);
+					} else {
+						toMe += ", " + e.print(replacementMap);
+					}
+					first = false;
+				}
+				toMe += ")";
+				break;
+			default:
+				throw new RuntimeException("found an operation that I did not recognize!");
 		}
-		first = false;
-	    }
-	    toMe += ")";
-	} else {
-	    throw new RuntimeException ("found an operation that I did not recognize!"); 
-	}
      
 	return toMe;
     }

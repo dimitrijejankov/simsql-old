@@ -51,23 +51,11 @@ struct Vector {
   double *value;
 };
 
-/**
- * The definition of a Matrix type.
- */
+// The definition of a Matrix type.
 struct Matrix {
-
-  // the row number and column number of the matrix
   double numRow;
   double numCol;
-
-  // pointer to the data of the matrix
   double *value;
-
-  // true if this is a row matrix false otherwise (if column matrix just transpose)
-  bool ifRow;
-
-  // a pointer to the gsl representation of the matrix
-  gsl_matrix *matrix;
 };
 
 class RecordIn;
@@ -135,7 +123,6 @@ void setMatrix(gsl_matrix* input, Matrix** output) {
   (*output)->numRow = (double)input->size1;
   (*output)->numCol = (double)input->size2;
   (*output)->value = (double *)malloc(sizeof(double) * input->size1 * input->size2);
-  (*output)->ifRow = 1;
   for (size_t i = 0; i < input->size1; i++) {
     for (size_t j = 0; j < input->size2; j++) {
       (*output)->value[i * input->size2 + j] = gsl_matrix_get(input, i, j);

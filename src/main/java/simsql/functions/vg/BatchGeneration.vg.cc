@@ -26,8 +26,6 @@
 
 using namespace std;
 
-#define DIMENSIONALITY 5
-
 struct RecordIn {
     long *dataID;
     Matrix *data;
@@ -72,7 +70,7 @@ public:
     finished = false;
     for(int i = 0; i < inputs.size(); i++) {
         if(inputs[i] != NULL)
-          gsl_matrix_free(inputs[i]);
+        	gsl_matrix_free(inputs[i]);
         inputs[i] = NULL;
     }
     inputs.clear();
@@ -86,7 +84,7 @@ public:
     }
 
     // copy the input
-    inputs.insert(std::make_pair(*input.dataID, input.data->matrix));
+    inputs.insert(std::make_pair(*input.dataID, getMatrix(input.data)));
   }
 
   int outputVals(RecordOut &out) {
@@ -98,20 +96,14 @@ public:
     out.x = (Matrix*)malloc(sizeof(Matrix));
 
     out.x->numRow = inputs.size();
-    out.x->numCol = DIMENSIONALITY;
-    out.x->ifRow = true;
-    out.x->value = (double*) calloc (inputs.size() * DIMENSIONALITY, sizeof(double));
+    out.x->numCol = (inputs.begin()->second)->size2;
+    out.x->value = (double*) calloc (inputs.size() * (inputs.begin()->second)->size2, sizeof(double));
 
     int i = 0;
 
     for (auto it = inputs.begin(); it != inputs.end(); ++it) {
         // copy the memory
-        if (it->second->size1 != 0 && it->second->size2 != 0) {
-            for (int j = 0; j < it->second->size2; j += 2) {
-                out.x->value[DIMENSIONALITY * i + (int)it->second->data[j]] = it->second->data[j + 1];
-            }
-        }
-        // memcpy(&out.x->value[it->second->size2 * i], it->second->data, sizeof(double) * it->second->size2);
+        memcpy(&out.x->value[it->second->size2 * i], it->second->data, sizeof(double) * it->second->size2);
 
         // increase the counter...
         i++;

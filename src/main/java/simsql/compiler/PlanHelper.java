@@ -254,7 +254,7 @@ public class PlanHelper {
 		 * Here, I use a BFS algorithms to traverse all the nodes in the graph, and output all 
 		 * of such sentences.
 		 */
-        HashSet<Operator> finishedQueue = new HashSet<Operator>();
+        HashSet<Operator> finishedQueue = new HashSet<>();
         LinkedBlockingDeque<Operator> availableQueue = new LinkedBlockingDeque<Operator>();
 
         for (int i = 0; i < elementList.size(); i++) {

@@ -7,6 +7,8 @@ import simsql.compiler.MultidimensionalTableSchema;
 
 import java.util.HashMap;
 
+import static simsql.compiler.MultidimensionalSchemaIndices.labelingOrder;
+
 public class TimeTableNode {
 
     @JsonProperty("table-name")
@@ -37,6 +39,32 @@ public class TimeTableNode {
     @JsonIgnore
     public String getBracketsTableName() {
         return MultidimensionalTableSchema.getBracketsTableNameFromIndices(tableName, indexStrings);
+    }
+
+    @JsonIgnore
+    public String getQualifiedTableName() {
+        return MultidimensionalTableSchema.getQualifiedTableNameFromIndices(tableName, indexStrings);
+    }
+
+    @JsonIgnore
+    public String getGeneralIndexName() {
+        String ret = tableName;
+
+        for(int i = 0; i < indexStrings.size(); ++i) {
+            ret += "[" + labelingOrder[i] + "]";
+        }
+
+        return ret;
+    }
+
+    @JsonIgnore
+    public boolean isGeneralIndexTable() {
+        return indexStrings != null && indexStrings.size() == 1;
+    }
+
+    @JsonIgnore
+    public boolean isMultidmensionalIndexTable() {
+        return indexStrings != null && indexStrings.size() == 0;
     }
 
     @Override

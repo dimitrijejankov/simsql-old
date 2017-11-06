@@ -51,6 +51,16 @@ public class FrameOutput extends Operator {
     }
 
     /**
+     * The frame output has no output attributes...
+     * @return returns null...
+     */
+    @Override
+    @JsonIgnore
+    public ArrayList<String> getOutputAttributeNames() {
+        return new ArrayList<> ();
+    }
+
+    /**
      * @param nodeName the name of the operator
      * @param children the children of the operator
      * @param parents  the parent operators
@@ -62,6 +72,16 @@ public class FrameOutput extends Operator {
                        ArrayList<String> tableList) {
         super(nodeName, children, parents);
         this.tableList = tableList;
+    }
+
+
+    /**
+     * Returns the type enumeration of the operator
+     * @return returns the type
+     */
+    @JsonIgnore
+    public OperatorType getOperatorType() {
+        return OperatorType.FRAME_OUTPUT;
     }
 
     /**

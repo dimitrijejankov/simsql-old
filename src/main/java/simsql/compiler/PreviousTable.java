@@ -36,6 +36,8 @@ public class PreviousTable
 	private ArrayList<String> attributeList;
 	private HashMap<String, String> attributeMap;
 	private ArrayList<String> randamAttributeList;
+	private ArrayList<Attribute> realAttributeList;
+	private ArrayList<String> primaryKey;
 	
 	private HashMap<String, Long> uniqueValueNumMap;
 	private long tupleNum;
@@ -47,11 +49,9 @@ public class PreviousTable
 	 * @param randamAttributeList
 	 */
 	public PreviousTable(String fileDirectory, String tableName,
-			ArrayList<String> attributeList,
-			HashMap<String, String> attributeMap,
-			ArrayList<String> randamAttributeList
-			)
-	{
+						 ArrayList<String> attributeList,
+						 HashMap<String, String> attributeMap,
+						 ArrayList<String> randamAttributeList) {
 		super();
 		this.fileDirectory = fileDirectory;
 		this.tableName = tableName;
@@ -62,7 +62,31 @@ public class PreviousTable
 		uniqueValueNumMap = new HashMap<String, Long>();
 		tupleNum = -1;
 	}
-	
+
+	public PreviousTable(String fileDirectory, String tableName,
+						 ArrayList<String> attributeList,
+						 HashMap<String, String> attributeMap,
+						 ArrayList<String> randamAttributeList,
+						 ArrayList<Attribute> realAttributeList) {
+		super();
+		this.fileDirectory = fileDirectory;
+		this.tableName = tableName;
+		this.attributeList = attributeList;
+		this.attributeMap = attributeMap;
+		this.randamAttributeList = randamAttributeList;
+		this.realAttributeList = realAttributeList;
+
+		uniqueValueNumMap = new HashMap<String, Long>();
+		tupleNum = -1;
+	}
+
+	/**
+	 * TODO this is temporary and needs to be refactored
+	 * @return
+	 */
+	public ArrayList<Attribute> getRealAttributeList() {
+		return realAttributeList;
+	}
 
 	/**
 	 * @return the fileDirectory
@@ -148,7 +172,15 @@ public class PreviousTable
 	public void setTupleNum(long tupleNum) {
 		this.tupleNum = tupleNum;
 	}
-	
+
+	public ArrayList<String> getPrimaryKey() {
+		return primaryKey;
+	}
+
+	public void setPrimaryKey(ArrayList<String> primaryKey) {
+		this.primaryKey = primaryKey;
+	}
+
 	public void addStat(String attribute, long statValue)
 	{
 		if(!uniqueValueNumMap.containsKey(attribute))

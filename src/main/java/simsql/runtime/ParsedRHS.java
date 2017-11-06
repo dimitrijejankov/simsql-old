@@ -84,12 +84,17 @@ class AssignmentListRHS extends ParsedRHS {
   
   public AssignmentListRHS (ArrayList <Assignment> valueIn) {
 
-		// HACK ADDED BY LUIS: AVOID ISPRESENT HERE.
-		value = new ArrayList<Assignment>();
-		for (Assignment a: valueIn) {
-			if (!a.getIdentifier().equals("isPres"))
-				value.add(a);
-		}
+      try {
+          // HACK ADDED BY LUIS: AVOID ISPRESENT HERE.
+          value = new ArrayList<>();
+          for (Assignment a : valueIn) {
+              if (!a.getIdentifier().equals("isPres"))
+                  value.add(a);
+          }
+      }
+      catch (Exception e) {
+          throw new RuntimeException("Ninja");
+      }
 
 		//    value = valueIn; 
   }

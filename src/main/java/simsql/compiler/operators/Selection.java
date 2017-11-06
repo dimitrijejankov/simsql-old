@@ -53,6 +53,17 @@ public class Selection extends Operator {
         super(nodeName, children, parents);
     }
 
+    @Override
+    @JsonIgnore
+    public ArrayList<String> getOutputAttributeNames() {
+
+        if(getChildren().size() != 1) {
+            throw new RuntimeException("The seed attribute has to have one child!");
+        }
+
+        return new ArrayList<>(getChildren().get(0).getOutputAttributeNames());
+    }
+
     /**
      * @param nodeName        the name of the operator
      * @param children        the children of the operator
@@ -76,6 +87,15 @@ public class Selection extends Operator {
      */
     public void setBooleanOperator(BooleanOperator booleanOperator) {
         this.booleanOperator = booleanOperator;
+    }
+
+    /**
+     * Returns the type enumeration of the operator
+     * @return returns the type
+     */
+    @JsonIgnore
+    public OperatorType getOperatorType() {
+        return OperatorType.SELECTION;
     }
 
     /**

@@ -1,0 +1,85 @@
+[ {
+  "class-name" : "projection",
+  "id" : 1,
+  "node-name" : "node4",
+  "children" : [ {
+    "class-name" : "scalar-function",
+    "id" : 2,
+    "node-name" : "node3",
+    "children" : [ {
+      "class-name" : "projection",
+      "id" : 3,
+      "node-name" : "node2",
+      "children" : [ {
+        "class-name" : "scalar-function",
+        "id" : 4,
+        "node-name" : "node1",
+        "children" : [ {
+          "class-name" : "table-scan",
+          "id" : 5,
+          "node-name" : "node0",
+          "children" : [ ],
+          "parents" : [ 4 ],
+          "name-map" : { },
+          "map-space-name-set" : [ ],
+          "table_name" : "weights_3_1",
+          "attribute_list" : [ "w" ],
+          "relation_statistics" : {
+            "relation" : "weights_3_1",
+            "directory" : "_",
+            "attribute-list" : [ "w" ],
+            "type" : 3,
+            "index-strings" : {
+              "i" : 3,
+              "j" : 1
+            },
+            "table-info" : null
+          },
+          "index-strings" : {
+            "i" : 3,
+            "j" : 1
+          },
+          "index-math-expressions" : { },
+          "type" : 3,
+          "table-info" : null
+        } ],
+        "parents" : [ 3 ],
+        "name-map" : { },
+        "map-space-name-set" : [ ],
+        "scalar-expression-list" : [ {
+          "class-name" : "e-function",
+          "math-op-id" : 6
+        } ],
+        "column-lists" : [ {
+          "operator" : 6,
+          "columns" : [ "w" ]
+        } ],
+        "inverted-output-map" : {
+          "weights_w" : 6
+        }
+      } ],
+      "parents" : [ 2 ],
+      "name-map" : { },
+      "map-space-name-set" : [ ],
+      "projected-name-list" : [ "weights_w" ]
+    } ],
+    "parents" : [ 1 ],
+    "name-map" : { },
+    "map-space-name-set" : [ ],
+    "scalar-expression-list" : [ {
+      "class-name" : "e-function",
+      "math-op-id" : 7
+    } ],
+    "column-lists" : [ {
+      "operator" : 7,
+      "columns" : [ "weights_w" ]
+    } ],
+    "inverted-output-map" : {
+      "weights_w" : 7
+    }
+  } ],
+  "parents" : [ ],
+  "name-map" : { },
+  "map-space-name-set" : [ ],
+  "projected-name-list" : [ "weights_w" ]
+} ]

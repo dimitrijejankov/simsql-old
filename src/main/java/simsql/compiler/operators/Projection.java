@@ -51,6 +51,12 @@ public class Projection extends Operator {
         super(nodeName, children, parents);
     }
 
+    @JsonIgnore
+    @Override
+    public ArrayList<String> getOutputAttributeNames() {
+        return projectedNameList;
+    }
+
     /**
      * @param nodeName          the name of the operator
      * @param children          the children of the operator
@@ -79,6 +85,15 @@ public class Projection extends Operator {
      */
     public void setProjectedNameList(ArrayList<String> projectedNameList) {
         this.projectedNameList = projectedNameList;
+    }
+
+    /**
+     * Returns the type enumeration of the operator
+     * @return returns the type
+     */
+    @JsonIgnore
+    public OperatorType getOperatorType() {
+        return OperatorType.PROJECTION;
     }
 
 

@@ -1,5 +1,3 @@
-
-
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -21,12 +19,11 @@
 
 package simsql.shell.query_processor;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import simsql.compiler.*;
 import simsql.compiler.operators.FrameOutput;
 import simsql.compiler.operators.Operator;
 import simsql.compiler.operators.TableScan;
+import simsql.compiler.timetable.GraphCutter;
 import simsql.optimizer.CompiledOptimizer;
 import simsql.optimizer.SimSQLOptimizedQuery;
 import simsql.code_generator.WrappedTranslator;
@@ -56,16 +53,14 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
     private HadoopRuntime myRuntime;
     private SimsqlCompiler myParser;
 
-    // data structures for MCMC
-    private PlanInstantiation planInstantiation;
-    private int maxLoop;
-
     private HadoopResult previousResult;
     private int timeTick;
     private boolean isFirstIteration;
 
+    private GraphCutter graphCutter;
+
     // remembers the output from the last iteration... used to save/delete this output
-    private ArrayList<Relation> requiredRelations = new ArrayList<Relation>();
+    private ArrayList<Relation> requiredRelations = new ArrayList<>();
 
     public void saveRequiredRelations() {
         for (Relation relation : requiredRelations) {
@@ -74,7 +69,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             String oldName = relation.getName();
             String without = "";
 
-            if(oldName.matches("^[^_]+(_[0-9]+){2,}$")) {
+            if (oldName.matches("^[^_]+(_[0-9]+){2,}$")) {
                 without = oldName;
             } else {
                 // strip off the MC iteration
@@ -110,28 +105,25 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             getCatalog().addRelation(relation);
             myTranslator.getPhysicalDatabase().rename(oldName, newName);
         }
-        requiredRelations = new ArrayList<Relation>();
+        requiredRelations = new ArrayList<>();
     }
 
     public void deleteNotRequiredRelationsFromLastIteration() {
         // if it's a recursive query, some relations are necessary and some are not.
-        if(isMCMC) {
-            ChainGeneration chainGeneration = this.planInstantiation.getChain();
-            HashSet<String> finalTables = this.planInstantiation.getFinalTables();
-            HashSet<Relation> removedTables = new HashSet<Relation>();
+        if (isMCMC) {
+
+            HashSet<Relation> removedTables = new HashSet<>();
 
             for (Relation relation : requiredRelations) {
-                if (!chainGeneration.isTableRequiredAfterIteration(relation.getName(), getIteration()) &&
-                        !finalTables.contains(relation.getName())) {
+                if (!graphCutter.isTableRequired(relation.getName())) {
                     getPhysicalDatabase().deleteTable(relation.getName());
                     removedTables.add(relation);
                 }
             }
 
             requiredRelations.removeAll(removedTables);
-        }
-        else {
-        // if it's a normal query remove them all.
+        } else {
+            // if it's a normal query remove them all.
             for (Relation relation : requiredRelations) {
                 getPhysicalDatabase().deleteTable(relation.getName());
             }
@@ -142,7 +134,6 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
     public MCMCQueryProcessor() {
         parsedQuery = null;
         isMCMC = false;
-        //myOptimizer = new FoulaOptimizer();
         myOptimizer = new CompiledOptimizer();
         myTranslator = new WrappedTranslator();
 
@@ -152,7 +143,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
                 myRuntime.getRuntimeParameters()
         );
         previousResult = null;
-        timeTick = -1;
+        timeTick = 0;
         isFirstIteration = true;
     }
 
@@ -194,8 +185,8 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
     public void reset() {
         parsedQuery = null;
-        planInstantiation = null;
-        timeTick = -1;
+        graphCutter = null;
+        timeTick = 0;
         isFirstIteration = true;
         previousResult = null;
         isMCMC = false;
@@ -203,7 +194,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
     public void doneParsing(SimSQLCompiledQuery parseResult) {
         /*
-		 * Here, for MCDB2 queries, we have already done postProcessing in
+         * Here, for MCDB2 queries, we have already done postProcessing in
 		 * SimsqlCompiler, so here we just transfer the object.
 		 * 
 		 * For MCMC queries, we should do postProcessing here, including the
@@ -215,30 +206,16 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             try {
                 ArrayList<Operator> sinkList = parseResult.sinkList;
                 ArrayList<Operator> queryList = parseResult.queryList;
-                ArrayList<String> sqlList = parseResult.sqlList;
                 HashMap<Operator, String> planTableMap = parseResult.definitionMap;
 
+                // create a topologic object
                 Topologic topologic = new Topologic(sinkList, planTableMap);
 
-
-                // JSON object loader
-                ObjectMapper mapper = new ObjectMapper();
-
-                try {
-                    String x = mapper.writerFor(new TypeReference<ArrayList<Operator>>() {}).writeValueAsString(queryList);
-                }
-                catch (Exception e) {
-
-                }
-
-                ChainGeneration chain = new ChainGeneration(topologic, parseResult.requiredTables, planTableMap);
-                maxLoop = chain.getMaxLoop();
-
-                TranslatorHelper translatorHelper = myParser.getTranslatorHelper();
-                planInstantiation = new PlanInstantiation(planTableMap, chain,
-                        translatorHelper, queryList);
-                timeTick = chain.getMinimumTimeTick();
-
+                // generate the bipartte graph
+                this.graphCutter = new GraphCutter(parseResult.requiredTables,
+                                                    topologic.getBackwardEdges(),
+                                                    planTableMap,
+                                                    queryList);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -252,25 +229,16 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             return oneToReturn;
         }
 
-        if (timeTick <= maxLoop) {
-            SimSQLCompiledQuery compiledQuery = generatePlan(planInstantiation,
-                                                             timeTick,
-                                                             previousResult,
-                                                             isFirstIteration);
+        SimSQLCompiledQuery compiledQuery = generatePlan(timeTick, previousResult, isFirstIteration);
 
-            if (isFirstIteration)// from now on, it is not the first iteration
-            {
-                isFirstIteration = false;
-            }
-            System.out.println("Monte Carlo iteration " + timeTick + "/" + maxLoop);
-            timeTick++;
-
-            return compiledQuery;
-        } else {
-            timeTick = -1;
-            return null;
+        if (isFirstIteration) // from now on, it is not the first iteration
+        {
+            isFirstIteration = false;
         }
+        System.out.println("Monte Carlo iteration " + timeTick);
+        timeTick++;
 
+        return compiledQuery;
     }
 
     public void doneExecuting(HadoopResult queryResult, String outputFile) {
@@ -293,7 +261,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             // where are we printing?
             if (outputFile == null) {
                 // only print out if we are at the end
-                if (timeTick == -1 || timeTick == maxLoop + 1)
+                if (graphCutter.isFinished())
                     getPhysicalDatabase().printRelation(rel);
             } else {
                 // a file
@@ -325,8 +293,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
         }
     }
 
-    public SimSQLCompiledQuery generatePlan(PlanInstantiation planInstantiation,
-                                            int timeTick,
+    private SimSQLCompiledQuery generatePlan(int timeTick,
                                             HadoopResult previousResult,
                                             boolean dataInCatalog) {
         SimSQLCompiledQuery compiledQuery = new SimSQLCompiledQuery("_" + timeTick + ".sql.pl");
@@ -338,10 +305,15 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 			/*
 			 * 1. Instantiate the plan.
 			 */
-            ArrayList<Operator> generatedSinkList = planInstantiation.generatePlan(timeTick, timeTick + 1);
-	
+            ArrayList<Operator> generatedSinkList = graphCutter.getCut();
+
+            // if we did we don't have a cut then we are done!
+            if(generatedSinkList == null) {
+                return null;
+            }
+
 			/*
-			 * 1. If dataInCatalog, we should change the tableScan from the local
+			 * 2. If dataInCatalog, we should change the tableScan from the local
 			 * file; furthermore, we should change the statistics accordingly.
 			 */
             if (!dataInCatalog) {
@@ -379,9 +351,9 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
         }
     }
 
-    public void updatePlanByPreviousResult(ArrayList<Operator> generatedSinkList, HadoopResult previousResult)
+    private void updatePlanByPreviousResult(ArrayList<Operator> generatedSinkList, HadoopResult previousResult)
             throws Exception {
-        HashMap<String, PreviousTable> tableMap = new HashMap<String, PreviousTable>();
+        HashMap<String, PreviousTable> tableMap = new HashMap<>();
 
 		/*
 		 * 1. Get the directory and attributeList.
@@ -390,15 +362,14 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             String file = outRelation.getFileName();
             String relName = outRelation.getName();
 
-            ArrayList<String> attributeNameList = new ArrayList<String>();
-            HashMap<String, String> attributeTypeMap = new HashMap<String, String>();
-            ArrayList<String> randamAttributeList = new ArrayList<String>();
+            ArrayList<String> attributeNameList = new ArrayList<>();
+            HashMap<String, String> attributeTypeMap = new HashMap<>();
+            ArrayList<String> randamAttributeList = new ArrayList<>();
 
             ArrayList<Attribute> attributeList = outRelation.getAttributes();
-            Attribute attribute;
+
             String attributeType;
-            for (Attribute anAttributeList : attributeList) {
-                attribute = anAttributeList;
+            for (Attribute attribute : attributeList) {
                 attributeNameList.add(attribute.getName());
                 attributeType = attribute.getType().writeOut();                // TO-DO
                 attributeTypeMap.put(attribute.getName(), attributeType);
@@ -408,25 +379,28 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             }
 
             PreviousTable resultTable = new PreviousTable(file,
-                    relName, attributeNameList, attributeTypeMap, randamAttributeList);
+                    relName, attributeNameList, attributeTypeMap, randamAttributeList, attributeList);
 
             resultTable.setTupleNum(outRelation.getTupleNum());
 
-            for (Attribute anAttributeList : attributeList) {
-                attribute = anAttributeList;
-                resultTable.addStat(attribute.getName(), attribute.getUniqueValue());
+            // set the primary key we need that in the TS
+            resultTable.setPrimaryKey(outRelation.getPrimaryKey());
 
+            for (Attribute anAttributeList : attributeList) {
+                resultTable.addStat(anAttributeList.getName(), anAttributeList.getUniqueValue());
             }
+
             tableMap.put(relName, resultTable);
         }
 		
 		/*
-		 * 3. Update the plan.
+		 * 2. Update the plan.
 		 */
         ArrayList<Operator> allNodeList = PostProcessorHelper.findAllNode(generatedSinkList);
         for (Operator operator : allNodeList) {
             if (operator instanceof TableScan) {
                 String tableName = ((TableScan) operator).getTableName();
+
                 if (tableMap.containsKey(tableName)) {
                     PreviousTable hdfsTable = tableMap.get(tableName);
                     ((TableScan) operator).setTableInfo(hdfsTable);

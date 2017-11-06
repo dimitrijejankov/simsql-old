@@ -442,8 +442,18 @@ JNIEXPORT void JNICALL Java_simsql_runtime_VGFunction_takeParams
     // add the stride to get to the right tuple.
     posBuf = inst->posBufIn + tupBuf[k];
 
+    /**
+    struct Vector *vec[inst->inSchema.numAtts];
+    struct Matrix *mat[inst->inSchema.numAtts];
+    **/
+
     // set the pointers for the input record using the position buffer.
     for (int i=0;i<inst->inSchema.numAtts;i++) {
+
+      /**
+      vec[i] = NULL;
+      mat[i] = NULL;
+      **/
 
       // check for correctness
       if (posBuf[i] >= capacity) {
@@ -454,38 +464,37 @@ JNIEXPORT void JNICALL Java_simsql_runtime_VGFunction_takeParams
       // a negative position implies a NULL pointer.
       if (posBuf[i] >= 0) {
 
+        
+        //        if (strstr(inst->inSchema.attTypes[i], "vector") !=NULL ) {
         if (inst->inTypes[i] == _VECTOR) {
+          /**
+          inst->inRec[i] = (void *)((long)dataBuf + posBuf[i]);
+          vec[i] = (struct Vector *) malloc(sizeof(struct Vector));
+          vec[i]->length = *((double*)inst->inRec[i]);
+          vec[i]->value = ((double*)inst->inRec[i]) + 1;
+          inst->inRec[i] = vec[i];
+          **/
           void *myRec = (void *)((long)dataBuf + posBuf[i]);
           Vector *myVec = &(inst->inVec[i]);
           myVec->length = *((double *)myRec);
           myVec->value = ((double *)myRec) + 1;
           inst->inRec[i] = myVec;
         }
+        //        else if (strstr(inst->inSchema.attTypes[i], "matrix") !=NULL) {
         else if (inst->inTypes[i] == _MATRIX) {
+          /**
+          inst->inRec[i] = (void *)((long)dataBuf + posBuf[i]);
+          mat[i] = (struct Matrix *) malloc(sizeof(struct Matrix));
+          mat[i]->numRow = *((double*)inst->inRec[i]);
+          mat[i]->numCol = *(((double*)inst->inRec[i]) + 1);
+          mat[i]->value = ((double*)inst->inRec[i]) + 2;
+          inst->inRec[i] = mat[i];
+          **/
           void *myRec = (void *)((long)dataBuf + posBuf[i]);
-
           Matrix *myMat = &(inst->inMat[i]);
-
-          // grab the gsl matrix pointer from
-          gsl_matrix* matrix = *((gsl_matrix**)myRec);
-
-          // grab the if row matrix indicator
-          char ifRow = *((char*)myRec + sizeof(gsl_matrix*));
-
-          // grab the sizes
-          myMat->numRow = matrix->size1;
-          myMat->numCol = matrix->size2;
-
-          // set the if row indicator
-          myMat->ifRow = ifRow;
-
-          // set a pointer to the data
-          myMat->value = matrix->data;
-
-          // set the gsl matrix pointer
-          myMat->matrix = matrix;
-
-          // set a reference to the gsl_matrix
+          myMat->numRow = *((double*)myRec);
+          myMat->numCol = *(((double*)myRec) + 1);
+          myMat->value = ((double*)myRec) + 2;
           inst->inRec[i] = myMat;
         }
 
@@ -500,6 +509,27 @@ JNIEXPORT void JNICALL Java_simsql_runtime_VGFunction_takeParams
 
     // call the function
     inst->func->takeParams((RecordIn &)*inst->inRec);
+
+    /**
+    for (int i=0;i<inst->inSchema.numAtts;i++) {
+
+
+      //      if(strstr(inst->inSchema.attTypes[i], "vector") != NULL) {
+      if (inst->inTypes[i] == _VECTOR) {
+        if(vec[i] != NULL) {
+          free(vec[i]);
+          vec[i] = NULL;
+        }
+      }
+      //      else if (strstr(inst->inSchema.attTypes[i], "matrix") != NULL) {
+      else if (inst->inTypes[i] == _MATRIX) {
+        if(mat[i] != NULL) {
+          free(mat[i]);
+          mat[i] = NULL;
+        }
+      }
+    }
+    **/
   }
 
   currentMethod = UNKNOWN;
@@ -635,21 +665,18 @@ JNIEXPORT jlong JNICALL Java_simsql_runtime_VGFunction_outputVals
         else if (inst->outTypes[i] == _MATRIX) {
           long row = (long) ((Matrix *)inst->outRec[i])->numRow;
           long col = (long) ((Matrix *)inst->outRec[i])->numCol;
-          long ifRow = (long) ((Matrix *)inst->outRec[i])->ifRow;
 
-          if (capacity < (long) (row * col * sizeof(double) + 2 * sizeof(long) + sizeof(char))) {
+          if (capacity < (long) (row * col * sizeof(double) + 2 * sizeof(long))) {
             throwException(env, "Data buffer overrun");
             return 0;
           }
 
           memmove((void *) ((long)dataBuf + curPosition), &row, sizeof(long));
           memmove((void *) ((long)dataBuf + curPosition + sizeof(long)), &col, sizeof(long));
-          memmove((void *) ((long)dataBuf + curPosition + 2 * sizeof(long)), &ifRow, sizeof(long));
-          memmove((void *) ((long)dataBuf + curPosition + 3 * sizeof(long)), ((Matrix *)inst->outRec[i])->value, row * col * sizeof(double));
-
+          memmove((void *) ((long)dataBuf + curPosition + 2 * sizeof(long)), ((Matrix *)inst->outRec[i])->value, row * col * sizeof(double));
           posBuf[i] = curPosition;
-          curPosition += row * col * sizeof(double) + 3 * sizeof(long);
-          capacity -= row * col * sizeof(double) + 3 * sizeof(long);
+          curPosition += row * col * sizeof(double) + 2 * sizeof(long);
+          capacity -= row * col * sizeof(double) + 2 * sizeof(long);
 
           free(((Matrix *)inst->outRec[i])->value);
 
@@ -811,6 +838,50 @@ JNIEXPORT jobjectArray JNICALL Java_simsql_runtime_VGFunction_getInputAttNames
   currentMethod = UNKNOWN;
   return(ret);
 }
+
+/**
+ * Returns an array of indices indicating the positions of the VG
+ * function's random output attributes.
+ *
+ JNIEXPORT jlongArray JNICALL Java_simsql_runtime_VGFunction_getRandomOutputAtts
+ (JNIEnv *env, jobject, jlong _inst) {
+
+ // set the method
+ currentMethod = GETRANDOMOUTPUTATTS;
+
+ // get the instance
+ instance *inst = (instance *)_inst;
+ if (inst == NULL) {
+ throwException(env, "Invalid VG function instance pointer.");
+ return NULL;
+ }
+
+ // count the number of random attributes
+ int n = 0;
+ for (int i=0;i<inst->outSchema.numAtts;i++) {
+ if (inst->outSchema.isRandom[i] > 0) {
+ n++;
+ }
+ }
+
+ // create the output array
+ int j = 0;
+ jlong *longs = (jlong *)malloc(sizeof(jlong) * n);
+ for (int i=0;i<inst->outSchema.numAtts;i++) {
+ if (inst->outSchema.isRandom[i] > 0) {
+ longs[j++] = i;
+ }
+ }
+
+ // create and fill the output array
+ jlongArray ret = env->NewLongArray(n);
+ env->SetLongArrayRegion(ret, 0, n, longs);
+  
+ // return it
+ currentMethod = UNKNOWN;
+ return(ret);
+ }
+*/
 
 /**
  * Returns the name of the VG function.

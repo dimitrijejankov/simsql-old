@@ -351,10 +351,9 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 			String query = "";
 			View view;
 			String tableName, sql;
-			
-			for(int i = 0; i < tableReferenceList.size(); i++)
-			{
-				tableName = tableReferenceList.get(i);
+
+			for (String aTableReferenceList : tableReferenceList) {
+				tableName = aTableReferenceList;
 				view = catalog.getView(tableName);
 				sql = view.getSql();
 				query += sql + ";\r\n";
@@ -426,10 +425,8 @@ public class SimsqlCompiler implements Compiler<SimSQLCompiledQuery>
 							}
 							unnester = new RandomTableUnnester((RandomTableTypeChecker) baselineElmentChecker);
 							UnnestedRandomTableStatement result = ((RandomTableUnnester) unnester).unnestRandomTableStatement((RandomTableStatement) baseLineArrayElement);
-							//System.out.println(result);
 							Operator element = translator.translate(result);
-							//System.out.println(Process.toString(element));
-				        	
+
 				        	/*
 				        	 * 5. PostProcessing
 				        	 */

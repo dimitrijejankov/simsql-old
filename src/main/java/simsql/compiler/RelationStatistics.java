@@ -94,7 +94,17 @@ public class RelationStatistics implements StatisticsOperator {
                 result += "relation('";
                 result += relation;
                 result += "', ";
-                result += directory;
+
+                if(directory == null) {
+                    result += null;
+                }
+                else if(directory.startsWith("'") && directory.endsWith("'")) {
+                    result += directory;
+                }
+                else {
+                    result += "'" + directory + "'";
+                }
+
                 result += ", [";
 
                 if (attributeList != null) {
@@ -109,52 +119,23 @@ public class RelationStatistics implements StatisticsOperator {
 
                 result += "]).\r\n";
 
-                ArrayList<Attribute> attributeList = SimsqlCompiler.catalog.getRelation(relation).getAttributes();
-                for (int i = 0; i < attributeList.size(); i++) {
-                    Attribute temp = attributeList.get(i);
+                // the list of attributes this relatio has
+                ArrayList<Attribute> attributeList;
+
+                // figure out where to grab the attribute list...
+                if(tableInfo != null) {
+                    attributeList = tableInfo.getRealAttributeList();
+                }
+                else {
+                    attributeList = SimsqlCompiler.catalog.getRelation(relation).getAttributes();
+                }
+
+                for (Attribute temp : attributeList) {
                     String attributeName = temp.getName();
                     DataType attributeType = temp.getType();
-                    AttributeType attributeTypeNode = null;
-                    attributeTypeNode = new AttributeType(attributeName, attributeType);
+                    AttributeType attributeTypeNode = new AttributeType(attributeName, attributeType);
 
-                    // switch(attributeType)
-                    // {
-                    // 	case Attribute.INTEGER:
-                    // 		attributeTypeNode = new AttributeType(attributeName, "integer");
-                    // 		break;
-
-                    // 	case Attribute.DOUBLE:
-                    // 		attributeTypeNode = new AttributeType(attributeName, "double");
-                    // 		break;
-
-                    // 	case Attribute.STRING:
-                    // 		attributeTypeNode = new AttributeType(attributeName, "string");
-                    // 		break;
-
-                    // 	case Attribute.DATE:
-                    // 		attributeTypeNode = new AttributeType(attributeName, "date");
-                    // 		break;
-
-                    // 	case Attribute.STOCHINT:
-                    // 		attributeTypeNode = new AttributeType(attributeName, "integer");
-                    // 		break;
-
-                    // 	case Attribute.STOCHDBL:
-                    // 		attributeTypeNode = new AttributeType(attributeName, "double");
-                    // 		break;
-
-                    // 	case Attribute.STOCHDAT:
-                    // 		attributeTypeNode = new AttributeType(attributeName, "date");
-                    // 		break;
-
-                    // 	case Attribute.SEED:
-                    // 		attributeTypeNode = new AttributeType(attributeName, "seed");
-                    // 		break;
-                    // }
-
-                    if (attributeTypeNode != null) {
-                        result += attributeTypeNode.visitNode();
-                    }
+                    result += attributeTypeNode.visitNode();
                 }
             } else {
                 if (tableInfo == null) {

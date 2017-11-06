@@ -96,6 +96,14 @@ public class VGWrapper extends Operator {
         super(nodeName, children, parents);
     }
 
+    @Override
+    @JsonIgnore
+    public ArrayList<String> getOutputAttributeNames() {
+        ArrayList<String> outputAttributes = new ArrayList<>(outputAttributeNameList);
+        outputAttributes.add(outputSeedAttributeName);
+        return outputAttributes;
+    }
+
 
     /**
      * @param nodeName                the name of the operator
@@ -255,6 +263,16 @@ public class VGWrapper extends Operator {
      */
     public void setVgStatistics(VGFunctionStatistics vgStatistics) {
         this.vgStatistics = vgStatistics;
+    }
+
+
+    /**
+     * Returns the type enumeration of the operator
+     * @return returns the type
+     */
+    @JsonIgnore
+    public OperatorType getOperatorType() {
+        return OperatorType.VG_WRAPPER;
     }
 
     /**

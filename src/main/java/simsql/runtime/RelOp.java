@@ -21,22 +21,22 @@
 
 package simsql.runtime;
 
-import java.util.*;
-import java.io.*;
-
-import simsql.shell.RuntimeParameter;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.RawComparator;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.mapreduce.*;
-import org.apache.hadoop.io.*;
 import simsql.shell.PhysicalDatabase;
+import simsql.shell.RuntimeParameter;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.*;
 
 import static simsql.runtime.ReflectedFunction.isScalarFunction;
 import static simsql.runtime.ReflectedFunction.isUDFunction;
@@ -395,27 +395,6 @@ public abstract class RelOp {
 
         ExampleRuntimeParameter p = (ExampleRuntimeParameter) params;
         return p.getMemoryPerCPUInMB();
-    }
-
-    /**
-     * Returns the amount of JVM memory we want to have
-     * @param params the runtime example parameter
-     * @return the amount
-     */
-    public int getJVMMemory(RuntimeParameter params) {
-        ExampleRuntimeParameter p = (ExampleRuntimeParameter) params;
-        return (int) (1.0 -p.getNativeToJVMRatio()) * p.getMemoryPerCPUInMB();
-    }
-
-
-    /**
-     * Returns the amount of native memory we want to have
-     * @param params the runtime example parameter
-     * @return the amount
-     */
-    public int getNativeMemory(RuntimeParameter params) {
-        ExampleRuntimeParameter p = (ExampleRuntimeParameter) params;
-        return (int) (p.getNativeToJVMRatio() * p.getMemoryPerCPUInMB());
     }
 
     // returns the memory to allocate per reduce task, in MB.
@@ -892,9 +871,9 @@ public abstract class RelOp {
 
         // make the directories with their runtime/functions substructure
         if (!(new File(workDirectory + "/simsql/runtime").mkdirs()) ||
-            !(new File(workDirectory + "/simsql/functions").mkdirs()) ||
-            !(new File(workDirectory + "/simsql/functions/scalar").mkdirs()) ||
-            !(new File(workDirectory + "/simsql/functions/ud").mkdirs())) {
+                !(new File(workDirectory + "/simsql/functions").mkdirs()) ||
+                !(new File(workDirectory + "/simsql/functions/scalar").mkdirs()) ||
+                !(new File(workDirectory + "/simsql/functions/ud").mkdirs())) {
             throw new RuntimeException("Could not prepare/create the work directories for macro replacement");
         }
 
@@ -1000,9 +979,9 @@ public abstract class RelOp {
         conf.setBoolean("mapred.compress.map.output", true);
 
         int ioSortMB = conf.getInt("io.sort.mb", 256);
-        conf.set("mapred.map.child.java.opts", "-XX:MaxDirectMemorySize=" + getNativeMemory(params) + "m -Xmx" + (getJVMMemory(params) + ioSortMB) + "m -Xms" + (getJVMMemory(params)) + "m -Duser.timezone='America/Chicago' -Djava.net.preferIPv4Stack=true -XX:CompileThreshold=10000 -XX:+DoEscapeAnalysis -XX:+UseNUMA -XX:-EliminateLocks -XX:+UseBiasedLocking -XX:+OptimizeStringConcat -XX:+UseFastAccessorMethods -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:+UseCompressedOops -XX:+AggressiveOpts -XX:-UseStringCache -XX:ErrorFile=/tmp/hs_err_pid%p.log");
+        conf.set("mapred.map.child.java.opts", "-Xmx" + (getMemPerMapper(params) + ioSortMB) + "m -Xms" + (getMemPerMapper(params)) + "m -Duser.timezone='America/Chicago' -Djava.net.preferIPv4Stack=true -XX:CompileThreshold=10000 -XX:+DoEscapeAnalysis -XX:+UseNUMA -XX:-EliminateLocks -XX:+UseBiasedLocking -XX:+OptimizeStringConcat -XX:+UseFastAccessorMethods -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:+UseCompressedOops -XX:+AggressiveOpts -XX:-UseStringCache -XX:ErrorFile=/tmp/hs_err_pid%p.log");
 
-        conf.set("mapred.reduce.child.java.opts", "-XX:MaxDirectMemorySize=" + getNativeMemory(params) + "m -Xms" + (getJVMMemory(params)) + "m -Duser.timezone='America/Chicago' -Djava.net.preferIPv4Stack=true -XX:CompileThreshold=10000 -XX:+DoEscapeAnalysis -XX:+UseNUMA -XX:-EliminateLocks -XX:+UseBiasedLocking -XX:+OptimizeStringConcat -XX:+UseFastAccessorMethods -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:+UseCompressedOops -XX:+AggressiveOpts -XX:-UseStringCache -XX:ErrorFile=/tmp/hs_err_pid%p.log");
+        conf.set("mapred.reduce.child.java.opts", "-Xmx" + (getMemPerReducer(params) + ioSortMB) + "m -Xms" + (getMemPerMapper(params)) + "m -Duser.timezone='America/Chicago' -Djava.net.preferIPv4Stack=true -XX:CompileThreshold=10000 -XX:+DoEscapeAnalysis -XX:+UseNUMA -XX:-EliminateLocks -XX:+UseBiasedLocking -XX:+OptimizeStringConcat -XX:+UseFastAccessorMethods -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:+UseCompressedOops -XX:+AggressiveOpts -XX:-UseStringCache -XX:ErrorFile=/tmp/hs_err_pid%p.log");
 
         conf.setInt("simsql.input.numSplits", pp.getNumCPUs());
         conf.setInt("mapred.job.reuse.jvm.num.tasks", 1);
@@ -1029,10 +1008,19 @@ public abstract class RelOp {
         // figure out what file to map
         String[] inDirs = myInputNetwork.getPipelinedInputFiles();
         inDirs = excludeAnyWhoWillNotBeMapped(inDirs);
-        String inSingleString = inDirs[0];
-        conf.set("simsql.fileToMap", inSingleString);
-        for (int i = 1; i < inDirs.length; i++) {
-            inSingleString += "," + inDirs[i];
+
+        String inSingleString = "";
+
+        try {
+            inSingleString = inDirs[0];
+            conf.set("simsql.fileToMap", inSingleString);
+            for (int i = 1; i < inDirs.length; i++) {
+                inSingleString += "," + inDirs[i];
+            }
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();
         }
 
         // create and name the job

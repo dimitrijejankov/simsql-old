@@ -2,39 +2,44 @@ package simsql.functions.ud;
 
 import simsql.runtime.*;
 
-/**
- * A reflected function obtained from a java method.
+/** A reflected function obtained from a java method.
  *
  * @author Jacob
  */
 
-public class matrix_multiply extends UDFunction {
+public class matrix_multiply extends UDFunction { 
 
-    public matrix_multiply() {
-        super("/simsql/runtime/MatrixMatrixMultiply.ud.so");
-    }
+  private static VGFunction udf;
+  private static UDWrapper udw;
 
-    @Override
-    public String getName() {
-        return "matrix_multiply";
-    }
+  static {
 
-    public static void main(String[] args) {
+    // the corresponding UDF
+    udf = new VGFunction("/simsql/runtime/MatrixMultiply.ud.so");
 
-        matrix_multiply os = new matrix_multiply();
+    // only one UDWrapper related with each UDFunction
+    udw = new UDWrapper(udf);
+  };
 
-        double[][] mat1 = new double[][]{{1, 2, 3}, {1, 2, 3}};
-        double[][] mat2 = new double[][]{{7, 8, 9, 10}, {9, 10, 11, 12}, {7, 8, 9, 10}};
+  public matrix_multiply() {
+    super(udf, udw);
+  }
 
-        MatrixAttribute ma1 = new MatrixAttribute(mat1);
-        MatrixAttribute ma2 = new MatrixAttribute(mat2);
+  @Override
+	public String getName() {
+		return "matrix_multiply";
+	}
 
-        System.out.print(ma1.print(200));
-        System.out.print(ma2.print(200));
+  public static void main (String[] args) {
 
-        Attribute out = os.apply(ma1, ma2);
+    matrix_multiply os = new matrix_multiply();
 
-        System.out.println(out.print(200));
+    double[][] mat1 = new double[][]{{1, 2, 3}, {4, 5, 6}};
+    double[][] mat2 = new double[][]{{7, 8}, {9, 10}, {11, 12}};
 
-    }
+    Attribute out = os.apply(new MatrixAttribute(mat1), new MatrixAttribute(mat2));
+
+    System.out.println(out.print(200));
+
+  }
 }

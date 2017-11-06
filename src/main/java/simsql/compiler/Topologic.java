@@ -26,6 +26,7 @@ package simsql.compiler;
 import simsql.compiler.expressions.MathExpression;
 import simsql.compiler.operators.Operator;
 import simsql.compiler.operators.TableScan;
+import simsql.compiler.operators.UnionView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,7 +60,6 @@ public class Topologic
 		this.backwardEdge = new HashMap<String, HashSet<String>>();	
 		
 		generateBackwardEdges();
-//		generateForwardEdges();
 	}
 
 	/**
@@ -154,7 +154,7 @@ public class Topologic
 				}
 				else
 				{
-					forwardSet = new HashSet<String>();
+					forwardSet = new HashSet<>();
 					forwardEdge.put(referencedTable, forwardSet);
 				}
 

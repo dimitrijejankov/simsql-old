@@ -21,7 +21,7 @@ public class TableDependencyGraph {
     public TableDependencyGraph(LinkedList<TimeTableNode> finalNodes, HashMap<String, HashSet<String>> backwardEdges) {
 
         this.backwardEdges = backwardEdges;
-        this.nodes = new HashMap<TimeTableNode, HashSet<TimeTableNode>>();
+        this.nodes = new HashMap<>();
         this.time = 0;
 
         generateGraph(finalNodes);
@@ -29,8 +29,8 @@ public class TableDependencyGraph {
 
     private void generateGraph(LinkedList<TimeTableNode> finalNodes) {
 
-        LinkedList<TimeTableNode> processingList = new LinkedList<TimeTableNode>(finalNodes);
-        HashSet<TimeTableNode> visitedNodes = new HashSet<TimeTableNode>();
+        LinkedList<TimeTableNode> processingList = new LinkedList<>(finalNodes);
+        HashSet<TimeTableNode> visitedNodes = new HashSet<>();
 
         while (processingList.size() != 0) {
 
@@ -166,11 +166,11 @@ public class TableDependencyGraph {
 
     public HashMap<String, HashSet<String>> generateRuleMap() {
 
-        HashMap<String, HashSet<String>> ret = new HashMap<String, HashSet<String>>();
+        HashMap<String, HashSet<String>> ret = new HashMap<>();
 
         for(TimeTableNode key : nodes.keySet()) {
 
-            HashSet<String> tmp = new HashSet<String>();
+            HashSet<String> tmp = new HashSet<>();
 
             for(TimeTableNode node : nodes.get(key)) {
                 tmp.add(node.getBracketsTableName());

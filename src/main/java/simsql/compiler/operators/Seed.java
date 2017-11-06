@@ -56,6 +56,21 @@ public class Seed extends Operator {
 		super(nodeName, children, parents);
 	}
 
+    @Override
+    @JsonIgnore
+    public ArrayList<String> getOutputAttributeNames() {
+
+	    if(getChildren().size() != 1) {
+	        throw new RuntimeException("The seed attribute has to have one child!");
+        }
+
+        // adds the seed attribute name to the list of attributes and returns it!
+	    ArrayList<String> names = new ArrayList<>(getChildren().get(0).getOutputAttributeNames());
+	    names.add(seedAttributeName);
+
+        return names;
+    }
+
     /**
      *
      * @param nodeName the name of the operator
@@ -100,6 +115,14 @@ public class Seed extends Operator {
 		this.seedAttributeName = seedAttributeName;
 	}
 
+    /**
+     * Returns the type enumeration of the operator
+     * @return returns the type
+     */
+    @JsonIgnore
+    public OperatorType getOperatorType() {
+        return OperatorType.SEED;
+    }
 
     /**
      * @return returns the string file representation of this operator

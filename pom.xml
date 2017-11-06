@@ -12,6 +12,23 @@
 
     <dependencies>
 
+        <!-- Graph Stream API begin -->
+
+        <dependency>
+            <groupId>org.graphstream</groupId>
+            <artifactId>gs-ui</artifactId>
+            <version>1.1.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.graphstream</groupId>
+            <artifactId>gs-core</artifactId>
+            <version>1.1.2</version>
+            <optional>false</optional>
+        </dependency>
+
+        <!-- Graph Stream API end -->
+
         <!-- Jackson begin -->
 
         <dependency>
@@ -116,10 +133,10 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
 
-                    <!-- Compile vg interface begin-->
+                    <!-- Compile jni begin-->
 
                     <execution>
-                        <id>vg-jni-compile</id>
+                        <id>jni-compile</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>exec</goal>
@@ -138,54 +155,8 @@
                         </configuration>
                     </execution>
 
-                    <!-- Compile vg interface end-->
+                    <!-- Compile jni end-->
 
-                    <!-- Compile ud interface begin-->
-
-                    <execution>
-                        <id>ud-jni-compile</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>/usr/bin/make</executable>
-                            <workingDirectory>${basedir}/src/main/java/simsql/runtime/</workingDirectory>
-                            <arguments>
-                                <argument>-f</argument>
-                                <argument>UDFunction.jni.Makefile</argument>
-                                <argument>CC=/usr/bin/g++</argument>
-                                <argument>INCLUDE=/usr/java/default/include</argument>
-                                <argument>OUTDIR=${basedir}/src/generated/resources/simsql/runtime</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-
-                    <!-- Compile ud interface end-->
-
-                    <!-- Compile runtime native interface begin-->
-
-                    <execution>
-                        <id>jni-compile</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>/usr/bin/make</executable>
-                            <workingDirectory>${basedir}/src/main/java/simsql/runtime/</workingDirectory>
-                            <arguments>
-                                <argument>-f</argument>
-                                <argument>Native.jni.Makefile</argument>
-                                <argument>CC=/usr/bin/g++</argument>
-                                <argument>INCLUDE=/usr/java/default/include</argument>
-                                <!--<argument>INCLUDE=/usr/lib/jvm/java-1.8.0-openjdk-amd64/include</argument>-->
-                                <argument>OUTDIR=${basedir}/src/generated/resources/simsql/runtime</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-
-                    <!-- Compile runtime native interface end-->
 
                     <!-- Compile VGFunctions begin-->
 
@@ -226,7 +197,6 @@
                                 <argument>ud.Makefile</argument>
                                 <argument>CC=/usr/bin/g++</argument>
                                 <argument>INCLUDE=${basedir}/src/main/java/simsql/runtime</argument>
-                                <argument>JNI_INCLUDE=/usr/java/default/include</argument>
                                 <argument>OUTDIR=${basedir}/src/generated/resources/simsql/runtime</argument>
                             </arguments>
                         </configuration>

@@ -176,8 +176,20 @@ public abstract class AbstractRecord implements Record {
     }
 
     public void copyMyselfFrom (Record me) {
-         if (me.getNumAttributes () != getNumAttributes ())
-             throw new RuntimeException ("can't do a record copy where the num atts does not match!");
+         if (me.getNumAttributes () != getNumAttributes ()){
+
+             String message = "";
+
+             for(int i = 0; i < me.getNumAttributes(); ++i) {
+                 message += " " + me.getIthAttribute(i).getType(0).getType().getTypeName();
+             }
+
+             message += "\n\n";
+             message +=  "Number of attributes : " +  getNumAttributes();
+
+             throw new RuntimeException ("can't do a record copy where the num atts does not match!\n" + message);
+         }
+
 
          if (me.hasSortAttribute ()) {
              setSortAttribute (me.getSortAttribute ());

@@ -1,3 +1,5 @@
+
+
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -19,17 +21,17 @@
 
 package simsql.runtime;
 
+import java.util.*;
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.HashMap;
+import java.nio.*;
 
-/**
+/*
  * Encapsulates a seed. Internally, this is represented as a number,
  * but it cannot be operated on arithmetically.
  *
  * @author Luis
  */
+
 public class SeedAttribute implements Attribute {
 
     // the seed value
@@ -127,7 +129,7 @@ public class SeedAttribute implements Attribute {
         }
 
         // if we got here, we read in a '|'
-        if (isNull && i == 5) {
+        if (isNull == true && i == 5) {
 
             // this means we got a null!
             return NullAttribute.NULL;
@@ -169,7 +171,7 @@ public class SeedAttribute implements Attribute {
     }
 
     public HashMap<Attribute, Bitstring> split() {
-        HashMap<Attribute, Bitstring> splits = new HashMap<>();
+        HashMap<Attribute, Bitstring> splits = new HashMap<Attribute, Bitstring>();
         splits.put(new SeedAttribute(myVal), BitstringWithSingleValue.trueIf(true));
         return splits;
     }
@@ -210,7 +212,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
-    public Attribute add(Matrix me) {
+    public Attribute add(boolean ifRow, double[][] me) {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
@@ -246,7 +248,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
-    public Attribute addR(Matrix me) {
+    public Attribute addR(boolean ifRow, double[][] me) {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
@@ -278,7 +280,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
-    public Attribute subtract(Matrix subtractThisOut) {
+    public Attribute subtract(boolean ifRow, double[][] subtractThisOut) {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
@@ -306,7 +308,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
-    public Attribute subtractR(Matrix subtractFromMe) {
+    public Attribute subtractR(boolean ifRow, double[][] subtractFromMe) {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
@@ -338,7 +340,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
-    public Attribute multiply(Matrix byMe) {
+    public Attribute multiply(boolean ifRow, double[][] byMe) {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
@@ -370,7 +372,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
-    public Attribute divide(Matrix byMe) {
+    public Attribute divide(boolean ifRow, double[][] byMe) {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
@@ -398,7 +400,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
-    public Attribute divideR(Matrix divideMe) {
+    public Attribute divideR(boolean ifRow, double[][] divideMe) {
         throw new RuntimeException("The seed type does not support arithmetic operations.");
     }
 
@@ -438,7 +440,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("Invalid equality check.");
     }
 
-    public Bitstring equals(Matrix me) {
+    public Bitstring equals(boolean ifRow, double[][] me) {
         throw new RuntimeException("Invalid equality check.");
     }
 
@@ -478,7 +480,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("Invalid equality check.");
     }
 
-    public Bitstring notEqual(Matrix me) {
+    public Bitstring notEqual(boolean ifRow, double[][] me) {
         throw new RuntimeException("Invalid equality check.");
     }
 
@@ -518,7 +520,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("Invalid comparison.");
     }
 
-    public Bitstring greaterThan(Matrix me) {
+    public Bitstring greaterThan(boolean ifRow, double[][] me) {
         throw new RuntimeException("Invalid comparison.");
     }
 
@@ -558,7 +560,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("Invalid comparison.");
     }
 
-    public Bitstring lessThan(Matrix me) {
+    public Bitstring lessThan(boolean ifRow, double[][] me) {
         throw new RuntimeException("Invalid comparison.");
     }
 
@@ -598,7 +600,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("Invalid comparison.");
     }
 
-    public Bitstring greaterThanOrEqual(Matrix me) {
+    public Bitstring greaterThanOrEqual(boolean ifRow, double[][] me) {
         throw new RuntimeException("Invalid comparison.");
     }
 
@@ -638,7 +640,7 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("Invalid comparison.");
     }
 
-    public Bitstring lessThanOrEqual(Matrix me) {
+    public Bitstring lessThanOrEqual(boolean ifRow, double[][] me) {
         throw new RuntimeException("Invalid comparison.");
     }
 
@@ -646,9 +648,10 @@ public class SeedAttribute implements Attribute {
         throw new RuntimeException("Seed types cannot be injected into scalar functions.");
     }
 
+
     // injection into a VG function for initialization
     public void initializeVG(VGFunction f, int numIter) {
-        byte[] someStuff = {(byte)numIter, (byte)(numIter >>> 8), (byte)(numIter >>> 16)};
+        byte[] someStuff = {(byte) numIter, (byte) (numIter >>> 8), (byte) (numIter >>> 16)};
         f.initializeSeed(myVal + Hash.hashMe(someStuff));
     }
 

@@ -45,10 +45,29 @@ import java.util.HashSet;
         @JsonSubTypes.Type(value = Seed.class, name = "seed"),
         @JsonSubTypes.Type(value = Selection.class, name = "selection"),
         @JsonSubTypes.Type(value = TableScan.class, name = "table-scan"),
-        @JsonSubTypes.Type(value = VGWrapper.class, name = "vg-wrapper")
+        @JsonSubTypes.Type(value = VGWrapper.class, name = "vg-wrapper"),
+        @JsonSubTypes.Type(value = UnionView.class, name = "union-view")
 })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "id")
 public abstract class Operator {
+
+    /**
+     * Enumeration for the type of the operator
+     */
+    public enum OperatorType {
+
+        AGGREGATE,
+        DUPLICATE_REMOVE,
+        FRAME_OUTPUT,
+        JOIN,
+        PROJECTION,
+        SCALAR_FUNCTION,
+        SEED,
+        SELECTION,
+        TABLE_SCAN,
+        VG_WRAPPER,
+        UNION_VIEW
+    }
 
     /**
      * the name of the node in the logical query plan
@@ -191,6 +210,23 @@ public abstract class Operator {
     }
 
     /**
+     * Replaces a parent operator in the parent list with the given operator
+     *
+     * @param op1 the parent operator to be replaced
+     * @param op2 the new child operator
+     */
+    public void replaceParent(Operator op1, Operator op2) {
+        int index = parents.indexOf(op1);
+        if (index >= 0) {
+            parents.remove(op1);
+            parents.add(index, op2);
+        } else {
+            parents.add(op2);
+        }
+    }
+
+
+    /**
      * Adds a child operator to the children list
      *
      * @param operator the new operator
@@ -216,6 +252,13 @@ public abstract class Operator {
     public void removeChild(Operator operator) {
         children.remove(operator);
     }
+
+    /**
+     * Returns the attribute names
+     * @return returns a list of output attribute names
+     */
+    @JsonIgnore
+    public abstract ArrayList<String> getOutputAttributeNames();
 
     /**
      * removes all the parents and children from this node
@@ -365,11 +408,18 @@ public abstract class Operator {
         mapSpaceNameSet.clear();
     }
 
+
+    /**
+     * Returns the type enumeration of the operator
+     * @return returns the type
+     */
+    @JsonIgnore
+    public abstract OperatorType getOperatorType();
+
     /**
      * @return returns the string file representation of this operator
      */
     public abstract String visitNode() throws Exception;
-
 
     /**
      * Changes the node based on the type and the provided indices. Basically it evaluates the predicates,

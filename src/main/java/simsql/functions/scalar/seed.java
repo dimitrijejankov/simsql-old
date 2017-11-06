@@ -1,5 +1,3 @@
-
-
 /*****************************************************************************
  *                                                                           *
  *  Copyright 2014 Rice University                                           *
@@ -54,11 +52,11 @@ public class seed extends Function {
 		// add the mac address
 		try {
 	    buildIntoSeed(NetworkInterface.getByInetAddress(InetAddress.getLocalHost()).getHardwareAddress());
-		} catch (Exception ignore) { }
+		} catch (Exception e) { }
 
 		// add the current time
 		buildIntoSeed(Calendar.getInstance().getTime().toString().getBytes());
-	}
+	};
 
 	// simple constructor
 	public seed() {

@@ -18,17 +18,17 @@
 
 package simsql.compiler;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.concurrent.LinkedBlockingDeque;
-
 import simsql.compiler.boolean_operator.*;
 import simsql.compiler.expressions.MathExpression;
 import simsql.compiler.math_operators.*;
 import simsql.compiler.operators.*;
 import simsql.runtime.DataType;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.concurrent.LinkedBlockingDeque;
 
 public class PlanInstantiation {
     /* randomTablePlanMap records all the plans for the Random tables. */
@@ -84,12 +84,12 @@ public class PlanInstantiation {
         }
 
 		/* Each random table (string) corresponds to an operator. */
-        HashMap<String, Operator> generatedPlanMap = new HashMap<String, Operator>();
+        HashMap<String, Operator> generatedPlanMap = new HashMap<>();
         /* Each random table (string) has a list of tableScan which should be replaced. */
-        HashMap<String, ArrayList<TableScan>> replacedPlanMap = new HashMap<String, ArrayList<TableScan>>();
+        HashMap<String, ArrayList<TableScan>> replacedPlanMap = new HashMap<>();
 
-        ArrayList<Operator> hostOperatorList = new ArrayList<Operator>();
-        ArrayList<Operator> linkedOperatorList = new ArrayList<Operator>();
+        ArrayList<Operator> hostOperatorList = new ArrayList<>();
+        ArrayList<Operator> linkedOperatorList = new ArrayList<>();
 
         //1. create the partial plan.
         for (int index = tpList.size() - 1; index >= 0; index--) {
@@ -113,7 +113,7 @@ public class PlanInstantiation {
         //2.link the partial plan.
         for (int index = tpList.size() - 1; index >= 0; index--) {
             String table = tpList.get(index);
-			/* here operator is the host operator */
+            /* here operator is the host operator */
 
             Operator hostOperator = generatedPlanMap.get(table);
             if (!hostOperatorList.contains(hostOperator)) {
@@ -143,12 +143,12 @@ public class PlanInstantiation {
 		/*
 		 * 3. find the sink operator list.
 		 */
-        HashSet<String> tpMap = new HashSet<String>();
+        HashSet<String> tpMap = new HashSet<>();
         tpMap.addAll(tpList);
 
         ArrayList<String> sinkTableList = getFutureUsedTable(tpMap, end_index);
         if (sinkTableList == null || sinkTableList.size() == 0) {
-            sinkTableList = new ArrayList<String>();
+            sinkTableList = new ArrayList<>();
             sinkTableList.addAll(tpMap);
         }
 
@@ -246,7 +246,7 @@ public class PlanInstantiation {
                 temp.removeParent(frameOutput);
 
                 Projection projection = new Projection(temp.getNodeName() + "_temp",
-                        copyOperatorList(temp.getChildren()), new ArrayList<Operator>(), copyStringList(((Projection) temp).getProjectedNameList()));
+                        copyOperatorList(temp.getChildren()), new ArrayList<>(), copyStringList(((Projection) temp).getProjectedNameList()));
 
                 children.remove(i);
                 children.add(i, projection);
@@ -262,15 +262,15 @@ public class PlanInstantiation {
 
     private String findMatchingGeneralIndexTable(String table) {
 
-        if(table.matches("^[^_]+((\\[[0-9]+])+){2,}$")) {
+        if (table.matches("^[^_]+((\\[[0-9]+])+){2,}$")) {
             String prefix = MultidimensionalTableSchema.getPrefixFromBracketsTableName(table);
             HashMap<String, Integer> indices = MultidimensionalTableSchema.getIndicesFromBracketsName(table);
 
-            for(String randomTable : randomTablePlanMap.keySet()) {
-                if(randomTable.startsWith(prefix)) {
+            for (String randomTable : randomTablePlanMap.keySet()) {
+                if (randomTable.startsWith(prefix)) {
                     MultidimensionalSchemaIndices indexSpecification = new MultidimensionalSchemaIndices(MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(randomTable));
 
-                    if (indexSpecification.areIndicesForThisTable(indices)){
+                    if (indexSpecification.areIndicesForThisTable(indices)) {
                         return randomTable;
                     }
                 }
@@ -281,7 +281,7 @@ public class PlanInstantiation {
 
         String randomTableName = getTablePrefix(table) + "[i]";
 
-        if(!randomTablePlanMap.containsKey(randomTableName)) {
+        if (!randomTablePlanMap.containsKey(randomTableName)) {
             throw new RuntimeException("Could not match the table " + MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(table) + "to a table schema");
         }
 
@@ -752,7 +752,7 @@ public class PlanInstantiation {
     }
 
     private ArrayList<String> changeFormatToUnderScore(ArrayList<String> sinkOperatorSet) {
-        ArrayList<String> resultList = new ArrayList<String>();
+        ArrayList<String> resultList = new ArrayList<>();
         for (String table : sinkOperatorSet) {
             resultList.add(MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(table));
         }
@@ -761,7 +761,7 @@ public class PlanInstantiation {
     }
 
     private static ArrayList<Operator> copyOperatorList(ArrayList<Operator> list) {
-        ArrayList<Operator> c_list = new ArrayList<Operator>(list.size());
+        ArrayList<Operator> c_list = new ArrayList< >(list.size());
         for (Operator aList : list) {
             c_list.add(aList);
         }

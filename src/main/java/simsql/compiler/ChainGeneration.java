@@ -24,10 +24,8 @@
  */
 package simsql.compiler;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import simsql.compiler.operators.Operator;
-import simsql.compiler.timetable.BipartiteGraph;
+import simsql.compiler.timetable.GraphCutter;
 import simsql.compiler.timetable.TableDependencyGraph;
 import simsql.compiler.timetable.TimeTableNode;
 
@@ -54,30 +52,30 @@ public class ChainGeneration
 	
 	private int startTimeTick;
     private LinkedList<TimeTableNode> requiredTables;
+
+	private GraphCutter bp;
 	
-	public ChainGeneration(Topologic topologic, LinkedList<TimeTableNode> requiredTables, HashMap<Operator, String> planTableMap)
+	public ChainGeneration(Topologic topologic, LinkedList<TimeTableNode> requiredTables, HashMap<Operator, String> planTableMap, ArrayList<Operator> queryList)
 	{
         this.topologic = topologic;
         this.requiredTables = requiredTables;
 
-		this.ruleMap = new HashMap<String, HashSet<String>>();
-        this.simulateTableMap = new HashMap<Integer, TableByTime>();
-        this.startPointList = new ArrayList<String>();
+		this.ruleMap = new HashMap<>();
+        this.simulateTableMap = new HashMap<>();
+        this.startPointList = new ArrayList<>();
 
-		HashMap<String, Operator> tableOperationMap = new HashMap<String, Operator>();
 
-        for(Operator o : planTableMap.keySet()) {
-        	tableOperationMap.put(planTableMap.get(o), o);
-		}
-
-		//BipartiteGraph bp = new BipartiteGraph(requiredTables, topologic.getBackwardEdges(), planTableMap);
 
 		instantiateChain();
 	}
 
+	public GraphCutter getBp() {
+		return bp;
+	}
+
 	public ArrayList<String> getTopologicalList(int start, int end)
 	{
-		return new ArrayList<String>(this.simulateTableMap.get(start).getTableSet());
+		return new ArrayList<>(this.simulateTableMap.get(start).getTableSet());
 	}
 
 	private void instantiateChain()
@@ -149,7 +147,7 @@ public class ChainGeneration
             }
         }
 
-        return new HashSet<String>();
+        return new HashSet<>();
     }
 
 	/**

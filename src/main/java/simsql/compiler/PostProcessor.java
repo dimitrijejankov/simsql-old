@@ -24,18 +24,12 @@
  */
 package simsql.compiler; // package mcdb.compiler.logicPlan.postProcessor;
 
+import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import simsql.compiler.math_operators.EFunction;
 import simsql.compiler.math_operators.MathOperator;
 import simsql.compiler.operators.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-
-
-
-
-
+import java.util.*;
 
 
 // import mcdb.compiler.logicPlan.logicOperator.mathOperator.EFunction;
@@ -79,18 +73,14 @@ public class PostProcessor
 		/*
 		 * 2. Rename all the nodes
 		 */
-		for(int i = 0; i < nodeList.size(); i++)
-		{
-			Operator element = nodeList.get(i);
+		for (Operator element : nodeList) {
 			renameNode(element, addedNodeList);
 		}
 		
 		/*
 		 * 3. Rename the attributes according to the result of step2
 		 */
-		for(int i = 0; i < nodeList.size(); i++)
-		{
-			Operator element = nodeList.get(i);
+		for (Operator element : nodeList) {
 			LogicOperatorReplacer.replaceAttribute(element);
 		}
 		
@@ -114,9 +104,8 @@ public class PostProcessor
 			/*
 			 * 5.1 Clear the renaming information.
 			 */
-			for(int i = 0; i < nodeList.size(); i++)
-			{
-				nodeList.get(i).clearRenamingInfo();
+			for (Operator aNodeList : nodeList) {
+				aNodeList.clearRenamingInfo();
 			}
 			
 			/*
@@ -276,12 +265,9 @@ public ArrayList<RenameNode> findSelfJoinRenanmeList(ArrayList<RenameNode> added
 		
 		if(parents != null)
 		{
-			for(int i = 0; i < parents.size(); i++)
-			{
-				Operator parent = parents.get(i);
-				if(!(parent instanceof Projection) ||
-						!same((Projection)parent, projection))
-				{
+			for (Operator parent : parents) {
+				if (!(parent instanceof Projection) ||
+						!same((Projection) parent, projection)) {
 					removeForParents = false;
 				}
 			}
@@ -289,12 +275,9 @@ public ArrayList<RenameNode> findSelfJoinRenanmeList(ArrayList<RenameNode> added
 		
 		if(children != null)
 		{
-			for(int i = 0; i < children.size(); i++)
-			{
-				Operator child = children.get(i);
-				if(!(child instanceof Projection) ||
-						!same((Projection)child, projection))
-				{
+			for (Operator child : children) {
+				if (!(child instanceof Projection) ||
+						!same((Projection) child, projection)) {
 					removeForChildren = false;
 				}
 			}
@@ -306,43 +289,35 @@ public ArrayList<RenameNode> findSelfJoinRenanmeList(ArrayList<RenameNode> added
 			/*
 			 * children remove parent "element"
 			 */
-			for(int i = 0; i < children.size(); i++)
-			{
-				Operator child = children.get(i);
+			for (Operator child : children) {
 				child.removeParent(projection);
 			}
 			
 			/*
 			 * parents remove child "element"
 			 */
-			for(int i = 0; i < parents.size(); i++)
-			{
-				Operator parent = parents.get(i);
-				
+			for (Operator parent : parents) {
 				int index = parent.getChildren().indexOf(projection);
 				parent.removeChild(projection);
-			
-				for(int j = 0; j < children.size(); j++) //In fact projection has only one child here. 
+
+				for (int j = 0; j < children.size(); j++) //In fact projection has only one child here.
 				{
 					Operator child = children.get(j);
-					
+
 					//parent adds child as "child" and child adds parent as "parent"
 					parent.addChild(index, child);
 					child.addParent(parent);
 				}
 
 				// change the outer_relation
-				if(parent instanceof VGWrapper &&
-						projection.equals(((VGWrapper) parent).getOuterRelationOperator()))
-				{
+				if (parent instanceof VGWrapper &&
+						projection.equals(((VGWrapper) parent).getOuterRelationOperator())) {
 					((VGWrapper) parent).setOuterRelationOperator(projection.getChildren().get(0));
 				}
-				
+
 				// change the leftTable
-				else if(parent instanceof Join)
-				{
-					if(((Join) parent).getLeftTable().equals(projection.getNodeName()))
-					{
+				else if (parent instanceof Join) {
+					if (((Join) parent).getLeftTable().equals(projection.getNodeName())) {
 						((Join) parent).setLeftTable(projection.getChildren().get(0).getNodeName());
 					}
 				}
@@ -363,35 +338,27 @@ public ArrayList<RenameNode> findSelfJoinRenanmeList(ArrayList<RenameNode> added
 		
 		if(expressionList != null)
 		{
-			for(int i = 0; i < expressionList.size(); i++)
-			{
-				MathOperator temp = expressionList.get(i);
-				if(temp instanceof EFunction) //empty Operator
-				{
-					ArrayList<String> associatedAttributeList = columnListMap.get(temp);
-					String output = outputMap.get(temp);
-					
-					if(associatedAttributeList.size() == 1)
-					{
-						String associateAttribute = associatedAttributeList.get(0);
-						if(!associateAttribute.equals(output))
-						{
-							remove = false;
-							break;
-						}
-					}
-					else
-					{
-						remove = false;
-						break;
-					}
-				}
-				else
-				{
-					remove = false;
-					break;
-				}
-			}
+            for (MathOperator temp : expressionList) {
+                if (temp instanceof EFunction) //empty Operator
+                {
+                    ArrayList<String> associatedAttributeList = columnListMap.get(temp);
+                    String output = outputMap.get(temp);
+
+                    if (associatedAttributeList.size() == 1) {
+                        String associateAttribute = associatedAttributeList.get(0);
+                        if (!associateAttribute.equals(output)) {
+                            remove = false;
+                            break;
+                        }
+                    } else {
+                        remove = false;
+                        break;
+                    }
+                } else {
+                    remove = false;
+                    break;
+                }
+            }
 		}
 		
 		if(remove) //we should remove the current 
@@ -402,90 +369,73 @@ public ArrayList<RenameNode> findSelfJoinRenanmeList(ArrayList<RenameNode> added
 			/*
 			 * parents remove child "element"
 			 */
-			for(int i = 0; i < parents.size(); i++)
-			{
-				Operator parent = parents.get(i);
-				parent.removeChild(element);
-				
-				// change the outer_relation
-				if(parent instanceof VGWrapper &&
-						element.equals(((VGWrapper) parent).getOuterRelationOperator()))
-				{
-					((VGWrapper) parent).setOuterRelationOperator(element.getChildren().get(0));
-				}
-				// change the leftTable
-				else if(parent instanceof Join)
-				{
-					if(((Join) parent).getLeftTable().equals(element.getNodeName()))
-					{
-						((Join) parent).setLeftTable(element.getChildren().get(0).getNodeName());
-					}
-				}
-			}
+            for (Operator parent : parents) {
+                parent.removeChild(element);
+
+                // change the outer_relation
+                if (parent instanceof VGWrapper &&
+                        element.equals(((VGWrapper) parent).getOuterRelationOperator())) {
+                    ((VGWrapper) parent).setOuterRelationOperator(element.getChildren().get(0));
+                }
+                // change the leftTable
+                else if (parent instanceof Join) {
+                    if (((Join) parent).getLeftTable().equals(element.getNodeName())) {
+                        ((Join) parent).setLeftTable(element.getChildren().get(0).getNodeName());
+                    }
+                }
+            }
 			
 			/*
 			 * children remove parent "element"
 			 */
-			for(int i = 0; i < children.size(); i++)
-			{
-				Operator child = children.get(i);
-				child.removeParent(element);
-			}
-			
-			for(int i = 0; i < parents.size(); i++)
-			{
-				Operator parent = parents.get(i);
-				
-				for(int j = 0; j < children.size(); j++)
-				{
-					Operator child = children.get(j);
-					
-					//parent adds child as "child" and child adds parent as "parent"
-					parent.addChild(child);
-					child.addParent(parent);
-				}
-			}
+            for (Operator child : children) {
+                child.removeParent(element);
+            }
+
+            for (Operator parent : parents) {
+                for (Operator child : children) {
+                    //parent adds child as "child" and child adds parent as "parent"
+                    parent.addChild(child);
+                    child.addParent(parent);
+                }
+            }
 			
 			element.clearLinks();
 		}
 		else //see if we need to remove some attributes
 		{
-			if(expressionList != null)
-			{
-				for(int i = 0; i < expressionList.size(); i++)
-				{
-					MathOperator temp = expressionList.get(i);
-					if(temp instanceof EFunction) //empty Operator
-					{
-						ArrayList<String> associatedAttributeList = columnListMap.get(temp);
-						String output = outputMap.get(temp);
-						
-						if(associatedAttributeList.size() == 1)
-						{
-							String associateAttribute = associatedAttributeList.get(0);
-							if(associateAttribute.equals(output))
-							{
-								expressionList.remove(temp);
-								columnListMap.remove(temp);
-								outputMap.remove(temp);
-								
-								//if we remove one element, then the i should decrease, or else 
-								//we ignore the next one.
-								i--;
-							}
-						}
-					}
-				}
-			}
+            for(int i = 0; i < expressionList.size(); i++)
+            {
+                MathOperator temp = expressionList.get(i);
+                if(temp instanceof EFunction) //empty Operator
+                {
+                    ArrayList<String> associatedAttributeList = columnListMap.get(temp);
+                    String output = outputMap.get(temp);
+
+                    if(associatedAttributeList.size() == 1)
+                    {
+                        String associateAttribute = associatedAttributeList.get(0);
+                        if(associateAttribute.equals(output))
+                        {
+                            expressionList.remove(temp);
+                            columnListMap.remove(temp);
+                            outputMap.remove(temp);
+
+                            //if we remove one element, then the i should decrease, or else
+                            //we ignore the next one.
+                            i--;
+                        }
+                    }
+                }
+            }
 		}
 	}
 	
 	public void merge(ArrayList<RenameNode> addedNodeList)
 	{
-		for(int i = 0; i < addedNodeList.size(); i++)
-		{
-			renameFunction(addedNodeList.get(i));
-		}
+        for (RenameNode anAddedNodeList : addedNodeList) {
+            renameFunction(anAddedNodeList);
+        }
 	}
 	
 	public void renameFunction(RenameNode renameNode)
@@ -1564,20 +1514,60 @@ public void selfJoinmerge(ArrayList<RenameNode> addedNodeList)
 							  String originalName, 
 							  String mappedName) throws Exception
 	{
-		for(int i = 0; i < addedNodeList.size(); i++)
-		{
-			RenameNode tempNode = addedNodeList.get(i);
-			if(tempNode.child.equals(currentNode) && 
-					tempNode.parent.equals(parent))
-			{
-				tempNode.addStringMap(originalName, mappedName);
-				return;
-			}
-		}
+        for (RenameNode tempNode : addedNodeList) {
+            if (tempNode.child.equals(currentNode) &&
+                    tempNode.parent.equals(parent)) {
+                tempNode.addStringMap(originalName, mappedName);
+                return;
+            }
+        }
 		//We could find the associated node in the list, and we add one.
 		RenameNode node = new RenameNode(currentNode, parent);
 		node.addStringMap(originalName, mappedName);
 		addedNodeList.add(node);
 	}
-	
+
+    /**
+     * Merges all the operators that are forwarded to the frame output as a
+     * @param frameOutput
+     * @param sourceOperators
+     */
+    public void mergeDuplicates(FrameOutput frameOutput, LinkedList<Operator> sourceOperators) {
+
+        Hashtable<Operator, String> uniques = new Hashtable<>();
+
+        int idx = 0;
+
+        // scan through all the children of the frameOutput
+	    for(Operator c : new ArrayList<>(frameOutput.getChildren())){
+
+	        if(!uniques.keySet().contains(c)) {
+	            // add it to the unique operators
+	            uniques.put(c, frameOutput.getTableList().get(idx));
+            }
+            else {
+
+	            // remove the duplicate from the frameOutput
+                frameOutput.getChildren().remove(idx);
+                String uniqueTable = uniques.get(c);
+                String removedTable = frameOutput.getTableList().remove(idx);
+
+                // update the sources so that the scan from the right table name
+                for(Operator o : sourceOperators) {
+                    TableScan s  = (TableScan) o;
+
+                    if(s.getTableName().equals(removedTable)) {
+                        s.setTableName(uniqueTable);
+                    }
+                }
+
+                // remove one link to the frameOutput
+                c.removeParent(frameOutput);
+
+                idx--;
+            }
+
+            idx++;
+        }
+    }
 }

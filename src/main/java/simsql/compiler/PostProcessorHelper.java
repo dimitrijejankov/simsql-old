@@ -143,17 +143,12 @@ public class PostProcessorHelper {
 		ArrayList<Operator> resultList = new ArrayList<Operator>();
 		
 		HashMap<Operator, Integer> childrenNumMap = new HashMap<Operator, Integer>();
-		
-		for(int i = 0; i < nodeList.size(); i++)
-		{
-			Operator temp = nodeList.get(i);
+
+		for (Operator temp : nodeList) {
 			ArrayList<Operator> children = temp.getChildren();
-			if(children == null)
-			{
+			if (children == null) {
 				childrenNumMap.put(temp, 0);
-			}
-			else
-			{
+			} else {
 				childrenNumMap.put(temp, children.size());
 			}
 		}
@@ -166,7 +161,7 @@ public class PostProcessorHelper {
 		
 		for(int i = 0; i < nodeList.size(); i++)
 		{
-			//find the node with no parents
+			//find the node with no children
 			int j = 0;
 			for(; j < nodeList.size(); j++)
 			{
@@ -193,15 +188,12 @@ public class PostProcessorHelper {
 				ArrayList<Operator> parents = temp.getParents();
 				if(parents != null)
 				{
-					for(int k = 0; k < parents.size(); k++)
-					{
-						Operator temp2 = parents.get(k);
-						if(temp2 == null || childrenNumMap.get(temp2) == null)
-						{
+					for (Operator temp2 : parents) {
+						if (temp2 == null || childrenNumMap.get(temp2) == null) {
 							System.out.println("adsfdsa");
 						}
 						int num = childrenNumMap.get(temp2);
-						childrenNumMap.put(temp2, num-1);
+						childrenNumMap.put(temp2, num - 1);
 					}
 				}
 			}

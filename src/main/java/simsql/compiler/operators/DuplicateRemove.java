@@ -19,6 +19,7 @@
 package simsql.compiler.operators;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import simsql.compiler.CommonContent;
 import simsql.compiler.CopyHelper;
@@ -43,6 +44,27 @@ public class DuplicateRemove extends Operator {
                            @JsonProperty("children") ArrayList<Operator> children,
                            @JsonProperty("parents") ArrayList<Operator> parents) {
         super(nodeName, children, parents);
+    }
+
+    @Override
+    @JsonIgnore
+    public ArrayList<String> getOutputAttributeNames() {
+
+        if(getChildren().size() != 1) {
+            throw new RuntimeException("The seed attribute has to have one child!");
+        }
+
+        return new ArrayList<>(getChildren().get(0).getOutputAttributeNames());
+    }
+
+
+    /**
+     * Returns the type enumeration of the operator
+     * @return returns the type
+     */
+    @JsonIgnore
+    public OperatorType getOperatorType() {
+        return OperatorType.DUPLICATE_REMOVE;
     }
 
     /**

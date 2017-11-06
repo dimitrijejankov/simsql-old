@@ -48,6 +48,9 @@ public class TypeMachine {
             outType = new VectorType();
         else if (parseMe.contains("matrix"))
             outType = new MatrixType();
+        else if (parseMe.contains("seed")){
+            outType = new SeedType();
+        }
         else if (parseMe.contains("unknown") || parseMe.contains("bottom") || parseMe.contains("versatile"))
             outType = new VersType();
         else

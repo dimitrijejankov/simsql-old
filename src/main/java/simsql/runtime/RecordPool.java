@@ -28,7 +28,7 @@ import java.lang.ref.*;
  * A late addition to the system: the ability to "recycle" records of
  * some type by marking them after they are not necessary anymore, so
  * that operators can avoid reallocating them and triggering the gc.
- * <p>
+ *
  * Operations obtain new instances through this class, and then use the
  * recycle() method to bring them back here.
  *
@@ -37,69 +37,69 @@ import java.lang.ref.*;
 
 class RecordPool {
 
-    // to avoid circular references and object loitering, we use soft
-    // references to our records.
-    private SoftReference<ArrayDeque<AbstractRecord>> recs;
-    private int capacity;
-    private AbstractRecord prototype;
+  // to avoid circular references and object loitering, we use soft
+  // references to our records.
+  private SoftReference<ArrayDeque<AbstractRecord>> recs;
+  private int capacity;
+  private AbstractRecord prototype;
 
-    // constructor with a defined capacity.
-    public RecordPool(int capacity, AbstractRecord prototype) {
-        recs = new SoftReference<>(null);
-        this.capacity = capacity;
-        this.prototype = prototype;
+  // constructor with a defined capacity.
+  public RecordPool(int capacity, AbstractRecord prototype) {
+    recs = new SoftReference<ArrayDeque<AbstractRecord>>(null);
+    this.capacity = capacity;
+    this.prototype = prototype;
+  }
+
+  // constructor with default capacity.
+  public RecordPool(AbstractRecord prototype) {
+    this(1024, prototype);
+  }
+
+  // produces an instance.
+  public AbstractRecord get() {
+
+    // did we get recalled?
+    ArrayDeque<AbstractRecord> Q = recs.get();
+    if (Q == null) {
+      
+      Q = new ArrayDeque<AbstractRecord>(capacity);
+      recs = new SoftReference<ArrayDeque<AbstractRecord>>(Q);
     }
 
-    // constructor with default capacity.
-    public RecordPool(AbstractRecord prototype) {
-        this(1024, prototype);
+    // are we empty?
+    if (Q.isEmpty()) {
+
+      // then return an old record.
+      try {
+	AbstractRecord myRec = (AbstractRecord)prototype.buildRecordOfSameType();
+	myRec.setPoolForRecycling(this);
+	return myRec;
+      } catch (Exception e) {
+	  e.printStackTrace();
+	  throw new RuntimeException("Pool failed!", e);
+      }
     }
 
-    // produces an instance.
-    public AbstractRecord get() {
+    // otherwise, pull a value from the queue.
+    AbstractRecord r = Q.remove();
+    r.setPoolForRecycling(this);
+    return r;
+  }
 
-        // did we get recalled?
-        ArrayDeque<AbstractRecord> Q = recs.get();
-        if (Q == null) {
-
-            Q = new ArrayDeque<>(capacity);
-            recs = new SoftReference<>(Q);
-        }
-
-        // are we empty?
-        if (Q.isEmpty()) {
-
-            // then return an old record.
-            try {
-                AbstractRecord myRec = (AbstractRecord) prototype.buildRecordOfSameType();
-                myRec.setPoolForRecycling(this);
-                return myRec;
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException("Pool failed!", e);
-            }
-        }
-
-        // otherwise, pull a value from the queue.
-        AbstractRecord r = Q.remove();
-        r.setPoolForRecycling(this);
-        return r;
+  // returns an instance to the pool
+  public void put(AbstractRecord myRec) {
+    
+    // did we get recalled?
+    ArrayDeque<AbstractRecord> Q = recs.get();
+    if (Q == null) {
+      Q = new ArrayDeque<AbstractRecord>(capacity);
+      recs = new SoftReference<ArrayDeque<AbstractRecord>>(Q);
     }
-
-    // returns an instance to the pool
-    public void put(AbstractRecord myRec) {
-
-        // did we get recalled?
-        ArrayDeque<AbstractRecord> Q = recs.get();
-        if (Q == null) {
-            Q = new ArrayDeque<>(capacity);
-            recs = new SoftReference<>(Q);
-        }
-
-        // take it only if we have the capacity.
-        if (Q.size() < capacity && myRec != null) {
-            Q.offer(myRec);
-        }
+    
+    // take it only if we have the capacity.
+    if (Q.size() < capacity && myRec != null) {
+      Q.offer(myRec);
     }
+  }
 
 }

@@ -87,21 +87,26 @@ public:
 
   void takeParams(RecordIn &input) {
 
+    printf("asdasdd");
+
     // weight matrix is provided store it
     if(input.w != NULL) {
-        w = input.w->matrix;
+        w = getMatrix(input.w);
+        printf("w : %d %d\n", w->size1, w->size2);
         active--;
     }
 
     // bias matrix is provided store it
     if(input.e != NULL) {
-        e = input.e->matrix;
+        e = getMatrix(input.e);
+        printf("e : %d %d\n", e->size1, e->size2);
         active--;
     }
 
     // store activation from previous layer
     if(input.o != NULL) {
-        o = input.o->matrix;
+        o = getMatrix(input.o);
+        printf("o : %d %d\n", o->size1, o->size2);
         active--;
     }
 
@@ -109,20 +114,30 @@ public:
 
   int outputVals(RecordOut &out) {
 
+    printf("here1");
+
     // do we still have to go
     if (active != 0) {
         return 0;
     }
 
+    printf("here2");
+
     // allocate the matrix
     gsl_matrix* product = gsl_matrix_calloc(o->size1, o->size2);
+
+    printf("here3");
 
     // multiply x * w
     gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, e, w, 0.0, product);
 
+    printf("here4");
+
     // free the matrices
     gsl_matrix_free(e);
     gsl_matrix_free(w);
+
+    printf("here5");
 
     // do RELU
     for(int i = 0; i < o->size1; ++i) {
@@ -131,26 +146,38 @@ public:
         }
     }
 
+    printf("here6");
+
     // allocate the output matrix
     out.u = (Matrix*)malloc(sizeof(Matrix));
+
+    printf("here7");
 
     // give the data to the output matrix
     out.u->numRow = product->size1;
     out.u->numCol = product->size2;
-    out.u->ifRow = true;
+
+    printf("here8");
 
     // the data in the product is not his anymore
     product->owner = false;
 
+    printf("here9");
+
     // give the data to the matrix
     out.u->value = product->data;
 
+    printf("here10");
+
     // free the product
     gsl_matrix_free(product);
-    gsl_matrix_free(o);
+
+    printf("here11");
 
     // set the number of required operators to 3
     active = NUM_OPERATORS;
+
+    printf("here12");
 
     return 1;
   }

@@ -73,6 +73,22 @@ public class ScalarFunction extends Operator {
     }
 
     /**
+     * Returns the output attribute names that are in the output map
+     * @return the list of attribute names
+     */
+    @Override
+    @JsonIgnore
+    public ArrayList<String> getOutputAttributeNames() {
+        ArrayList<String> names = new ArrayList<>();
+
+        for(MathOperator o : scalarExpressionList) {
+            names.add(outputMap.get(o));
+        }
+
+        return names;
+    }
+
+    /**
      * @param nodeName         the name of the operator
      * @param children         the children of the operator
      * @param parents          the parent operators
@@ -128,6 +144,15 @@ public class ScalarFunction extends Operator {
      */
     public void setOutputMap(HashMap<MathOperator, String> outputMap) {
         this.outputMap = outputMap;
+    }
+
+    /**
+     * Returns the type enumeration of the operator
+     * @return returns the type
+     */
+    @JsonIgnore
+    public OperatorType getOperatorType() {
+        return OperatorType.SCALAR_FUNCTION;
     }
 
     /**
@@ -217,7 +242,7 @@ public class ScalarFunction extends Operator {
 
     @JsonIgnore
     public ArrayList<String> getGeneratedNameList() {
-        ArrayList<String> resultList = new ArrayList<String>();
+        ArrayList<String> resultList = new ArrayList<>();
 
         if (scalarExpressionList != null) {
             for (MathOperator mathOperator : scalarExpressionList) {
@@ -235,7 +260,7 @@ public class ScalarFunction extends Operator {
     @JsonGetter("column-lists")
     public ArrayList<ColumnList> getColumnLists() {
 
-        ArrayList<ColumnList> ret = new ArrayList<ColumnList>();
+        ArrayList<ColumnList> ret = new ArrayList<>();
 
         // convert to array list
         for (MathOperator m : columnListMap.keySet()) {
@@ -253,7 +278,7 @@ public class ScalarFunction extends Operator {
     @JsonSetter("column-lists")
     public void setColumnLists(ArrayList<ColumnList> invertedColumnMap) {
 
-        columnListMap = new HashMap<MathOperator, ArrayList<String>>();
+        columnListMap = new HashMap<>();
 
         // invert the map and add it to to the empty output map
         for (ColumnList c : invertedColumnMap) {
@@ -288,7 +313,7 @@ public class ScalarFunction extends Operator {
     @JsonSetter("inverted-output-map")
     public void setInvertedOutputMap(HashMap<String, MathOperator> invertedOutputMap) {
 
-        outputMap = new HashMap<MathOperator, String>();
+        outputMap = new HashMap<>();
 
         // invert the map and add it to to the empty output map
         for (String m : invertedOutputMap.keySet()) {
