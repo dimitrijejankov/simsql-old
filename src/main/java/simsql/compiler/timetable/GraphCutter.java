@@ -1,5 +1,6 @@
 package simsql.compiler.timetable;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import simsql.compiler.*;
@@ -8,13 +9,35 @@ import simsql.compiler.math_operators.EFunction;
 import simsql.compiler.math_operators.MathOperator;
 import simsql.compiler.operators.*;
 import simsql.runtime.DataType;
+import simsql.runtime.IntType;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import static simsql.compiler.MultidimensionalTableSchema.isGeneralTable;
 
 public class GraphCutter {
+
+
+    private class Cut {
+
+        /**
+         * The current best cut
+         */
+        public Set<Operator> bestCut = new HashSet<>();
+
+        /**
+         * The current best edges
+         */
+        public LinkedHashSet<Operator> bestCutEdges = new LinkedHashSet<>();
+
+        /**
+         * The current best cost
+         */
+        public double bestCost;
+    }
 
     /**
      * The cost model for the graph cutter
@@ -101,7 +124,7 @@ public class GraphCutter {
     /**
      * The desired number of operators in a cut, in certain cases can be greater
      */
-    private static final int LOWER_OPERATOR_BOUND = 10;
+    private static final int LOWER_OPERATOR_BOUND = 5;
 
     /**
      * Each cut should not be bigger than this value
@@ -248,6 +271,8 @@ public class GraphCutter {
         // figure out the best cut...
         getBestCut(edgeNodeList, cut);
 
+        System.out.println("The number of operators this cut has: " + cut.size());
+
         ArrayList<Operator> parents = new ArrayList<>();
         ArrayList<Operator> children = new ArrayList<>();
         ArrayList<String> tableList = new ArrayList<>();
@@ -309,7 +334,7 @@ public class GraphCutter {
 
         /*
          * 3. Renaming
-		 */
+         */
         for (Operator operator : cut) {
             operator.clearRenamingInfo();
         }
@@ -454,6 +479,10 @@ public class GraphCutter {
         return sinkListOperators;
     }
 
+    public LinkedList<Operator> getSourceOperators() {
+        return sourceOperators;
+    }
+
     private Operator wrapOperator(Operator child, Operator edge) {
 
         Projection projection = new Projection("wrapped" + detachedNodesCounter, new ArrayList<>(), new ArrayList<>());
@@ -508,6 +537,7 @@ public class GraphCutter {
     }
 
     private void getBestCut(LinkedHashSet<Operator> edgeNodeList, Set<Operator> cut) {
+
         // smallest cut
         int smallestCut = Integer.MAX_VALUE;
 
@@ -535,8 +565,23 @@ public class GraphCutter {
             // all the parents are edges
             edgeNodeList.addAll(source.getParents());
 
+            // create an empty cut
+            Cut cutObject = new Cut();
+            cutObject.bestCost = Double.MAX_VALUE;
+
+            // select the cut
+            selectCutDeep(source, cut, cutObject);
+
+            edgeNodeList.clear();
+            edgeNodeList.addAll(cutObject.bestCutEdges);
+
+            cut.clear();
+            cut.addAll(cutObject.bestCut);
+
+            System.out.println("Best cost " + cutObject.bestCost) ;
+
             // select a cut for this source node if we haven't made a cut...
-            selectCut(edgeNodeList, cut);
+            // selectCut(edgeNodeList, cut);
 
             // if we have a smaller one store it
             if (smallestCut > cut.size()) {
@@ -553,8 +598,17 @@ public class GraphCutter {
                 smallestCut = cut.size();
             }
 
-            // this has to be either the last cut or in the bounds
+            // if this cut is in bounds this one is the one we are going to use
             if (cut.size() <= UPPER_OPERATOR_BOUND && (cut.size() >= LOWER_OPERATOR_BOUND || edgeNodeList.isEmpty())) {
+
+                // remove the cut
+                bestEdgeNodeList.clear();
+                bestCut.clear();
+
+                // set this as the best candidate
+                bestEdgeNodeList.addAll(edgeNodeList);
+                bestCut.addAll(cut);
+
                 break;
             }
 
@@ -569,6 +623,116 @@ public class GraphCutter {
         // set the best candidates
         cut.addAll(bestCut);
         edgeNodeList.addAll(bestEdgeNodeList);
+    }
+
+
+    private void selectCutDeep(Operator edge,
+                               Set<Operator> currentCut,
+                               Cut cut) {
+
+        // is the cut large enough if so we are done here
+        if (currentCut.size() >= UPPER_OPERATOR_BOUND) {
+            return;
+        }
+
+        // the seed operators that were added
+        LinkedList<Operator> addedSeedOperators = new LinkedList<>();
+
+        // the children that are the consequence of adding this operator
+        Set<Operator> consequentialChildren = getConsequentialChildrenWithoutSeedDependencies(currentCut, edge, addedSeedOperators);
+
+        // make a cut from consequential children and cut
+        HashSet<Operator> mergedCut = new HashSet<>(currentCut);
+        mergedCut.addAll(consequentialChildren);
+
+        // the seed operators we already visited
+        HashSet<Operator> visitedSeeds = new HashSet<>();
+
+        // fix the seed operators
+        while (!addedSeedOperators.isEmpty() && mergedCut.size() < UPPER_OPERATOR_BOUND) {
+
+            LinkedList<Operator> newSeedOperators = new LinkedList<>();
+
+            // process each seed operator we just added
+            for(Operator seed : addedSeedOperators) {
+
+                // if we have processed this operator we skip it
+                if(visitedSeeds.contains(seed)) {
+                    continue;
+                }
+
+                // the operators that must be added as a result of this seed
+                HashSet<Operator> tmp = seedDependents(seed, mergedCut, newSeedOperators);
+
+                // add to the cut
+                mergedCut.addAll(tmp);
+                consequentialChildren.addAll(tmp);
+            }
+
+            // add all the seeds we just visited to the visited operators
+            visitedSeeds.addAll(addedSeedOperators);
+
+            // the seed operators we just added
+            addedSeedOperators = newSeedOperators;
+        }
+
+        // add the edge to the merged cut
+        mergedCut.add(edge);
+
+        // if the upper bound has been reached makes no sense to use this
+        if(mergedCut.size() >= UPPER_OPERATOR_BOUND) {
+            return;
+        }
+
+        // get all edges induced by the parent
+        LinkedList<Operator> newEdges = getEdges(currentCut, consequentialChildren, edge);
+
+        // the cost of the cut
+        double cost = calculateCost(currentCut, consequentialChildren, edge, newEdges);
+
+        // we have a better edge and it is bigger
+        if (cost < cut.bestCost && mergedCut.size() >= cut.bestCut.size()) {
+            cut.bestCut.clear();
+            cut.bestCut.addAll(mergedCut);
+            cut.bestCost = cost;
+            cut.bestCutEdges.clear();
+            cut.bestCutEdges.addAll(newEdges);
+        }
+
+        // go through each parent
+        for(Operator p : edge.getParents()) {
+
+
+            // check if we have an union if we do check if we have cut off all the children
+            if(p instanceof UnionView && !checkUnion((UnionView)p)) {
+                continue;
+            }
+
+            selectCutDeep(p, mergedCut, cut);
+        }
+    }
+
+    private boolean checkUnion(UnionView union) {
+
+        for(Operator c : union.getChildren()) {
+
+            if(!checkUnionChild(c)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean checkUnionChild(Operator c) {
+
+        if(c.getChildren().size() != 1) {
+            return false;
+        }
+
+        Operator o = c.getChildren().get(0);
+
+        return o instanceof Seed || o instanceof TableScan;
     }
 
     private void selectCut(LinkedHashSet<Operator> edgeNodeList, Set<Operator> cut) {
@@ -808,7 +972,7 @@ public class GraphCutter {
         requiredTables.replace(tableName, requiredTables.get(tableName) + 1);
 
         // put it to the source operators
-        sourceOperators.add(scan);
+        sourceOperators.addFirst(scan);
     }
 
 
@@ -885,6 +1049,7 @@ public class GraphCutter {
 
         // increase the cost
         return cost / Math.exp(n - 1);
+	//return cost / n;
     }
 
     /**
@@ -969,6 +1134,10 @@ public class GraphCutter {
                 }
             }
 
+            if(consequentialChildren.size() > UPPER_OPERATOR_BOUND) {
+                return consequentialChildren;
+            }
+
             // remove the visited operator..
             toVisit.removeFirst();
         }
@@ -1024,6 +1193,8 @@ public class GraphCutter {
 
         // fix-up the source operators
         fixSourceOperators();
+
+        System.out.println("Num of operators: " + PostProcessorHelper.findAllNode(new ArrayList<>(this.sinkListOperators)).size());
     }
 
     private void fixSourceOperators() throws Exception {
@@ -1031,20 +1202,113 @@ public class GraphCutter {
         LinkedList<Operator> newSources = new LinkedList<>();
 
         // go through all the source operators
-        for (Operator o : sourceOperators) {
+        for (Operator start : sourceOperators) {
 
             // if this table scan has more than one
-            if (o.getParents().size() > 1) {
-                for (Operator p : o.getParents()) {
-                    // add the source
-                    newSources.add(rewireTableScan(o, p));
-                }
-            }
+            Operator end = findMultipleConsumers(start);
+
+            // rewire the end
+            rewire(end, newSources);
+
+            System.out.println("asd");
         }
 
         // add all sources
         sourceOperators.addAll(newSources);
     }
+
+    private void rewire(Operator end, LinkedList<Operator> newSources) throws Exception {
+
+        if(end.getParents().size() == 0) {
+            return;
+        }
+
+        int copyNum = 1;
+
+        // wait till we trim the parent
+        while(end.getParents().size() != 1) {
+
+            // set the current parent and the current child
+            Operator curParent = end.getParents().get(0);
+            Operator curChild = end;
+
+            // follow it down (the rabbit hole)
+            while(!curParent.getChildren().isEmpty()) {
+
+                // copy the child
+                Operator cp = curChild.copy(copyHelper);
+                cp.setNodeName(cp.getNodeName() + "_" + copyNum);
+
+                // rewire the parent
+                curParent.replaceChild(curChild, cp);
+                curChild.removeParent(curParent);
+                cp.addParent(curParent);
+
+                // the current parent becomes the copy
+                curParent = cp;
+
+                // the current child if exists becomes the child of the copy
+                if(!cp.getChildren().isEmpty()) {
+                    curChild = cp.getChildren().get(0);
+                }
+                else {
+
+                    // I am a source add me
+                    newSources.add(curParent);
+                }
+            }
+        }
+    }
+
+    private Operator findMultipleConsumers(Operator start) {
+
+        // current operator is start operator
+        Operator curOperator = start;
+
+        // if the next operator has only one parent
+        while(curOperator.getParents().size() == 1) {
+
+            // grab the next operator in line
+            Operator nextOperator = curOperator.getParents().get(0);
+
+            // is this new operator a scalar function with just EFunctions
+            if(PostProcessorHelper.getNodeType(nextOperator) == PostProcessorHelper.SCALARFUNCTION) {
+
+                // got through each MathOperator
+                for (MathOperator temp : ((ScalarFunction) nextOperator).getScalarExpressionList()) {
+
+                    // if just one of them is not an EFunction we are done here
+                    if (!(temp instanceof EFunction)) {
+                        break;
+                    }
+                }
+
+                // go just to the next operator
+                curOperator = nextOperator;
+                continue;
+            }
+
+            // is this operator a projection
+            if(PostProcessorHelper.getNodeType(nextOperator) == PostProcessorHelper.PROJECTION) {
+
+                // go just to the next operator
+                curOperator = nextOperator;
+                continue;
+            }
+
+            // does this operator have multiple children
+            if(nextOperator.getParents().size() > 1) {
+                break;
+            }
+
+            // we are done here
+            break;
+        }
+
+
+        return curOperator;
+    }
+
 
     /**
      * Finds all the sinks
@@ -1247,16 +1511,16 @@ public class GraphCutter {
         }
         /*
          * Scalar function followed by projection
-		 */
+         */
         if (old_attributeNameList.size() != 0) {
-			/*
-			 * 1. Scalar function on the new defined attribute due to the
-			 * definition of the schema.
-			 */
+            /*
+             * 1. Scalar function on the new defined attribute due to the
+             * definition of the schema.
+             */
 
-			/*
-			 * The data structure in the ScalarFunction node.
-			 */
+            /*
+             * The data structure in the ScalarFunction node.
+             */
             String nodeName = "node" + translatorHelper.getInstantiateNodeIndex();
             ArrayList<Operator> children = new ArrayList<>();
             ArrayList<Operator> parents = new ArrayList<>();
@@ -1264,96 +1528,96 @@ public class GraphCutter {
             HashMap<MathOperator, ArrayList<String>> columnListMap = new HashMap<>();
             HashMap<MathOperator, String> outputMap = new HashMap<>();
 
-			/*
-			 * 1.1. Fill the translatedStatement in the ScalarFunction.
-			 */
+            /*
+             * 1.1. Fill the translatedStatement in the ScalarFunction.
+             */
             for (int i = 0; i < old_attributeNameList.size(); i++) {
-				/*
-				 * 1.2. Fill in the scalarFunction with the concrete
-				 * MathFunction Here it should be EFunction.
-				 */
+                /*
+                 * 1.2. Fill in the scalarFunction with the concrete
+                 * MathFunction Here it should be EFunction.
+                 */
                 scalarExpressionList.add(new EFunction());
             }
 
-			/*
-			 * It comes to the attribute set of each function. Since one scalar
-			 * function can have multiple functions, with each function can have
-			 * multiple involved attributes. However, since the scalar function
-			 * only plays the role of renaming, each scalar function has only
-			 * one attribute.
-			 */
+            /*
+             * It comes to the attribute set of each function. Since one scalar
+             * function can have multiple functions, with each function can have
+             * multiple involved attributes. However, since the scalar function
+             * only plays the role of renaming, each scalar function has only
+             * one attribute.
+             */
 
             ArrayList<String> tempList;
             for (int i = 0; i < old_attributeNameList.size(); i++) {
-				/*
-				 * 1.3. Fill each functions in the ScalarFunction with involved
-				 * attributes.
-				 */
+                /*
+                 * 1.3. Fill each functions in the ScalarFunction with involved
+                 * attributes.
+                 */
                 tempList = new ArrayList<>();
                 tempList.add(old_attributeNameList.get(i));
                 columnListMap.put(scalarExpressionList.get(i), tempList);
             }
 
             for (int i = 0; i < new_attributeNameList.size(); i++) {
-				/*
-				 * 1.4. Fill each functions in the ScalarFunction with an output
-				 */
+                /*
+                 * 1.4. Fill each functions in the ScalarFunction with an output
+                 */
                 outputMap.put(scalarExpressionList.get(i), new_attributeNameList.get(i));
             }
 
-			/*
-			 * 1.5. Fill in the children
-			 */
+            /*
+             * 1.5. Fill in the children
+             */
             children.add(originalElement);
 
-			/*
-			 * 1.6 Create the current scalar function node.
-			 */
+            /*
+             * 1.6 Create the current scalar function node.
+             */
             ScalarFunction scalarFunction = new ScalarFunction(nodeName, children, parents, translatorHelper);
             scalarFunction.setScalarExpressionList(scalarExpressionList);
             scalarFunction.setColumnListMap(columnListMap);
             scalarFunction.setOutputMap(outputMap);
 
-			/*
-			 * 1.7 This translatedElement add current Node as parent
-			 */
+            /*
+             * 1.7 This translatedElement add current Node as parent
+             */
             originalElement.addParent(scalarFunction);
 
-			/*
-			 * 2. Projection on the result attribute
-			 */
-			/*
-			 * 2.1 Create the data structure of the Projection
-			 */
+            /*
+             * 2. Projection on the result attribute
+             */
+            /*
+             * 2.1 Create the data structure of the Projection
+             */
             Projection projection;
             nodeName = "node" + translatorHelper.getInstantiateNodeIndex();
             children = new ArrayList<>();
             parents = new ArrayList<>();
             ArrayList<String> projectedNameList = new ArrayList<>();
 
-			/*
-			 * 2.2 Fill the tranlsatedResult.
-			 */
+            /*
+             * 2.2 Fill the tranlsatedResult.
+             */
             for (String aNew_attributeNameList : new_attributeNameList) {
                 /*
-				 * 2.3 Fill the projectedNameList
-				 */
+                 * 2.3 Fill the projectedNameList
+                 */
                 projectedNameList.add(aNew_attributeNameList);
             }
 
-			/*
-			 * 2.4 Fill the children
-			 */
+            /*
+             * 2.4 Fill the children
+             */
             children.add(scalarFunction);
 
-			/*
-			 * 2.5 Create the current projection node.
-			 */
+            /*
+             * 2.5 Create the current projection node.
+             */
             projection = new Projection(nodeName, children, parents,
                     projectedNameList);
-			/*
-			 * 2.6 "scalarFunction" fills it parents with the projection.
-			 */
+            /*
+             * 2.6 "scalarFunction" fills it parents with the projection.
+             */
             scalarFunction.addParent(projection);
             return projection;
         } else {
@@ -1361,6 +1625,22 @@ public class GraphCutter {
         }
     }
 
+
+    View dummyView()  {
+
+        ArrayList<Attribute> atts = new ArrayList<>();
+
+
+        atts.add(new Attribute("topic_id", new IntType(), "sumwordtopic_i"));
+        atts.add(new Attribute("word_id", new IntType(), "sumwordtopic_i"));
+        atts.add(new Attribute("sum_count", new IntType(), "sumwordtopic_i"));
+
+        return new View("sumwordtopic_i", "\n" +
+                "create table sumwordtopic[i] (topic_id, word_id, sum_count) as\n" +
+                "    select pw.topic_id as topic_id, pw.word_id as word_id, sum(pw.count_num) as sum_count\n" +
+                "    from producedword[i/10][i%10] as pw\n" +
+                "    group by pw.word_id, pw.topic_id", atts, 3);
+    }
 
     /**
      * Instantiates an operator to he specified indices
@@ -1447,6 +1727,206 @@ public class GraphCutter {
                         translatorElement.addParent(unionView);
                     }
                 }
+            }
+        }
+
+        // the set of all the operators we already have visited
+        HashSet<Operator> finishedQueue = new HashSet<>();
+
+        // the list of all the operators that are still unprocessed
+        LinkedBlockingDeque<Operator> availableQueue = new LinkedBlockingDeque<>();
+
+        // add the operator we want to instantiate
+        availableQueue.add(operator);
+
+        // while there are no more operators that are unprocessed
+        while (!availableQueue.isEmpty()) {
+
+            // grab the first available operator
+            Operator currentElement = availableQueue.poll();
+
+            // check if we have processed it already, if we have just skip it
+            if (!finishedQueue.contains(currentElement)) {
+
+                // change the indices of the current operator
+                currentElement.changeNodeProperty(indices, translatorHelper);
+
+                // add the current operator to the set of processed operators so we don't visit him again
+                finishedQueue.add(currentElement);
+
+                // if the current operator is a table scan operator
+                if (currentElement instanceof TableScan) {
+
+                    // if this is not a normal table
+                    if (((TableScan) currentElement).getType() != TableReference.COMMON_TABLE) {
+
+                        // grab it's table name
+                        String tableName = ((TableScan) currentElement).getTableName();
+
+                        // check if it's a general index table
+                        if (isGeneralTable(tableName)) {
+                            HashMap<String, MathExpression> expressions = ((TableScan) currentElement).getIndexMathExpressions();
+                            String prefix = MultidimensionalTableSchema.getTablePrefixFromQualifiedName(tableName);
+
+                            HashMap<String, Integer> newIndices = MultidimensionalTableSchema.evaluateExpressions(expressions, indices);
+
+                            ((TableScan) currentElement).setTableName(MultidimensionalTableSchema.getQualifiedTableNameFromIndices(prefix, newIndices));
+                            ((TableScan) currentElement).setIndexStrings(newIndices);
+
+                            /*
+                             * Keep the state of current table scan, which should be replaced in the integrated plan.
+                             */
+                            putIntoMap(replacedPlanMap, rootTable, (TableScan) currentElement);
+                        } else {
+                            putIntoMap(replacedPlanMap, rootTable, (TableScan) currentElement);
+                        }
+                    }
+                    // this is a common table
+                    else {
+
+                        // add the operator
+                        sourceOperators.add(currentElement);
+                    }
+                }
+
+                // get the children of the current operator
+                ArrayList<Operator> children = currentElement.getChildren();
+
+                // if it has some children add them to the available queue
+                if (children != null) {
+                    for (Operator temp : children) {
+                        if (!finishedQueue.contains(temp)) {
+                            availableQueue.add(temp);
+                        }
+                    }
+                }
+            }
+        }
+
+        generatedPlanMap.put(rootTable, operator);
+        return operator;
+    }
+
+    private int N = 0;
+
+    /**
+     * Instantiates an operator to he specified indices
+     * TODO handle union view
+     *
+     * @param rootTable
+     * @param operator         the operator we ant to instantiate
+     * @param indices
+     * @param generatedPlanMap
+     * @param replacedPlanMap
+     * @param sourceOperators
+     * @return
+     */
+    private Operator instantiateOperatorFake(String rootTable,
+                                         Operator operator,
+                                         HashMap<String, Integer> indices,
+                                         HashMap<String, Operator> generatedPlanMap,
+                                         HashMap<String, ArrayList<TableScan>> replacedPlanMap, LinkedList<Operator> sourceOperators) {
+
+        ArrayList<Operator> sinkList = new ArrayList<Operator>();
+        sinkList.add(operator);
+        ArrayList<Operator> allOperators = Topologic.findAllNode(sinkList);
+        UnionView unionView = Topologic.findUnionVIew(allOperators);
+
+        if (unionView != null) {
+            HashSet<String> referencedTables = ruleMap.get(MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(rootTable));
+
+            //get the tables that have been already in the plan.
+            HashSet<String> alreadyInPlanTables = new HashSet<>();
+            for (Operator currentElement : allOperators) {
+                if (currentElement instanceof TableScan) {
+                    String tableName = ((TableScan) currentElement).getTableName();
+                    if (((TableScan) currentElement).getType() != TableReference.COMMON_TABLE) {
+                        if (isGeneralTable(tableName)) {
+                            HashMap<String, MathExpression> expressions = ((TableScan) currentElement).getIndexMathExpressions();
+                            String prefix = MultidimensionalTableSchema.getTablePrefixFromQualifiedName(tableName);
+                            alreadyInPlanTables.add(MultidimensionalTableSchema.getBracketsTableNameFromEvaluatedExpressions(prefix, expressions, indices));
+                        } else {
+                            alreadyInPlanTables.add(MultidimensionalTableSchema.getBracketsTableNameFromQualifiedTableName(tableName));
+                        }
+                    }
+                }
+            }
+
+            //create the plan for the remaining tables.
+            if (referencedTables != null) {
+                String qualifiedTableName;
+                Translator translator = new Translator(translatorHelper);
+
+                File queriesFile = new File( "/home/dimitrije/Documents/graph-lda/union_0_" + (N++) + ".json");
+
+                ArrayList<Operator> tmp = null;
+                try {
+                    tmp = new ObjectMapper().readValue(queriesFile, new TypeReference<ArrayList<Operator>>() {});
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                //ArrayList<Operator> tmp = new ArrayList<>();
+
+                int i = 0;
+                for (String tableName : referencedTables) {
+
+                    if (!alreadyInPlanTables.contains(tableName)) {
+                        qualifiedTableName = MultidimensionalTableSchema.getQualifiedTableNameFromBracketsTableName(tableName);
+                        String prefix = MultidimensionalTableSchema.getTablePrefixFromQualifiedName(qualifiedTableName);
+                        HashMap<String, Integer> referencedIndices = MultidimensionalTableSchema.getIndicesFromQualifiedName(qualifiedTableName);
+
+                        View view;
+                        try {
+                            view = SimsqlCompiler.catalog.getView(qualifiedTableName);
+                        } catch (Exception e) {
+                            view = dummyView();
+                        }
+
+                        TableReference tempReference = new TableReference(prefix, qualifiedTableName, referencedIndices, TableReference.CONSTANT_INDEX_TABLE);
+                        Operator translatorElement = null;
+
+                        try {
+                            //File queriesFile = new File( "/home/dimitrije/IntellijProjects/graph-lda/union.json");
+                            translatorElement = tmp.get(i);
+                            //translatorElement = translator.sqlExpressionTranslator.indexTableScan(view, qualifiedTableName, tempReference);
+                        }
+                        catch (Exception e) {
+                            System.out.println("");
+                        }
+
+                        if (translatorElement instanceof Projection) {
+                            unionView.getInputAttributeNameList().addAll(((Projection) translatorElement).getProjectedNameList());
+                        } else {
+                            throw new RuntimeException("The children of UnionView operator should be Projection");
+                        }
+
+                        //  tmp.add(translatorElement);
+
+                        ArrayList<DataType> outputAttributeTypeList = new ArrayList<>();
+                        ArrayList<Attribute> realAttributes = view.getAttributes();
+                        for (Attribute realAttribute : realAttributes) {
+                            outputAttributeTypeList.add(realAttribute.getType());
+                        }
+
+                        unionView.addChild(translatorElement);
+                        unionView.getInputAttributeTypeList().addAll(outputAttributeTypeList);
+                        translatorElement.addParent(unionView);
+
+                        i++;
+                    }
+                }
+//
+//                try {
+//
+//                    String out = new ObjectMapper().writerFor(new TypeReference<ArrayList<Operator>>() {}).writeValueAsString(tmp);
+//
+//                    System.out.println("As");
+//
+//                } catch (JsonProcessingException e) {
+//                    e.printStackTrace();
+//                }
+
             }
         }
 

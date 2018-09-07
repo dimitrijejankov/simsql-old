@@ -172,7 +172,8 @@ public class IntAttribute implements Attribute {
   }
   
   public long getHashCode () {
-    return Hash.hashMe (getValue (0));
+    //return Hash.hashMe (getValue (0));
+	return myVal % 80;
   }
   
   public byte [] getValue (int whichMC) {

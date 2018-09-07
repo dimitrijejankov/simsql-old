@@ -22,22 +22,14 @@
 package simsql.runtime;
 
 import java.util.*;
-import java.io.*;
-import org.antlr.runtime.*;
+
+import simsql.compiler.ParallelExecutor;
 import simsql.shell.RuntimeParameter;
 
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.mapreduce.*;
-import org.apache.hadoop.io.*;
 
 /**
  * Temporary table operation.
@@ -111,7 +103,7 @@ public class TempTableOp extends RelOp {
   }
 
   @Override
-    public boolean run(RuntimeParameter params, boolean verbose) {
+    public boolean run(RuntimeParameter params, boolean verbose, ParallelExecutor parent) {
 		
     // first, try getting an output file
     Configuration conf = new Configuration ();

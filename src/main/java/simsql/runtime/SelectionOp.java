@@ -23,20 +23,14 @@
 package simsql.runtime;
 
 import java.util.*;
-import java.io.*;
-import org.antlr.runtime.*;
+
+import simsql.compiler.ParallelExecutor;
 import simsql.shell.RuntimeParameter;
 import simsql.shell.PhysicalDatabase;
-import simsql.code_generator.*;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.mapreduce.*;
-import org.apache.hadoop.io.*;
 
 public class SelectionOp extends RelOp {
 
@@ -294,11 +288,15 @@ public class SelectionOp extends RelOp {
 
   // execution -- if we're chained and don't have to reduce, we skip
   // all of this.
-  public boolean run(RuntimeParameter params, boolean verbose) {
+  public boolean run(RuntimeParameter params, boolean verbose, ParallelExecutor parent) {
 
     // if not chained OR if we need to run a reducer, run normally.
     if (!isChained || runSelectionReducer) {
-      return super.run(params, verbose);
+      return super.run(params, verbose, parent);
+    }
+    // else if there is an executor running wait for it to finish
+    else if(parent != null) {
+        parent.waitToFinish();
     }
 
     // otherwise, just rename.

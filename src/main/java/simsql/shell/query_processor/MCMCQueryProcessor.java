@@ -69,6 +69,9 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             String oldName = relation.getName();
             String without = "";
 
+	  //  System.out.println("Old name is: " + oldName);
+
+		
             if (oldName.matches("^[^_]+(_[0-9]+){2,}$")) {
                 without = oldName;
             } else {
@@ -83,6 +86,11 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
                 else
                     without += "i";
             }
+		
+	//	without = oldName;
+
+	//    System.out.println("without name is: " + without);
+
 
             // see if this is a view
             View res = getCatalog().getView(without);
@@ -98,12 +106,15 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
                 index++;
             }
 
+
             // now save the relation
             String newName = relation.getName() + "_saved";
             relation.setName(newName);
             relation.setFileName(null);
             getCatalog().addRelation(relation);
             myTranslator.getPhysicalDatabase().rename(oldName, newName);
+
+	   // System.out.println("We are adding this relation:  " + newName);
         }
         requiredRelations = new ArrayList<>();
     }
@@ -114,19 +125,38 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
 
             HashSet<Relation> removedTables = new HashSet<>();
 
+ 	//System.out.println("I am entering MCMC");
             for (Relation relation : requiredRelations) {
+
+	//		System.out.println("Relation name: " + relation.getName());
+		// Added by Shangyu; Save table[0]
                 if (!graphCutter.isTableRequired(relation.getName())) {
+		//	System.out.println("Not Required Relation name: " + relation.getName());
+			
+                //    if (relation.getName().contains("projected")) {
+                  //  if (!relation.getName().contains("query_block")
+                  //          && relation.getName().contains("_")
+                  //          && relation.getName().split("_")[1].charAt(0) == '0') {
+                  //      continue;
+                  //  }
+			
+
                     getPhysicalDatabase().deleteTable(relation.getName());
                     removedTables.add(relation);
                 }
+		
             }
 
             requiredRelations.removeAll(removedTables);
         } else {
             // if it's a normal query remove them all.
+
+	//	System.out.println("I am entering NONE MCMC");
             for (Relation relation : requiredRelations) {
-                getPhysicalDatabase().deleteTable(relation.getName());
+	//	if (!relation.getName().contains("projected"))
+                	getPhysicalDatabase().deleteTable(relation.getName());
             }
+		
             requiredRelations.clear();
         }
     }
@@ -223,6 +253,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
     }
 
     public SimSQLCompiledQuery nextIteration() {
+
         if (!isMCMC) {
             SimSQLCompiledQuery oneToReturn = parsedQuery;
             parsedQuery = null;
@@ -251,7 +282,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
         // there might be some empty files that got left around... they were allocated before
         // the query was executed, but they were never actually used (so they don't appear in
         // the return set of "getFilesToUnlink"
-        getPhysicalDatabase().removeZeroSizeRelations("query_block");
+        //getPhysicalDatabase().removeZeroSizeRelations("query_block");
 
         // build a relation for the iterator creation
         if (queryResult.getOutputRelation(getPhysicalDatabase()) != null) {
@@ -261,7 +292,7 @@ public class MCMCQueryProcessor implements QueryProcessor<SimSQLCompiledQuery, S
             // where are we printing?
             if (outputFile == null) {
                 // only print out if we are at the end
-                if (graphCutter.isFinished())
+                if (graphCutter == null || graphCutter.isFinished())
                     getPhysicalDatabase().printRelation(rel);
             } else {
                 // a file

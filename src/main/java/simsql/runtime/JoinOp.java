@@ -21,13 +21,22 @@
 
 package simsql.runtime;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
-import simsql.shell.PhysicalDatabase;
-import simsql.shell.RuntimeParameter;
-
 import java.util.*;
+import java.io.*;
+
+import org.antlr.runtime.*;
+
+import simsql.shell.RuntimeParameter;
+import simsql.shell.PhysicalDatabase;
+import simsql.code_generator.*;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.io.*;
 
 public class JoinOp extends RelOp {
 
@@ -62,6 +71,9 @@ public class JoinOp extends RelOp {
     // not be our immediate inputs... they might be the files that feed the pipe on the left or the right
     String leftFile;
     String rightFile;
+
+    private boolean materializedInputFileSpecified = false;
+    private String materializedInputFile;
 
     // returns a set of necessary mappings.
     public Set<String> getNecessaryValues() {
@@ -168,7 +180,7 @@ public class JoinOp extends RelOp {
 
     // this looks through the final selection pred associated with the join, and tries to find an
     // attribute participates in an equality check with the attribute referred to by "attName"
-    private String getEqualityCheckWith(String attName) {
+    public String getEqualityCheckWith(String attName) {
 
         ArrayList<String> leftList = getValue("leftInput.hashAtts").getIdentifierList();
         ArrayList<String> rightList = getValue("rightInput.hashAtts").getIdentifierList();
@@ -425,6 +437,13 @@ public class JoinOp extends RelOp {
         return addPipelinedOperationToInputPipeNetwork(temp);
     }
 
+    public PipeNetwork getPipelinedVersion(String materializedInputFile) {
+        materializedInputFileSpecified = true;
+        this.materializedInputFile = materializedInputFile;
+        PipeNode temp = new PipelinedJoin(this);
+        return addPipelinedOperationToInputPipeNetwork(temp);
+    }
+
     // returns the number of megabytes that we think will be needed to pipeline this thing
     public long numMegsToPipeline() {
 
@@ -458,6 +477,10 @@ public class JoinOp extends RelOp {
 
     // returns the smaller of the two inputs
     public String getSmallInput() {
+
+        if (materializedInputFileSpecified) {
+            return getValue(materializedInputFile + "Input.inFiles").getStringList().get(0);
+        }
 
         long leftSize = getSize("left");
         long rightSize = getSize("right");

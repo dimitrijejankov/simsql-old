@@ -361,7 +361,7 @@ public ArrayList<RenameNode> findSelfJoinRenanmeList(ArrayList<RenameNode> added
             }
 		}
 		
-		if(remove) //we should remove the current 
+		if(remove) // we should remove the current
 		{
 			ArrayList<Operator> parents = element.getParents();
 			ArrayList<Operator> children = element.getChildren();

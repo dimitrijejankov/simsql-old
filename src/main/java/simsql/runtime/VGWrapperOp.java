@@ -161,11 +161,6 @@ public class VGWrapperOp extends RelOp {
     // number of reducers -- zero if we got the sort orders correctly.
     public int getNumReducers(RuntimeParameter params) {
 
-        // map-only job if there are no relations to sort.
-        if (!runVGWrapperReducer) {
-            return 0;
-        }
-
         // otherwise, use reducers.
         ExampleRuntimeParameter p = (ExampleRuntimeParameter) params;
         return p.getNumCPUs();
@@ -568,7 +563,7 @@ public class VGWrapperOp extends RelOp {
                 }
             }
 
-            runVGWrapperReducer = false;
+            runVGWrapperReducer = true;
             return;
         }
 
@@ -627,7 +622,7 @@ public class VGWrapperOp extends RelOp {
                 }
 
                 // we're done.
-                runVGWrapperReducer = false;
+                runVGWrapperReducer = true;
                 return;
             }
         }

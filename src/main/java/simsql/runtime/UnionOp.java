@@ -60,7 +60,7 @@ public class UnionOp extends RelOp {
         // add the inner inputs
         ParsedRHS innerInputs = getValue("innerInputs");
         if (innerInputs != null) {
-            for (String innerName : innerInputs.getVarList().keySet()) {
+            for (String innerName: innerInputs.getVarList().keySet()) {
                 inputSet.addAll(getValue("innerInputs." + innerName + ".inFiles").getStringList());
             }
         }
@@ -73,7 +73,8 @@ public class UnionOp extends RelOp {
     public Map<String, Set<Set<String>>> getExistingSortAtts(PhysicalDatabase myDBase) {
 
         // there are no existing sort atts for the union
-        return new HashMap<>();
+        Map<String, Set<Set<String>>> ret = new HashMap<String, Set<Set<String>>>();
+        return ret;
     }
 
     // returns the output of this operation
@@ -89,7 +90,7 @@ public class UnionOp extends RelOp {
     public String[] getOutputAttNames() {
 
         ArrayList<String> out = new ArrayList<String>();
-        for (Assignment a : getValue("output.outAtts").getAssignmentList()) {
+        for (Assignment a: getValue("output.outAtts").getAssignmentList()) {
             out.add(a.getIdentifier());
         }
 
@@ -104,14 +105,14 @@ public class UnionOp extends RelOp {
         // go through all the inner inputs.
         ParsedRHS innerInputs = getValue("innerInputs");
         if (innerInputs != null) {
-            for (String innerName : innerInputs.getVarList().keySet()) {
+            for (String innerName: innerInputs.getVarList().keySet()) {
 
                 ParsedRHS innerSelRHS = getValue("innerInputs." + innerName + ".selection");
                 if (innerSelRHS != null) {
                     one.addAll(innerSelRHS.getExpression().getAllFunctions());
                 }
 
-                for (Assignment a : getValue("innerInputs." + innerName + ".outAtts").getAssignmentList()) {
+                for (Assignment a: getValue("innerInputs." + innerName + ".outAtts").getAssignmentList()) {
                     one.addAll(a.getExpression().getAllFunctions());
                 }
             }
@@ -124,7 +125,7 @@ public class UnionOp extends RelOp {
         }
 
         // output assignments
-        for (Assignment a : getValue("output.outAtts").getAssignmentList()) {
+        for (Assignment a: getValue("output.outAtts").getAssignmentList()) {
             one.addAll(a.getExpression().getAllFunctions());
         }
 
@@ -140,25 +141,25 @@ public class UnionOp extends RelOp {
         }
 
         // otherwise, use reducers
-        ExampleRuntimeParameter p = (ExampleRuntimeParameter) params;
+        ExampleRuntimeParameter p = (ExampleRuntimeParameter)params;
         return p.getNumCPUs();
 
     }
 
     // this looks up the size of a file
-    private long getSizeFromName(String inputName) {
-        String[] bar = new String[1];
+    private long getSizeFromName (String inputName) {
+        String [] bar = new String [1];
         bar[0] = inputName;
-        return getPathsActualSize(bar);
+        return getPathsActualSize (bar);
     }
 
     // this gets the size in bytes of the given input... fName should be something like "outerInput.inFiles"
-    private long getSize(String fName) {
-        ArrayList<String> inputSet = getValue(fName).getStringList();
-        System.out.println("getting size for " + inputSet);
-        String[] foo = {""};
-        String[] bar = inputSet.toArray(foo);
-        return getPathsActualSize(bar);
+    private long getSize (String fName) {
+        ArrayList<String> inputSet = getValue (fName).getStringList ();
+        System.out.println ("getting size for " + inputSet);
+        String [] foo = {""};
+        String [] bar = inputSet.toArray (foo);
+        return getPathsActualSize (bar);
     }
 
     // the basic tactic here is to read an input record, and then do a runSelectionAndProjection on it.
@@ -167,7 +168,7 @@ public class UnionOp extends RelOp {
     // returns the set of macro replacements
     public Map<String, String> buildMacroReplacements() {
 
-        HashMap<String, String> replacements = new HashMap<String, String>();
+        HashMap<String,String> replacements = new HashMap<String,String>();
 
         // add in the output type code
         replacements.put("outputTypeCode", "" + getValue("output.typeCode").getInteger());
@@ -176,18 +177,18 @@ public class UnionOp extends RelOp {
         replacements.put("numOutputAtts", "" + (getValue("output.outAtts").getAssignmentList().size()));
 
         // now do the output selection
-        if (getValue("output.selection") != null)
-            throw new RuntimeException("Problem!  I found a selection in the union output");
+        if (getValue ("output.selection") != null)
+            throw new RuntimeException ("Problem!  I found a selection in the union output");
 
         // and the funciotns
         replacements.put("functionDeclarations", "" + buildFunctionDeclarations());
 
-        for (Set<String> s : allSortingAtts) {
+        for (Set <String> s : allSortingAtts) {
             // and the hash positions for splitting
-            replacements.put("hashPositions", buildAttPositionsArray(s, "output.outAtts"));
+            replacements.put("hashPositions", buildAttPositionsArray (s, "output.outAtts"));
 
             // and the primary hash
-            replacements.put("primaryHash", buildHashReplacements(s, "output.outAtts", ""));
+            replacements.put("primaryHash", buildHashReplacements (s, "output.outAtts", ""));
         }
 
         // then, finally, the names of all the VG inner input classes.
@@ -195,7 +196,7 @@ public class UnionOp extends RelOp {
         if (innerInputs != null) {
 
             String innerNames = "";
-            for (String s : innerInputs.getVarList().keySet()) {
+            for (String s: innerInputs.getVarList().keySet()) {
                 innerNames += ", UnionInnerRecord_" + s + ".class";
             }
 
@@ -206,7 +207,7 @@ public class UnionOp extends RelOp {
     }
 
     // returns the set of macro replacements for a given inner query
-    public Map<String, String> buildInnerMacroReplacements(String innerInputName, int innerInputID) {
+    public Map<String,String> buildInnerMacroReplacements(String innerInputName, int innerInputID) {
 
         HashMap<String, String> replacements = new HashMap<String, String>();
 
@@ -225,18 +226,18 @@ public class UnionOp extends RelOp {
         //
         // at the same time, we build a map from the VG function output attribute name to temp1, temp2
         String assignmentString = "\n";
-        Map<String, String> mapFromVGAttNameToTempVar = new HashMap<String, String>();
+        Map <String, String> mapFromVGAttNameToTempVar = new HashMap <String, String> ();
         int counter = 0;
-        for (Assignment a : getValue("innerInputs." + innerInputName + ".outAtts").getAssignmentList()) {
-            assignmentString += "\tAttribute temp" + counter + " = " + a.getExpression().print(innerAtts) + ";\n";
+        for (Assignment a: getValue("innerInputs." + innerInputName + ".outAtts").getAssignmentList()) {
+            assignmentString += "\tAttribute temp" + counter + " = " + a.getExpression ().print (innerAtts)  + ";\n";
 
             // for the seed, we take the seed att
             if (counter == 0) {
-                mapFromVGAttNameToTempVar.put(getValue("seedAtt").getIdentifier(), "temp" + counter);
+                mapFromVGAttNameToTempVar.put (getValue ("seedAtt").getIdentifier (), "temp" + counter);
 
                 // otherwise, take the other atts
             } else {
-                mapFromVGAttNameToTempVar.put(getValue("function.vgOutAtts").getIdentifierList().get(counter - 1), "temp" + counter);
+                mapFromVGAttNameToTempVar.put (getValue ("function.vgOutAtts").getIdentifierList ().get (counter - 1), "temp" + counter);
             }
             counter++;
         }
@@ -246,8 +247,8 @@ public class UnionOp extends RelOp {
         // the first one should always be the seed!
         assignmentString += "\n";
         counter = 0;
-        for (Assignment a : getValue("output.outAtts").getAssignmentList()) {
-            assignmentString += "\toutRec.atts[" + counter + "] = " + a.getExpression().print(mapFromVGAttNameToTempVar) + ";\n";
+        for (Assignment a: getValue("output.outAtts").getAssignmentList()) {
+            assignmentString += "\toutRec.atts[" + counter + "] = " + a.getExpression ().print (mapFromVGAttNameToTempVar) + ";\n";
             counter++;
         }
 
@@ -268,7 +269,7 @@ public class UnionOp extends RelOp {
     public String buildJarFile(RuntimeParameter paramsIn) {
 
         // cast the parameters.
-        ExampleRuntimeParameter params = (ExampleRuntimeParameter) paramsIn;
+        ExampleRuntimeParameter params = (ExampleRuntimeParameter)paramsIn;
 
         // get a name for the jar file, java template names and work directory
         String newJarFileName = getOperatorName() + "_" + RelOp.COUNT_OP + ".jar";
@@ -280,19 +281,16 @@ public class UnionOp extends RelOp {
         rmdir(new File(workDirectory));
 
         // make the directories with their runtime/functions substructure
-        if (!(new File(workDirectory + "/simsql/runtime").mkdirs()) ||
-                !(new File(workDirectory + "/simsql/functions").mkdirs()) ||
-                !(new File(workDirectory + "/simsql/functions/scalar").mkdirs()) ||
-                !(new File(workDirectory + "/simsql/functions/ud").mkdirs())) {
+        if (!(new File(workDirectory + "/simsql/runtime").mkdirs()) || !(new File(workDirectory + "/simsql/functions").mkdirs())) {
             throw new RuntimeException("Could not prepare/create the work directories for macro replacement");
         }
 
         // get the macro replacements for the inner.
         ArrayList<String> javaFileNames = new ArrayList<String>();
         ParsedRHS innerInputs = getValue("innerInputs");
-        if (innerInputs != null) {
+        if  (innerInputs != null) {
             int yx = 1; // id=0 for the outer input.
-            for (String innerName : innerInputs.getVarList().keySet()) {
+            for (String innerName: innerInputs.getVarList().keySet()) {
                 String newFileName = "/simsql/runtime/Macro" + getOperatorName() + RelOp.COUNT_OP + innerName + ".java";
                 MacroReplacer innerReplacer = new MacroReplacer(getInnerTemplateFile(), workDirectory + "/" + newFileName, buildInnerMacroReplacements(innerName, yx));
                 javaFileNames.add(newFileName);
@@ -335,31 +333,30 @@ public class UnionOp extends RelOp {
     // this corresponds to the file that we are going to actual map... it is the biggest input file
     String bigFile = null;
 
-    public String[] excludeAnyWhoWillNotBeMapped(String[] inFiles) {
+    public String [] excludeAnyWhoWillNotBeMapped (String [] inFiles) {
 
         // if bigFile is null, it means that the configs have not yet been set
         if (bigFile == null)
-            throw new RuntimeException("bigFile was null... perhaps setConfigurations was not called?");
+            throw new RuntimeException ("bigFile was null... perhaps setConfigurations was not called?");
 
         // verify that bigFile is in there
         boolean foundIt = false;
         for (String s : inFiles)
-            if (s.equals(bigFile))
+            if (s.equals (bigFile))
                 foundIt = true;
 
         if (!foundIt)
-            throw new RuntimeException("this is strange... I could not find the file that *should* be mapped");
+            throw new RuntimeException ("this is strange... I could not find the file that *should* be mapped");
 
         // the only one we do MapReduce over is the big one
-        inFiles = new String[1];
+        inFiles = new String [1];
         inFiles[0] = bigFile;
         return inFiles;
     }
 
     private short pipelinedTypeCode = -1;
     private int pipelinedNumAtts = -1;
-
-    public String getPipelinedFile() {
+    public String getPipelinedFile () {
 
         // the biggest file
         String bigFile = null;
@@ -368,46 +365,45 @@ public class UnionOp extends RelOp {
         // now check all of the inner inputs
         ParsedRHS innerInputs = getValue("innerInputs");
         if (innerInputs != null) {
-            for (String s : innerInputs.getVarList().keySet()) {
+            for (String s: innerInputs.getVarList().keySet()) {
 
                 // see if this next guy is the biggest
-                ArrayList<String> fileSet = getValue("innerInputs." + s + ".inFiles").getStringList();
-                String inFile = getNetworkOnInputSide().getFeeder(fileSet.get(0));
-                if (getSizeFromName(inFile) > bigSize) {
-                    bigSize = getSizeFromName(inFile);
+                ArrayList <String> fileSet = getValue ("innerInputs." + s + ".inFiles").getStringList ();
+                String inFile = getNetworkOnInputSide ().getFeeder (fileSet.get (0));
+                if (getSizeFromName (inFile) >= bigSize) {
+                    bigSize = getSizeFromName (inFile);
                     bigFile = inFile;
-                    pipelinedTypeCode = getValue("innerInputs." + s + ".typeCode").getInteger().shortValue();
-                    pipelinedNumAtts = getValue("innerInputs." + s + ".inAtts").getIdentifierList().size();
+                    pipelinedTypeCode = getValue ("innerInputs." + s + ".typeCode").getInteger ().shortValue();
+                    pipelinedNumAtts = getValue ("innerInputs." + s + ".inAtts").getIdentifierList().size ();
                 }
             }
         }
 
-        System.out.println("bigFile was " + bigFile);
+        System.out.println ("bigFile was " + bigFile);
         return bigFile;
 
     }
 
-    public int getPipelinedTypeCode() {
+    public int getPipelinedTypeCode () {
         return pipelinedTypeCode;
     }
 
-    public int getPipelinedNumAtts() {
+    public int getPipelinedNumAtts () {
         return pipelinedNumAtts;
     }
 
     String allTypeCodes = null;
-
-    public String getNonPipelinedTypeCodes() {
+    public String getNonPipelinedTypeCodes () {
         if (allTypeCodes == null)
-            getNonPipelinedFiles();
+            getNonPipelinedFiles ();
 
         return allTypeCodes;
     }
 
-    public String getNonPipelinedFiles() {
+    public String getNonPipelinedFiles () {
 
         // the biggest file
-        String bigFile = getPipelinedFile();
+        String bigFile = getPipelinedFile ();
 
         // this is the String of all of the files to process
         String allFilesToProcess = null;
@@ -415,24 +411,24 @@ public class UnionOp extends RelOp {
         // now check all of the inner inputs
         ParsedRHS innerInputs = getValue("innerInputs");
         if (innerInputs != null) {
-            for (String s : innerInputs.getVarList().keySet()) {
+            for (String s: innerInputs.getVarList().keySet()) {
 
                 // now, add him to the string all of the input files
-                ArrayList<String> fileSet = getValue("innerInputs." + s + ".inFiles").getStringList();
-                String inFile = getNetworkOnInputSide().getFeeder(fileSet.get(0));
+                ArrayList <String> fileSet = getValue ("innerInputs." + s + ".inFiles").getStringList ();
+                String inFile = getNetworkOnInputSide ().getFeeder (fileSet.get (0));
 
                 boolean useThisOne = false;
                 if (inFile == null)
                     useThisOne = true;
-                else if (!inFile.equals(getPipelinedFile()))
+                else if (!inFile.equals (getPipelinedFile ()))
                     useThisOne = true;
 
                 if (useThisOne && allFilesToProcess == null) {
-                    allFilesToProcess = fileSet.get(0);
-                    allTypeCodes = getValue("innerInputs." + s + ".typeCode").getInteger() + "";
+                    allFilesToProcess = fileSet.get (0);
+                    allTypeCodes = getValue ("innerInputs." + s + ".typeCode").getInteger () + "";
                 } else if (useThisOne && allFilesToProcess != null) {
-                    allFilesToProcess = allFilesToProcess + "," + fileSet.get(0);
-                    allTypeCodes = allTypeCodes + "," + getValue("innerInputs." + s + ".typeCode").getInteger();
+                    allFilesToProcess = allFilesToProcess + "," + fileSet.get (0);
+                    allTypeCodes = allTypeCodes + "," + getValue ("innerInputs." + s + ".typeCode").getInteger ();
                 }
             }
         }
@@ -451,19 +447,19 @@ public class UnionOp extends RelOp {
         // via MapReduce.
 
         // this is the String of all of the files to process
-        bigFile = getPipelinedFile();
-        String allFilesToProcess = getNonPipelinedFiles();
+        bigFile = getPipelinedFile ();
+        String allFilesToProcess = getNonPipelinedFiles ();
 
-        System.out.println("pipielined file is " + bigFile);
-        System.out.println("non-pipelined file is " + allFilesToProcess);
+        System.out.println ("pipielined file is " + bigFile);
+        System.out.println ("non-pipelined file is " + allFilesToProcess);
 
         // now, take out the large one
-        String[] allFiles = allFilesToProcess.split(",");
+        String [] allFiles = allFilesToProcess.split (",");
         for (String s : allFiles) {
             // and add information to the config file... we need the typecode and the number of atts
             // this will allow the mapper to read them in
-            conf.setInt("simsql." + s + ".typeCode", getDB().getTypeCode(getDB().getTableName(s)));
-            conf.setInt("simsql." + s + ".numAtts", getDB().getNumAtts(getDB().getTableName(s)));
+            conf.setInt ("simsql." + s + ".typeCode", getDB().getTypeCode(getDB().getTableName(s)));
+            conf.setInt ("simsql." + s + ".numAtts", getDB().getNumAtts(getDB().getTableName(s)));
         }
 
         // and add in the configuration... this is the file to directy read
@@ -477,19 +473,19 @@ public class UnionOp extends RelOp {
         // here we add the seed for each of the inners
         ParsedRHS innerInputs = getValue("innerInputs");
         if (innerInputs != null) {
-            for (String innerName : innerInputs.getVarList().keySet()) {
-                Expression myExp = new Expression("literal int");
-                myExp.setValue("0");
-                getValue("innerInputs." + innerName + ".outAtts").getAssignmentList().add(0, new Assignment("foo", myExp));
+            for (String innerName: innerInputs.getVarList().keySet()) {
+                Expression myExp = new Expression ("literal int");
+                myExp.setValue ("0");
+                getValue("innerInputs." + innerName + ".outAtts").getAssignmentList().add (0, new Assignment ("foo", myExp));
             }
         }
 
         // put the outerInput into the inner inputs
-        getValue("innerInputs").getVarList().put("outerInput", getValue("outerInput"));
+        getValue("innerInputs").getVarList ().put ("outerInput", getValue ("outerInput"));
 
         // get the set of all output atts
         outputAtts = new HashSet<String>();
-        for (Assignment a : getValue("output.outAtts").getAssignmentList()) {
+        for (Assignment a: getValue("output.outAtts").getAssignmentList()) {
             outputAtts.add(a.getIdentifier());
         }
 
@@ -498,7 +494,7 @@ public class UnionOp extends RelOp {
     }
 
     // do we run a reducer on this?
-    private boolean runUnionReducer = false;
+    private boolean runUnionReducer = true;
 
     // our set of sorting and output attributes.
     private Set<Set<String>> allSortingAtts;
@@ -506,29 +502,33 @@ public class UnionOp extends RelOp {
 
     public boolean acceptsPipelineable() {
 
-        // we only allow a pipeline of one of the inputs
-
-        // this variable will count the number of items to be pipelines
-        int numThatAreNotThere = 0;
-
-        // now check all of the inner inputs
-        ParsedRHS innerInputs = getValue("innerInputs");
-        if (innerInputs != null) {
-            for (String s : innerInputs.getVarList().keySet()) {
-                long returnedSize = getSize("innerInputs." + s + ".inFiles");
-                System.out.println("Size was " + returnedSize);
-                if (returnedSize == 0)
-                    numThatAreNotThere++;
-            }
-        }
-
-        System.out.println("Found that " + numThatAreNotThere + " inputs are not there");
-        // if there is less than one that is materialized, we can accept a pipeline
-        return numThatAreNotThere <= 1;
+        return false;
+//        // we only allow a pipeline of one of the inputs
+//
+//        // this variable will count the number of items to be pipelines
+//        int numThatAreNotThere = 0;
+//
+//        // now check all of the inner inputs
+//        ParsedRHS innerInputs = getValue("innerInputs");
+//        if (innerInputs != null) {
+//            for (String s: innerInputs.getVarList().keySet()) {
+//                long returnedSize = getSize ("innerInputs." + s + ".inFiles");
+//                System.out.println ("Size was " + returnedSize);
+//                if (returnedSize == 0)
+//                    numThatAreNotThere++;
+//            }
+//        }
+//
+//        System.out.println ("Found that " + numThatAreNotThere + " inputs are not there");
+//        // if there is less than one that is materialized, we can accept a pipeline
+//        return numThatAreNotThere <= 1;
     }
 
-    public boolean isPipelineable(int megabytesIn) {
+    public boolean isPipelineable (int megabytesIn) {
 
+        // we can pipeline only if we have exactly one input that is not materialized
+        boolean canBePipelined = acceptsPipelineable ();
+        System.out.println ("canBePipelined is " + canBePipelined);
         return false;
     }
 
@@ -548,15 +548,15 @@ public class UnionOp extends RelOp {
 
     // here, we determine if we are going to do a map-side-only union, which is equivalent to
     // deciding if we are going to provide a sort order on the output
-    public void determineWhatAlgorithmToRun(Set<Set<String>> votes, Map<String, Set<String>> fds,
-                                            Map<String, Set<Set<String>>> sortingAttsIn) {
+    public void determineWhatAlgorithmToRun (Set <Set <String>> votes, Map <String, Set <String>> fds,
+                                             Map <String, Set <Set <String>>> sortingAttsIn) {
 
         // if we have sort order requests, we'll try to honor them.
         if (votes.size() > 0) {
 
             // find the largest of the requested sort orders.
             Set<String> biggest = null;
-            for (Set<String> s : votes) {
+            for (Set <String> s: votes) {
                 if (biggest == null || s.size() > biggest.size()) {
                     biggest = s;
                 }
@@ -574,12 +574,12 @@ public class UnionOp extends RelOp {
     }
 
     // simply returns the sorting atts we have decided.
-    public Set<Set<String>> getSortedOutputAtts() {
+    public Set <Set <String>> getSortedOutputAtts () {
         return allSortingAtts;
     }
 
     // we can sort on anything we output
-    public Set<Set<String>> getAllPossibleSortingAtts() {
+    public Set <Set <String>> getAllPossibleSortingAtts () {
         return SubsetMachine.getAllSubsets(outputAtts);
     }
 

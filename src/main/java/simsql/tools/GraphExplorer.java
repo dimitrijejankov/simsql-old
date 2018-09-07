@@ -279,7 +279,7 @@ public class GraphExplorer {
             JComponent containerPanel = new JPanel(new BorderLayout());
             tabbedPane.addTab("The Graph", null, containerPanel, "The whole graph");
 
-            Graph graph = constructGraph(graphCutter.getSinkListOperators(), "Whole Graph");
+            Graph graph = constructGraph(graphCutter.getSourceOperators(), "Whole Graph");
 
             Viewer viewer = new Viewer(graph, Viewer.ThreadingModel.GRAPH_IN_SWING_THREAD);
             viewer.enableAutoLayout();
@@ -310,7 +310,106 @@ public class GraphExplorer {
         }
     }
 
-    private Graph constructGraph(LinkedList<Operator> sinkListOperators, String graphName) {
+    private Graph constructGraph(LinkedList<Operator> sourceOperators, String graphName) {
+
+        // nodes we need to visit
+        LinkedList<Operator> nodesToVisit = new LinkedList<>(sourceOperators);
+        HashSet<Operator> visitedNodes = new HashSet<>();
+
+        // the graph we are going to construct
+        Graph graph = new SingleGraph(graphName);
+
+        graph.addAttribute("ui.stylesheet", "node { text-size : 14; shape: box; fill-color: yellow; size-mode: fit;}");
+
+        // add the nodes in the graph
+        while(!nodesToVisit.isEmpty()) {
+
+            Operator o = nodesToVisit.getFirst();
+
+            // add the node to the graph
+            Node n = graph.addNode(o.getNodeName());
+            n.setAttribute("ui.label", o.getNodeName() + " (" +  o.getOperatorType().toString().toLowerCase().replace("_", " ") + ")");
+            n.setAttribute("operator", o);
+            visitedNodes.add(o);
+
+            // add the all unvisited operators
+            for(Operator c : o.getParents())  {
+                if(!visitedNodes.contains(c) && !nodesToVisit.contains(c)) {
+                    nodesToVisit.addLast(c);
+                }
+            }
+
+            // remove node
+            nodesToVisit.removeFirst();
+        }
+
+        // reinitialize this
+        nodesToVisit = new LinkedList<>(sourceOperators);
+        visitedNodes = new HashSet<>();
+
+        // the number of edges
+        int edgeNumber = 0;
+
+        // add all the connections
+        while(!nodesToVisit.isEmpty()) {
+
+            Operator o = nodesToVisit.getFirst();
+
+            // add the node to the graph
+            visitedNodes.add(o);
+
+            // add the all unvisited operators
+            for(Operator p : o.getParents())  {
+                if(!visitedNodes.contains(p) && !nodesToVisit.contains(p)) {
+                    nodesToVisit.addLast(p);
+                }
+
+                // add the edge
+                graph.addEdge("edge" + edgeNumber++, o.getNodeName(), p.getNodeName(), true);
+            }
+
+            // remove node
+            nodesToVisit.removeFirst();
+        }
+
+        return graph;
+    }
+
+    private void search() {
+
+        String s = (String)JOptionPane.showInputDialog(
+                mainFrame,
+                "Search for node with name : ",
+                "Search Dialog",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                null,
+                "");
+
+        //If a string was returned, say so.
+        if ((s != null) && (s.length() > 0)) {
+
+            try {
+                View v = (View) ((BorderLayout) ((JPanel) tabbedPane.getSelectedComponent()).getLayout()).getLayoutComponent(BorderLayout.CENTER);
+                Graph g = grapForView.get(v);
+                Node node = g.getNode(s);
+
+                if(node != null) {
+                    node.addAttribute("ui.style", "fill-color: rgb(0,100,255);");
+                }
+            }
+            catch (Exception ignore) {}
+
+            return;
+        }
+
+        JOptionPane.showMessageDialog(mainFrame,
+                "You didn't enter anything",
+                "Open failed!",
+                JOptionPane.WARNING_MESSAGE);
+    }
+
+    private Graph constructSinkGraph(LinkedList<Operator> sinkListOperators, String graphName) {
 
         // nodes we need to visit
         LinkedList<Operator> nodesToVisit = new LinkedList<>(sinkListOperators);
@@ -375,40 +474,6 @@ public class GraphExplorer {
         return graph;
     }
 
-    private void search() {
-
-        String s = (String)JOptionPane.showInputDialog(
-                mainFrame,
-                "Search for node with name : ",
-                "Search Dialog",
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                null,
-                "");
-
-        //If a string was returned, say so.
-        if ((s != null) && (s.length() > 0)) {
-
-            try {
-                View v = (View) ((BorderLayout) ((JPanel) tabbedPane.getSelectedComponent()).getLayout()).getLayoutComponent(BorderLayout.CENTER);
-                Graph g = grapForView.get(v);
-                Node node = g.getNode(s);
-
-                if(node != null) {
-                    node.addAttribute("ui.style", "fill-color: rgb(0,100,255);");
-                }
-            }
-            catch (Exception ignore) {}
-
-            return;
-        }
-
-        JOptionPane.showMessageDialog(mainFrame,
-                "You didn't enter anything",
-                "Open failed!",
-                JOptionPane.WARNING_MESSAGE);
-    }
-
     private void nextCut() {
 
         JComponent containerPanel = new JPanel(new BorderLayout());
@@ -418,7 +483,7 @@ public class GraphExplorer {
 
             tabbedPane.addTab("Cut " + currentCut++, null, containerPanel, "One of the cuts");
 
-            Graph graph = constructGraph(new LinkedList<>(sinkList), "Cut " + currentCut);
+            Graph graph = constructSinkGraph(new LinkedList<>(sinkList), "Cut " + currentCut);
 
             Viewer viewer = new Viewer(graph, Viewer.ThreadingModel.GRAPH_IN_SWING_THREAD);
             viewer.enableAutoLayout();

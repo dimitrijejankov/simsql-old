@@ -54,7 +54,7 @@ public class VGWrapperMapper extends MapperWithPipeNetwork {
       int numMC = context.getConfiguration().getInt("simsql.numIterations", 1);
 
       // get the direct buffer size.
-      int dataBufferSize = context.getConfiguration().getInt("simsql.dataBufferSize", 1024 * 1024 * 10);
+      int dataBufferSize = context.getConfiguration().getInt("simsql.dataBufferSize", 1024 * 1024 * 100);
 
       // start up the VGWrapper.
       vgw = new VGWrapper(dataBufferSize, vgf, numMC, new VGWrapperReducer.Writer(context), this);

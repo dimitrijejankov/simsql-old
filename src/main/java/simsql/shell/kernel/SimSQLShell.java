@@ -822,8 +822,7 @@ public class SimSQLShell<MyCompiledQuery extends CompiledQuery, MyOptimizedQuery
     public void setParam(String param, String value) {
 
         // set the param
-        myQueryProcessor.getRuntimeParameter().setParam(param,
-                value);
+        myQueryProcessor.getRuntimeParameter().setParam(param, value);
 
         // and save the params
         myQueryProcessor.getRuntimeParameter().save();
@@ -951,8 +950,7 @@ public class SimSQLShell<MyCompiledQuery extends CompiledQuery, MyOptimizedQuery
 
             // see if we got an error
             if (myOptimizedQuery.isError() != null) {
-                System.out.println("Error optimizing query: "
-                        + myOptimizedQuery.isError());
+                System.out.println("Error optimizing query: " + myOptimizedQuery.isError());
                 myOptimizedQuery.cleanUp();
                 break;
             }
@@ -978,7 +976,6 @@ public class SimSQLShell<MyCompiledQuery extends CompiledQuery, MyOptimizedQuery
 
             // and give it back to the query processor for post-processing
             myQueryProcessor.doneExecuting(myRuntimeOutput, outputFile);
-
         }
 
         // save the outputs so they can be queried

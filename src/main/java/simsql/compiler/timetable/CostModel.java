@@ -13,19 +13,34 @@ public class CostModel {
         costs = new HashMap<>();
 
         // we don't want to remove a projection or selection from a join
-        addRule(OperatorType.SELECTION, OperatorType.JOIN, 1.5);
-        addRule(OperatorType.PROJECTION, OperatorType.JOIN, 1.5);
+        addRule(OperatorType.SELECTION, OperatorType.JOIN, 0.9);
+        addRule(OperatorType.PROJECTION, OperatorType.JOIN, 0.8);
 
         // cutting after a selection is generally bad
-        addRule(OperatorType.SELECTION, OperatorType.JOIN, 1.5);
-        addRule(OperatorType.SELECTION, OperatorType.JOIN, 1.5);
+        addRule(OperatorType.SELECTION, OperatorType.SELECTION, 1);
+        addRule(OperatorType.SELECTION, OperatorType.SCALAR_FUNCTION, 0.8);
+        addRule(OperatorType.SELECTION, OperatorType.PROJECTION, 0.8);
+
+	// added by Shangyu from statistics
+        addRule(OperatorType.SELECTION, OperatorType.VG_WRAPPER, 0);
 
         // if there is an aggregate after most operators this is usually a bad choice for cut
-        addRule(OperatorType.SELECTION, OperatorType.AGGREGATE, 2);
-        addRule(OperatorType.SCALAR_FUNCTION, OperatorType.AGGREGATE, 2);
-        addRule(OperatorType.PROJECTION, OperatorType.AGGREGATE, 2);
-        addRule(OperatorType.JOIN, OperatorType.AGGREGATE, 2);
-        addRule(OperatorType.DUPLICATE_REMOVE, OperatorType.AGGREGATE, 2);
+        addRule(OperatorType.SELECTION, OperatorType.AGGREGATE, 1);
+        addRule(OperatorType.SCALAR_FUNCTION, OperatorType.AGGREGATE, 1);
+        addRule(OperatorType.PROJECTION, OperatorType.AGGREGATE, 1);
+        addRule(OperatorType.JOIN, OperatorType.AGGREGATE, 1);
+        addRule(OperatorType.DUPLICATE_REMOVE, OperatorType.AGGREGATE, 1);
+
+
+        addRule(OperatorType.SCALAR_FUNCTION, OperatorType.SELECTION, 1);
+        addRule(OperatorType.PROJECTION, OperatorType.SELECTION, 1);
+        addRule(OperatorType.JOIN, OperatorType.SELECTION, 1);
+        addRule(OperatorType.DUPLICATE_REMOVE, OperatorType.SELECTION, 1);
+
+
+	// added by Shangyu from statistics
+	addRule(OperatorType.JOIN, OperatorType.VG_WRAPPER, 0.9);
+	addRule(OperatorType.VG_WRAPPER, OperatorType.SELECTION, 1);
 
         // if we want to cut after an aggregate the cost should be 0
         addRule(OperatorType.AGGREGATE, OperatorType.SELECTION, 0);
@@ -37,13 +52,16 @@ public class CostModel {
         addRule(OperatorType.AGGREGATE, OperatorType.UNION_VIEW, 0);
 
         // if we have a join after a join we might not want to cut after this might be piplined
-        addRule(OperatorType.JOIN, OperatorType.JOIN, 1.5);
+        addRule(OperatorType.JOIN, OperatorType.JOIN, 0.95);
+
+	// added by Shangyu from statistics
+        addRule(OperatorType.JOIN, OperatorType.SELECTION, 1);
     }
 
     public double getCostFor(Operator child, Operator parent) {
         return costs.getOrDefault(combinedTypeCode(getTypeCodeFor(child.getOperatorType()),
                                                    getTypeCodeFor(parent.getOperatorType())),
-                                                1.0);
+                                                0.5);
     }
 
     public void addRule(OperatorType child, OperatorType parent, double value) {

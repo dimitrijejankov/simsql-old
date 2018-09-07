@@ -29,6 +29,8 @@ import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.omg.Messaging.SYNC_WITH_TRANSPORT;
+import simsql.compiler.ParallelExecutor;
 import simsql.shell.PhysicalDatabase;
 import simsql.shell.RuntimeParameter;
 
@@ -44,7 +46,7 @@ import static simsql.runtime.ReflectedFunction.isUDFunction;
 /**
  * A general relational operator class.
  *
- * @author Luis.
+ * @author Luis.con
  */
 public abstract class RelOp {
 
@@ -877,7 +879,7 @@ public abstract class RelOp {
             throw new RuntimeException("Could not prepare/create the work directories for macro replacement");
         }
 
-        return buildJarFile(paramsIn, newJarFileName, workDirectory, javaFileName, new String[]{javaFileName});
+         return buildJarFile(paramsIn, newJarFileName, workDirectory, javaFileName, new String[]{javaFileName});
     }
 
     // helper for building jars
@@ -954,7 +956,7 @@ public abstract class RelOp {
     }
 
     // runs this operation.
-    public boolean run(RuntimeParameter params, boolean verbose) {
+    public boolean run(RuntimeParameter params, boolean verbose, ParallelExecutor parent) {
 
         ExampleRuntimeParameter pp = (ExampleRuntimeParameter) params;
 
@@ -966,7 +968,6 @@ public abstract class RelOp {
 
         // set quite mode on/off
         conf.setQuietMode(!verbose);
-
 
         /***
          conf.setBoolean("mapred.task.profile", true);
@@ -1070,6 +1071,11 @@ public abstract class RelOp {
         job.setPartitionerClass(getPartitionerClass());
         job.setSortComparatorClass(getSortComparatorClass());
 
+        // if there is a parent executor wait for it to finish
+        if(parent != null) {
+            parent.waitToFinish();
+        }
+
         // and now, submit the job and wait for things to finish
         int exitCode;
         try {
@@ -1080,10 +1086,7 @@ public abstract class RelOp {
             Counter mx = c.findCounter(OutputFileSerializer.Counters.BYTES_WRITTEN);
 
             // and use them to set the size of the output relation.
-            if (myDB != null) {
-                myDB.setTableSize(myDB.getTableName(getOutput()), mx.getValue());
-                myDB.setNumAtts(myDB.getTableName(getOutput()), getOutputAttNames().length);
-            }
+            setSetStatistics(mx.getValue(), false);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -1180,6 +1183,39 @@ public abstract class RelOp {
             isFinal = (finalVal != null && finalVal.getStringLiteral().equals("true"));
         }
     }
+
+    public long estimateSize(ExampleRuntimeParameter parameters) {
+
+        /// TODO this is dumb but idk
+        return parameters.getDefaultSpeculativeSize();
+    }
+
+    public void speculateStatistics(ExampleRuntimeParameter parameters) {
+
+        // set the speculative stats
+        setSetStatistics(estimateSize(parameters), true);
+    }
+
+    private synchronized void setSetStatistics(long size, boolean isSpeculation) {
+
+        // we have already set the real statistics we are done here
+        if(setRealStats) {
+            return;
+        }
+
+        // set the stats if the physical database is provided
+        if (myDB != null) {
+            myDB.setTableSize(myDB.getTableName(getOutput()), size);
+            myDB.setNumAtts(myDB.getTableName(getOutput()), getOutputAttNames().length);
+        }
+
+        // if we are not speculating mark that we have set the real statistics
+        if(!isSpeculation) {
+            setRealStats = true;
+        }
+    }
+
+    private boolean setRealStats = false;
 
     // counter for the jars
     protected static int COUNT_OP = 1;

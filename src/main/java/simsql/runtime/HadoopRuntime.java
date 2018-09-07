@@ -21,6 +21,7 @@
 
 package simsql.runtime;
 
+import simsql.compiler.ParallelExecutor;
 import simsql.shell.*;
 import simsql.code_generator.*;
 
@@ -321,6 +322,13 @@ public class HadoopRuntime implements simsql.shell.Runtime<DataFlowQuery, Hadoop
         // operations that are either piplined or not yet executed.
         ArrayList<RelOp> unexecutedOps = new ArrayList<RelOp>(result);
 
+        HashMap<Pair<String, String>, Integer> pipelineStats = new HashMap<>();
+        HashMap<Pair<String, String>, Integer> totalPipelineStats = new HashMap<>();
+        HashSet<Pair<Integer, Integer>> visitedPairs = new HashSet<>();
+
+        // we just started executing
+        ParallelExecutor parallelExecutor = null;
+
         for (int i = 0; i < result.size(); i++) {
 
             // tells if we found a guy to pipeline
@@ -338,10 +346,141 @@ public class HadoopRuntime implements simsql.shell.Runtime<DataFlowQuery, Hadoop
 
                 ArrayList<RelOp> follows = getFollows(unexecutedOps, r1);
 
+                if (follows.size() > 0) {
+
+                    // store the result quick and dirty
+                    Integer op1 = System.identityHashCode(r1);
+                    Integer op2 = System.identityHashCode(follows.get(0));
+
+                    Pair<Integer, Integer> key = new Pair<>(op1, op2);
+
+                    if(!visitedPairs.contains(key)) {
+
+                        // store the result quick and dirty
+                        Pair<String, String> k = new Pair<>(r1.getClass().getSimpleName(),
+                                                               follows.get(0).getClass().getSimpleName());
+
+                        totalPipelineStats.putIfAbsent(k, 0);
+
+                        // increase the current value
+                        totalPipelineStats.put(k, totalPipelineStats.get(k) + 1);
+
+                        visitedPairs.add(key);
+                    }
+                }
+
+
                 // if one guy comes after, then perhaps we can pipeline
-                if (follows.size() == 1 && r1.isPipelineable((int) (follows.get(0).getRemainingMemForPipelinePerMapper
-                        (getRuntimeParameters()))) && follows.get(0).acceptsPipelineable()) {
+                if (follows.size() == 1 && r1.isPipelineable((int) (follows.get(0).getRemainingMemForPipelinePerMapper (getRuntimeParameters()))) && follows.get(0).acceptsPipelineable()) {
+
                     follows.get(0).suckUpNetworkOnInput(r1.getPipelinedVersion());
+
+                    // store the result quick and dirty
+                    String op1 = r1.getClass().getSimpleName();
+                    String op2 = follows.get(0).getClass().getSimpleName();
+
+                    Pair<String, String> key = new Pair<>(op1, op2);
+
+                    // if we did not initialize
+                    pipelineStats.putIfAbsent(key, 0);
+
+                    // increase the current value
+                    pipelineStats.put(key, pipelineStats.get(key) + 1);
+
+
+			/*
+		                    boolean foundPipelinedInputFile = false;
+
+                    if (r1 instanceof JoinOp && follows.get(0) instanceof JoinOp) {
+                        if (verbose) {
+                            System.out.println("All the sorting atts: " + sortingAtts);
+                            System.out.println("The sorting atts of r1: " + r1.getAllPossibleSortingAtts());
+                            System.out.println("The sorting atts of next: " + follows.get(0).getAllPossibleSortingAtts());
+                            // System.out.println("The preferred sort order of r1 to next: " + follows.get(0).getPreferredSortOrder(r1.getOutput(), fds, r1.getAllPossibleSortingAtts()));
+                        }
+
+                        String leftFile1 = r1.getNetworkOnInputSide().getFeeder(r1.getValue("leftInput.inFiles").getStringList().get(0));
+                        String rightFile1 = r1.getNetworkOnInputSide().getFeeder(r1.getValue("rightInput.inFiles").getStringList().get(0));
+
+                        if (sortingAtts.containsKey(leftFile1) && sortingAtts.containsKey(rightFile1)) {
+                            // String leftSortingAtt1 = sortingAtts.get(leftFile1).iterator().next().iterator().next();
+                            // String rightSortingAtt1 = sortingAtts.get(rightFile1).iterator().next().iterator().next();
+                            if (verbose) {
+                                System.out.println("The left file of r1: " + leftFile1 + ", sorted on: " + sortingAtts.get(leftFile1));
+                                System.out.println("The right file of r1: " + rightFile1 + ", sorted on: " + sortingAtts.get(rightFile1));
+                            }
+
+                            String leftFile2 = follows.get(0).getNetworkOnInputSide().getFeeder(follows.get(0).getValue("leftInput.inFiles").getStringList().get(0));
+                            String rightFile2 = follows.get(0).getNetworkOnInputSide().getFeeder(follows.get(0).getValue("rightInput.inFiles").getStringList().get(0));
+                            if (sortingAtts.containsKey(leftFile2)) {
+                                // String leftSortingAtt2 = sortingAtts.get(leftFile2).iterator().next().iterator().next();
+                                // String rightSortingAtt2 = sortingAtts.get(rightFile2).iterator().next().iterator().next();
+                                if (verbose) {
+                                    System.out.println("The left file of next: " + leftFile2 + ", sorted on: " + sortingAtts.get(leftFile2));
+                                    // System.out.println("The right file of next: " + rightFile2 + ", sorted on: " + sortingAtts.get(rightFile2));
+                                    System.out.println("The right file of next: " + rightFile2);
+                                }
+                                String leftSortingAtt1 = "";
+                                String rightSortingAtt1 = "";
+                                String determiningSortingAtt = "";
+                                // if (follows.get(0).getValue ("leftInput.hashAtts").getIdentifierList ().contains(leftSortingAtt1)
+                                //     && follows.get(0).getValue ("leftInput.hashAtts").getIdentifierList ().contains(rightSortingAtt1)) {
+                                //     determiningSortingAtt = rightSortingAtt2;
+                                // }
+                                ArrayList<String> leftHashAtts = follows.get(0).getValue("leftInput.hashAtts").getIdentifierList();
+                                ArrayList<String> rightHashAtts = follows.get(0).getValue("rightInput.hashAtts").getIdentifierList();
+                                if (rightHashAtts.size() == 2) {
+                                    if (sortingAtts.get(leftFile1).contains(Collections.singleton(rightHashAtts.get(0)))) {
+                                        leftSortingAtt1 = rightHashAtts.get(0);
+                                        rightSortingAtt1 = rightHashAtts.get(1);
+                                    } else {
+                                        leftSortingAtt1 = rightHashAtts.get(1);
+                                        rightSortingAtt1 = rightHashAtts.get(0);
+                                    }
+                                    if (leftHashAtts.size() == 2) {
+                                        if (sortingAtts.get(leftFile2).contains(Collections.singleton(leftHashAtts.get(0)))) {
+                                            determiningSortingAtt = leftHashAtts.get(0);
+                                        } else {
+                                            determiningSortingAtt = leftHashAtts.get(1);
+                                        }
+                                    }
+                                }
+                                // if (follows.get(0).getValue ("rightInput.hashAtts").getIdentifierList ().contains(leftSortingAtt1)
+                                //         && follows.get(0).getValue ("rightInput.hashAtts").getIdentifierList ().contains(rightSortingAtt1)) {
+                                //     determiningSortingAtt = leftSortingAtt2;
+                                // }
+                                if (determiningSortingAtt.length() > 0) {
+                                    if (verbose) {
+                                        System.out.println("The determining sort att: " + determiningSortingAtt);
+                                    }
+                                    String pipelinedInputFile = "", materializedInputFile = "";
+                                    String pipelinedSortingAtt = ((JoinOp) follows.get(0)).getEqualityCheckWith("any." + determiningSortingAtt);
+                                    if (leftSortingAtt1.equals(pipelinedSortingAtt)) {
+                                        pipelinedInputFile = leftFile1;
+                                        materializedInputFile = "right";
+                                    }
+                                    if (rightSortingAtt1.equals(pipelinedSortingAtt)) {
+                                        pipelinedInputFile = rightFile1;
+                                        materializedInputFile = "left";
+                                    }
+                                    if (pipelinedInputFile.length() > 0) {
+                                        foundPipelinedInputFile = true;
+                                        if (verbose) {
+                                            System.out.println("The pipelined file should be: " + pipelinedInputFile + ", sorted on: " + pipelinedSortingAtt);
+                                            System.out.println("The materialized file should be: " + materializedInputFile);
+                                        }
+                                        // follows.get(0) will now take r1 with pipelinedInputFile pipelined and the other table materialized
+                                        follows.get(0).suckUpNetworkOnInput(((JoinOp) r1).getPipelinedVersion(materializedInputFile));
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (!foundPipelinedInputFile) {
+                        follows.get(0).suckUpNetworkOnInput(r1.getPipelinedVersion());
+                    }
+*/
 
                     // let the user know how we are doing
                     if (!verbose) {
@@ -359,6 +498,18 @@ public class HadoopRuntime implements simsql.shell.Runtime<DataFlowQuery, Hadoop
                 if (follows.size() == 1 && follows.get(0).isAppendable(r1.getInputFiles()) && r1.acceptsAppendable()) {
                     r1.appendNetworkOnOutputSide(follows.get(0).getAppendableNetwork());
                     gotOne = true;
+
+                    // store the result quick and dirty
+                    String op1 = r1.getClass().getSimpleName();
+                    String op2 = follows.get(0).getClass().getSimpleName();
+
+                    Pair<String, String> key = new Pair<>(op1, op2);
+
+                    // if we did not initialize
+                    pipelineStats.putIfAbsent(key, 0);
+
+                    // increase the current value
+                    pipelineStats.put(key, pipelineStats.get(key) + 1);
 
                     // set stats collection (for the finals that get some pre-processing work moved but won't run a mapper).
                     r1.setCollectStats(follows.get(0).collectStats());
@@ -444,21 +595,44 @@ public class HadoopRuntime implements simsql.shell.Runtime<DataFlowQuery, Hadoop
                 }
 
                 // run the job
-                try {
-                    if (!verbose) {
-                        turnOnOutput();
-                        System.out.print(result.size() + " (running " + nextOp.getOperatorName() + " as Hadoop job...)\n\t");
-                        turnOffOutput();
+                if(params.getSpeculativeExecution()) {
+
+                    // if we are doing speculative execution
+                    ParallelExecutor parent = parallelExecutor;
+
+                    parallelExecutor = new ParallelExecutor(nextOp, verbose, getRuntimeParameters(), parent);
+                    parallelExecutor.start();
+
+                    // check if there is an executor running
+                    if(parent != null) {
+
+                        // if it is wait for it
+                        parent.waitToFinish();
+
+                        // ok we got the thing check for error
+                        if(parent.hasError()) {
+
+                            // finish this then and set the error
+                            res.setError(parent.getError());
+                            return res;
+                        }
                     }
 
-                    nextOp.run(getRuntimeParameters(), verbose);
-                } catch (Exception e) {
-                    if (!verbose)
-                        turnOnOutput();
-                    StringWriter sw = new StringWriter();
-                    e.printStackTrace(new PrintWriter(sw));
-                    res.setError("Unable to execute query!\n" + sw.toString());
-                    return res;
+                    // speculate the statistics
+                    nextOp.speculateStatistics((ExampleRuntimeParameter) getRuntimeParameters());
+                }
+                else {
+
+                    // just run the job and wait for it to finish
+                    parallelExecutor = new ParallelExecutor(nextOp, verbose, getRuntimeParameters(), null);
+                    parallelExecutor.start();
+                    parallelExecutor.waitToFinish();
+                }
+
+                if (!verbose) {
+                    turnOnOutput();
+                    System.out.print(result.size() + " (running " + nextOp.getOperatorName() + " as Hadoop job...)\n\t");
+                    turnOffOutput();
                 }
 
                 // we record its output file for the end...
@@ -509,7 +683,7 @@ public class HadoopRuntime implements simsql.shell.Runtime<DataFlowQuery, Hadoop
                 result.remove(i);
 
                 // recreate the wait list.
-                waitFiles = new HashSet<String>();
+                waitFiles = new HashSet<>();
                 for (RelOp r : result) {
                     r.reEvaluateWhichFilesArePipelined();
                     waitFiles.add(r.getOutput());
@@ -522,13 +696,33 @@ public class HadoopRuntime implements simsql.shell.Runtime<DataFlowQuery, Hadoop
             }
         }
 
+        try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("/tmp/stats.txt", true)))) {
+
+            // output everything
+            out.println("<<<<<<<<<<<<<<<Total>>>>>>>>>>>>>>");
+            for(Pair<String, String> key : totalPipelineStats.keySet()) {
+                out.println("(" + key.getFirst() + ", " + key.getSecond() + ") => " + totalPipelineStats.get(key).toString());
+            }
+
+            // output everything
+            out.println("<<<<<<<<<<<<<<<Pipelinable>>>>>>>>>>>>>>");
+            for(Pair<String, String> key : pipelineStats.keySet()) {
+                out.println("(" + key.getFirst() + ", " + key.getSecond() + ") => " + pipelineStats.get(key).toString());
+            }
+
+        } catch (IOException e) {
+            //exception handling left as an exercise for the reader
+        }
+
         t = System.currentTimeMillis() - t;
-        if (verbose) {
+        if (!verbose) {
+	    turnOnOutput();
             System.out.println("Query finished. Execution took " + t + " milliseconds.");
+	    turnOffOutput();
         }
 
         // since everything in outFiles will be destroyed, don't remove the final stuff
-        outFiles.removeAll(finalFilesSet);
+         outFiles.removeAll(finalFilesSet);
 
         // obtain info on the final relations.
         for (String s : queryPlan.getFinalRelations()) {
@@ -571,7 +765,7 @@ public class HadoopRuntime implements simsql.shell.Runtime<DataFlowQuery, Hadoop
 
         if (outputFile != null) {
             outFiles.remove(outputFile);
-            res.setOutputRelation(outputFile, new ArrayList<String>(Arrays.asList(outputAtts)));
+            res.setOutputRelation(outputFile, new ArrayList<>(Arrays.asList(outputAtts)));
         }
 
         // unlink those files...

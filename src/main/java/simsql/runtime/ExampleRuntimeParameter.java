@@ -49,6 +49,8 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
     private Integer optIterations;
     private Integer optPlans;
     private Boolean debug;
+    private Boolean speculativeExecution = true;
+    private long defaultSpeculativeSize = 1024L*1024L*1024*6L;
 
     // this is where we save ourselves to
     private File whereILive;
@@ -82,6 +84,14 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
         return debug;
     }
 
+    public boolean getSpeculativeExecution() {
+        return speculativeExecution;
+    }
+
+    public long getDefaultSpeculativeSize() {
+        return defaultSpeculativeSize;
+    }
+
     public int getOptIterations() {
         return optIterations;
     }
@@ -104,6 +114,7 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
         System.out.format("%-25s | %-50d%n", "optIterations", optIterations);
         System.out.format("%-25s | %-50d%n", "optPlans", optPlans);
         System.out.format("%-25s | %-50s%n", "debug", debug.toString());
+        System.out.format("%-25s | %-50s%n", "speculativeExecution", speculativeExecution.toString());
         System.out.format("%n");
     }
 
@@ -131,6 +142,14 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
             } else if (paramName.equalsIgnoreCase("debug")) {
                 debug = Boolean.parseBoolean(paramValue);
                 setLogging();
+            } else if (paramName.equalsIgnoreCase("speculativeExecution")) {
+                speculativeExecution = Boolean.parseBoolean(paramValue);
+
+                if(speculativeExecution) {
+                    System.out.println("Speculative execution is an experimental feature and should be used with caution!");
+                    System.out.println("It assumes that all the relations are of size " + defaultSpeculativeSize + " bytes.");
+                }
+
             } else {
                 System.out.format("Unknown parameter %s%n", paramName);
             }
@@ -522,6 +541,16 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
                 keepAsking = true;
             }
         }
+
+        keepAsking = true;
+        while (keepAsking) {
+            try {
+                String s = cr.readLine("[speculativeExecution]\t\t Do you plan on using speculative execution? ");
+                keepAsking = !setParam("speculativeExecution", s);
+            } catch (Exception e) {
+                keepAsking = true;
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -540,6 +569,7 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
             optIterations = (Integer) in.readObject();
             optPlans = (Integer) in.readObject();
             debug = (Boolean) in.readObject();
+            speculativeExecution = (Boolean) in.readObject();
             setLogging();
 
             vgFunctionLocations = (HashMap<String, FileInfoPair>) in.readObject();
@@ -563,6 +593,7 @@ public class ExampleRuntimeParameter implements RuntimeParameter {
             out.writeObject(optIterations);
             out.writeObject(optPlans);
             out.writeObject(debug);
+            out.writeObject(speculativeExecution);
             out.writeObject(vgFunctionLocations);
             out.writeObject(regularFunctionLocations);
             out.close();
